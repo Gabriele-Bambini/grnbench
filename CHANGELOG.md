@@ -2,6 +2,19 @@
 
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
+### Project
+- Canonical repo is now the private GitHub repo (D-016). Rules for people and agents in
+  `AGENTS.md`; onboarding prompt in `docs/START_HERE_AGENT_PROMPT.md`.
+- Experiment registry `experiments/` with pre-registration (D-017), data provenance manifest
+  `experiments/datasets.tsv` (`benchmarks/data_manifest.py`), `paper/` (claims ledger, reporting
+  checklist, CRediT log, availability drafts, `paper/make_figures.py`), `CITATION.cff`.
+- Pinned environment `requirements/lock-py311.txt`; `hpc/setup_env.sh` installs it. CI runs on
+  Ubuntu / Python 3.11 with that lock, on PRs and `main` only.
+- HPC: `hpc/hpc.sh` (check/sync/run/submit/status/log/cancel/fetch; per-user `.env.hpc`, never a
+  username in the repo) replaces `hpc/sync_to_cluster.sh`; `docs/HPC.md`. `grnbench.sbatch` and
+  `beeline_backtest.sbatch` now ask for 8 CPUs (the `stud` QOS cap), not 16.
+- `.gitattributes` keeps shell scripts LF.
+
 ### Added
 - `grnbench ui`: Streamlit interface (data -> profile -> pipeline -> compare pipelines ->
   clean -> models incl. user models -> benchmark). `grnbench demo`, `grnbench kb`.

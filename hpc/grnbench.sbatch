@@ -2,7 +2,7 @@
 #SBATCH --job-name=grnbench
 #SBATCH --partition=stud
 #SBATCH --qos=stud
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
 #SBATCH --time=12:00:00
 #SBATCH --output=%x_%j.out

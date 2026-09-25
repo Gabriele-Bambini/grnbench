@@ -7,26 +7,15 @@ Defaults in these scripts match the cluster already used by the sibling projects
 (`--partition=stud --qos=stud`, conda at `/software/miniconda3`). Override with
 `CONDA_SH=` / `ENV_NAME=` if yours differs.
 
-## 1. Copy the repo over
+Team setup (your own account, ssh alias, `.env.hpc`, VPN, lockouts, QOS limits):
+**`docs/HPC.md`**. Short version:
 
 ```bash
-rsync -av --exclude .venv --exclude runs --exclude __pycache__ \
-      grnbench/ USER@CLUSTER:~/grnbench/
+bash hpc/hpc.sh sync                          # copy the working tree to ~/grnbench (or GRNBENCH_HPC_DIR)
+bash hpc/hpc.sh run 'bash hpc/setup_env.sh'   # once: conda env "grnbench" from requirements/lock-py311.txt
 ```
 
-## 2. Build the environment once
-
-```bash
-ssh USER@CLUSTER
-cd ~/grnbench
-bash hpc/setup_env.sh                 # conda env "grnbench" + pip install -e .[all]
-```
-
-The script prints `grnbench methods` at the end: that table is the honest answer
-to "what can actually run on this node". A method with a missing dependency is
-listed with its reason, never silently dropped.
-
-## 3. Submit
+## Submit
 
 ```bash
 sbatch --export=ALL,DATA=$HOME/data/pbmc.h5ad,TFS=$HOME/data/tfs.txt,GOLD=dorotheaABC \
@@ -46,7 +35,7 @@ Useful extra variables:
 | `GROUPKEY` | obs column for pseudobulk / strategy recommendations |
 | `ENV_NAME` | conda env name (default `grnbench`) |
 
-## 4. Read the result
+## Read the result
 
 ```bash
 cat  runs/<jobid>/eval/eval_report.md
@@ -62,7 +51,7 @@ as a single file.
 | dataset | methods | reasonable ask |
 |---|---|---|
 | ≤5k cells × 3k genes | spearman + plugins | `--cpus-per-task=8 --mem=32G --time=2:00:00` |
-| ~20k cells × 3k genes | + genie3/grnboost2 | `--cpus-per-task=16 --mem=64G --time=12:00:00` (the default) |
+| ~20k cells × 3k genes | + genie3/grnboost2 | `--cpus-per-task=8 --mem=64G --time=12:00:00` (the default; 8 CPUs is the QOS cap) |
 | >50k cells | + genie3/grnboost2 | pseudobulk first (`GROUPKEY=cell_type`) or `--subsample-cells` |
 
 Tree methods scale roughly with `n_genes × n_TFs`; restricting regulators with

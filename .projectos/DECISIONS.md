@@ -84,3 +84,20 @@ STATUS: PROPOSED | ACTIVE | SUPERSEDED by D-xxx | REVERTED
 ### D-015 | 2026-09-24 | claude | ACTIVE | Validate the engine on real data before trusting synthetic gains
 - decision: Headline claims about the automatic cleaning must come from real datasets with reference networks (CELLxGENE + CollecTRI halves) and be paired with the synthetic bench; synthetic-only gains are reported as upper bounds of the simulator's assumptions.
 - why: Interim v2: synthetic +42% vs real ~ties; rules alone hurt on real data
+
+### D-016 | 2026-09-25 | claude (for LM) | ACTIVE | Canonical repo = private GitHub elle13eth/grnbench; Drive folder frozen
+- decision: all code changes go through the GitHub repo (feature branches <initials>/<topic>, PRs, squash-merge, one review by another person). The Drive folder is read-only history; HANDOFF.md is replaced by PR descriptions + STATE.md.
+- why: three people and their agents edited one Drive folder; Drive disconnects killed runs; no history, no review.
+- alternatives: keep Drive + local git copies (diverges; no review); public repo now (not ready to publish).
+- note: pushed as a squashed, sanitized snapshot: the old history contained personal absolute paths and host names (no keys or tokens found).
+
+### D-017 | 2026-09-25 | claude (for LM) | ACTIVE | One experiment registry with pre-registration; paper claims only from reproduced confirmatory runs
+- decision: every run gets experiments/EXP-YYYYMMDD-<initials>-<n>.md committed before it starts. Confirmatory runs fix hypothesis, endpoint, unit = dataset, datasets, exclusions and the comparison family; tested with compare_units (paired, Holm). paper/CLAIMS.md maps claims to EXP IDs; a claim is usable only after a second person reproduced it. Tables/figures come from paper/make_figures.py. ATTEMPTS.md keeps non-run attempts only.
+- why: the goal is a publishable paper (team request 2026-09-25); D-008 (datasets as units) and the 0.6.0 retraction show what happens without declared families.
+- alternatives: ATTEMPTS.md for runs (one file, merge conflicts between three people, no pre-registration); a lab notebook outside git (not traceable to commits).
+
+### D-018 | 2026-09-25 | claude (for LM) | PROPOSED | Licence: keep MIT ("GRN-Bench contributors")
+- decision: keep the existing MIT LICENSE; confirm the copyright holder wording and the author list (CITATION.cff) before any public release.
+- why: MIT is OSI-approved and accepted by journal code policies; nothing in the repo conflicts with it. Redistributed data keep their own licences (CELLxGENE: CC BY 4.0).
+- alternatives: Apache-2.0 (patent grant), BSD-3. Needs team confirmation.
+

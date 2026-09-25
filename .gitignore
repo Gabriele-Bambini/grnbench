@@ -16,3 +16,21 @@ Thumbs.db
 graphify-out/
 OUT/
 .ruff_cache/
+
+# Data and run outputs never go in git (see AGENTS.md "Data")
+data/
+grnbench_data/
+grnbench-data/
+result_logs/
+logs/
+work/
+*.h5ad
+*.loom
+*.mtx
+*.mtx.gz
+*.feather
+cistarget/
+# Per-user HPC settings and local agent state
+.env.hpc
+.claude/settings.local.json
+HANDOFF.md

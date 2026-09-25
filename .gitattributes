@@ -1,0 +1,7 @@
+# Normalize line endings; shell scripts must stay LF or bash on the cluster breaks.
+* text=auto
+*.sh text eol=lf
+*.sbatch text eol=lf
+*.py text eol=lf
+*.png binary
+*.svg text

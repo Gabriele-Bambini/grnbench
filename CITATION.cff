@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use grnbench, please cite it as below."
+title: "grnbench: context-aware data cleaning and honest comparison for gene regulatory network inference"
+type: software
+license: MIT
+version: 0.8.0-dev
+authors:
+  # Order and full author list to be decided before release (see paper/CONTRIBUTIONS.md).
+  - given-names: Luca
+    family-names: Mascaro
+  - given-names: Gabriele
+    family-names: Bambini
+repository-code: "https://github.com/elle13eth/grnbench"
+keywords:
+  - gene regulatory networks
+  - single-cell RNA-seq
+  - preprocessing
+  - benchmarking

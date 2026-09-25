@@ -1,5 +1,8 @@
 # grnbench — a plugin-first GRN benchmark with bulletproof preprocessing
 
+> Team: read [`AGENTS.md`](AGENTS.md) before working. New member or new agent: [`docs/START_HERE_AGENT_PROMPT.md`](docs/START_HERE_AGENT_PROMPT.md).
+> Runs are registered in [`experiments/`](experiments/README.md); paper material lives in [`paper/`](paper/README.md).
+
 ## New in 0.8 (in development): interface + context-aware cleaning
 
 ```

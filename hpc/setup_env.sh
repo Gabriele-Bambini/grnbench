@@ -3,9 +3,8 @@
 #
 #   bash hpc/setup_env.sh [ENV_NAME] [REPO_DIR]
 #
-# Creates a conda env with the CPU-only stack grnbench needs and installs the
-# package with the `all` extra (arboreto/GENIE3/GRNBoost2, decoupler/DoRothEA,
-# pyarrow for parquet plugin exchange, matplotlib). Safe to re-run.
+# Creates a conda env (python 3.11) and installs the pinned stack from
+# requirements/lock-py311.txt plus grnbench itself (editable). Safe to re-run.
 set -euo pipefail
 
 ENV_NAME="${1:-grnbench}"
@@ -25,9 +24,10 @@ if ! conda env list | awk '{print $1}' | grep -qx "$ENV_NAME"; then
 fi
 conda activate "$ENV_NAME" || exit 1
 
-echo "=== installing grnbench[all] from $REPO_DIR ==="
+echo "=== installing the pinned environment + grnbench from $REPO_DIR ==="
 python -m pip install --upgrade pip
-python -m pip install -e "$REPO_DIR[all,dev]"
+python -m pip install -r "$REPO_DIR/requirements/lock-py311.txt"
+python -m pip install --no-deps -e "$REPO_DIR"
 
 echo "=== what can actually run here ==="
 grnbench version
@@ -43,5 +43,5 @@ else
 fi
 
 echo "=== self-test ==="
-python -m pytest "$REPO_DIR/tests" -q
+cd "$REPO_DIR" && python -m pytest -q -p no:cacheprovider tests/test_engine.py tests/test_context.py tests/test_simulate.py tests/test_ui.py
 echo SETUP_DONE

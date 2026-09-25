@@ -1,29 +1,25 @@
 # State - grnbench
-Updated: 2026-09-23 by claude (G0 audit-fixture regressions; A-008 closed)
+Updated: 2026-09-25 by claude for LM (repo moved to GitHub; registry and paper standard added)
 
 ## Focus
-Product (D-012/D-013): universal, context-aware GRN data-cleaning engine + interface + mounted models + comparison, to be published as a tool. Engine = stages/decision points -> all options implemented -> dataset profile -> literature KB with evidence levels -> rule selector -> tested candidate pipelines.
+Product (D-012/D-013): universal, context-aware GRN data-cleaning engine + interface + mounted models + comparison, to be published as a tool with a paper. Headline claims from real data only (D-015), through the experiment registry (D-017).
 
 ## Done recently
-- G0 (2026-09-23): every audit/2026-09-13 eval_findings case now mapped to a regression on its exact input; new tests/test_audit_fixtures.py (coverage guard + null_support and finite_random_ap_baseline gaps), 3/3 pass. MI fixtures already exact in tests/test_inference_reliability.py. A-008 degree null verified fixed and closed.
-- G0 suite (2026-09-23, this machine, Python 3.12, `PYTHONPATH=src`): 290 passed, 3 skipped, 1 env-dependent failure fixed - tests/test_infer.py::test_list_methods_reports_unavailability assumed java on PATH; now accepts either documented aracne3 prerequisite (java / ARACNE3_JAR).
-- 0.7.0 (2026-09-15): retracted the 0.6.0 edge-level significance layer (pseudo-replication, A-003); added `compare_units` / `grnbench compare` (paired t, Holm, Bonferroni intervals) and backtest `unit_comparison` + `regime_check`; added `eval.universe` fixed candidate universe (fixes A-009); gold thinning now fixed-k scenarios (fixes A-007); MI binning by first rank (fixes A-010); BEELINE TF selection pinned to official script SHA-256 (A-013).
-- Real run: 9 methods x 7 BEELINE datasets, datasets as units, Holm: **0/108 EPR, 0/108 AUPRC-ratio resolved**; point-estimate winner changes with the reference on 7/7 datasets. Archived `benchmarks/results/beeline-2026-09-17-9methods/`.
-- Score-level calibration: confirmation run (1000 reps) passes all iid scenarios; pseudoreplication fails as designed (A-011) -> G3 met at score level.
-- Preprocessing fixes in 0.7.0 (0-cell output refused, strategy warnings captured in manifest, explicit 0 thresholds honored, label/group imbalance split, NaN label stratum, duplicate barcodes).
+- 2026-09-25: canonical repo is now github.com/elle13eth/grnbench (private), squashed sanitized snapshot; Drive folder frozen (D-016). Experiment registry `experiments/`, `paper/` standard, `docs/HPC.md`, `hpc/hpc.sh`, pinned `requirements/lock-py311.txt`, `experiments/datasets.tsv`.
+- 2026-09-25 (EXP-20260925-LM-1, exploratory): motif prior (cisTarget) lifts every model on 12 real CELLxGENE datasets; pearson_motif vs pearson +0.23 AUPRC ratio [0.16, 0.30], p_Holm 1e-4; regdiffusion_motif best (1.65); GRNBoost2 at random on EPR; auto vs baseline cleaning still ties. `docs/models_that_work.md`.
+- 2026-09-24: engine mass tests v1 and v2-partial (EXP-20260924-PRE-1/2): synthetic auto >> baseline, real ~ties, rules alone worse on real.
+- 0.7.0 and earlier: see CHANGELOG.md and EXP-20260917-PRE-1 (BEELINE: 0/108 comparisons resolved).
 
 ## In progress
-- MASS TEST v2 running (2026-09-24 ~11:48, from frozen local code snapshot ~/grnbench_bench/code; resumable; results in session scratchpad bench_local2 (97 synthetic, 62 done at 12:25) and bench_real1 (40 real, 15 done)). Reports: `python benchmarks/engine_bench.py report --out DIR`, `python benchmarks/real_bench.py report --out DIR`.
-- Interim findings: synthetic auto vs baseline 86% wins, +42%, p=5.9e-07 (37 datasets); per model Pearson/Spearman +82/+98%, CLR ties. REAL (9 scored): recovery of CollecTRI evaluation half barely above random (AUPRC ratio ~1.2-1.3); auto ~= baseline (mostly ties, small +), RULES ALONE WORSE than baseline (Pearson 1.12 vs 1.22) - per-cell-type split hurts generic-regulon recovery on real data; screening protects. Synthetic per-type advantage partly built into the simulator.
-- Code fixed after the snapshot (not yet in the running v2): curated species label (context.species_label), high-mito tissue gate relaxation (mito_warn/mito_fail + CLI), cell-type column weights, safe folder names, real_bench report/case-insensitive detection. => after v2 completes, re-snapshot code and rerun REAL tasks for a consistent final report.
-- HPC unreachable: slogin.hpc.unibocconi.it -> 10.35.5.3 times out (VPN needed?) + Windows ssh-agent disabled + key passphrase. User action required.
-- Real data: ~/grnbench_data (INDEX.md, 1.9 GB, not on Drive).
+- Nothing running. The v2 runs on the collaborator PC were abandoned (partial results archived).
+- Known defect: scikit-image missing from the lock, so scrublet falls back to the heuristic doublet caller (test_drop_doublets_uses_scrublet... fails; CI deselects it). Likely affected EXP-20260925-LM-1.
 
 ## Next steps (engine validation)
-1. Finish v2, rerun real with final code, write consolidated report (synthetic + real) into benchmarks/results/engine-2026-09-24-v2/.
-2. Recalibrate KB rule context_scope with bench evidence: pooled for generic regulons, per_cell_type when the goal is a cell-type-specific network (add a 'goal' input); mark evidence 'heuristic -> bench-validated'.
-3. Simulator realism: partially cell-type-specific networks, so per-type vs pooled trade-off is not built in.
-4. HPC scale-up (~490 synthetic + all real) once reachable.
+1. Add scikit-image to pyproject + lock; confirm scrublet runs; check the 2026-09-25 manifests for the fallback.
+2. First confirmatory experiment on HPC (docs/HPC.md): synthetic ~490 + real datasets not used before, pre-registered; one job per run (QOS: 1 running job, 8 CPUs).
+3. Recalibrate the `context_scope` rule in selector.py with bench evidence (pooled for generic regulons; per_cell_type when the goal is a cell-type network; add a "goal" input); regenerate the KB doc.
+4. Simulator realism: partially cell-type-specific networks, then rerun synthetic.
+5. GUI: per-model best pipeline from screening, knee cell calling, mito-gate decision, motif models.
 
 ## Next steps (improved plan, proposed to user 2026-09-23)
 0. (NEXT) Define "best": measurable objective + validation bench (known-truth data with injected corruptions: doublets, ambient, damaged cells, batch, dropout) - the selector must beat defaults; this is also the paper's main figure.
@@ -38,13 +34,12 @@ Product (D-012/D-013): universal, context-aware GRN data-cleaning engine + inter
 9. Publication: positioning vs BEAR-GRN / geneRNIB / BEELINE, docs, pip/conda/Docker, "why this pipeline" report.
 
 ## Blockers / open questions
-- User to confirm the improved plan order (0 -> 9) and the venue (Bioinformatics App Note vs JOSS).
+- Publication route (JOSS first vs Bioinformatics App Note vs a Nature-family journal) - team decision.
+- Licence and copyright holder (D-018, proposed: keep MIT).
+- Third team member's GitHub username (to invite).
 
 ## Notes for the next agent
-- MAP.md predates the engine/GUI modules (context, kb, profile, selector, autoprep, screen, demo, ui/): run an incremental remap (pos-mapper, haiku) before relying on it.
-- README top still carries the 0.7.0 "ranking is not real" framing below the new 0.8 section; full README rewrite for the product direction needs user approval.
-- This machine (collab-pc): grnbench not installed; run tests with `PYTHONPATH=src` (python 3.12 has numpy/pandas/scipy/anndata/scanpy). Suite is slow on Google Drive.
-- Read `.projectos/MAP.md` for code layout. DIRECTION: product/tool (D-012, D-013). Do NOT steer toward the audit's metascience plan (D-011 rejected; user was angry about it).
-- Never quote the 0.6.0 numbers (80% resolved, 47% contradictions): retracted.
-- Unresolved != equivalent: the finding is that the design cannot rank, not that methods are equal.
-- ProjectOS kit is vendored in `.projectos/kit/` (`python .projectos/kit/install.py` on a new machine).
+- Rules: AGENTS.md. Runs: experiments/. Paper: paper/. HPC: docs/HPC.md. Onboarding: docs/START_HERE_AGENT_PROMPT.md.
+- MAP.md predates the engine/GUI modules (context, kb, profile, selector, autoprep, screen, demo, ui/): remap before relying on it.
+- README top still carries the 0.7.0 "ranking is not real" framing below the 0.8 section; a README rewrite for the product direction needs team approval.
+- Never quote the 0.6.0 numbers (80% resolved, 47% contradictions): retracted. Unresolved != equivalent.
