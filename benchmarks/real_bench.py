@@ -113,10 +113,26 @@ def _split_combined(method: str) -> tuple[str, str | None]:
     return method, None
 
 
-def score_models(records_by_cand, plans, arms: dict, methods: list[str], tfs, eval_pairs) -> dict:
+ARTIFACT_TOP_EDGES = 20000     # per model/arm/context edge dump size when --keep-artifacts
+
+
+def _write_edges_artifact(edges: pd.DataFrame, path: Path) -> None:
+    top = edges.sort_values("weight", ascending=False, kind="stable").head(ARTIFACT_TOP_EDGES)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    top[["source", "target", "weight"]].to_csv(path, sep="\t", index=False, compression="gzip")
+
+
+def score_models(records_by_cand, plans, arms: dict, methods: list[str], tfs, eval_pairs,
+                 artifacts_dir: Path | None = None) -> dict:
     """AUPRC ratio + EPR of every method on the arms' candidates, mean over contexts.
 
     Returns ``{f"m_{method}_{arm}_{metric}": value}`` plus per-method seconds.
+
+    ``artifacts_dir``, when given, writes per arm/context the top-scored edges
+    of every model (``<arm>/ctx<i>/<model>.tsv.gz``) and the processed AnnData
+    actually scored (``<arm>/ctx<i>/processed.h5ad`` + ``context.json``). This
+    disables the baseline==auto dedup so every arm gets its own files; it does
+    not change the returned scores.
     """
     import anndata as ad
     from engine_bench import MAX_SCORE_CELLS
@@ -130,13 +146,13 @@ def score_models(records_by_cand, plans, arms: dict, methods: list[str], tfs, ev
     for arm, cand in arms.items():
         if cand is None or cand not in records_by_cand:
             continue
-        if cand in done:                       # auto == baseline: same numbers, no rerun
+        if cand in done and artifacts_dir is None:   # auto == baseline: same numbers, no rerun
             for k, v in done[cand].items():
                 out[k.replace("__ARM__", arm)] = v
             continue
         assume = plans[cand].value("strategy") != "raw_counts"
         vals = {m: {"auprc_ratio": [], "epr": [], "seconds": 0.0} for m in methods}
-        for rec in records_by_cand[cand]:
+        for i, rec in enumerate(records_by_cand[cand]):
             if not rec.get("processed"):
                 continue
             adata = ad.read_h5ad(rec["processed"])
@@ -148,6 +164,14 @@ def score_models(records_by_cand, plans, arms: dict, methods: list[str], tfs, ev
             universe = pd.DataFrame([(s_, g) for s_ in sources for g in genes if s_ != g],
                                     columns=["source", "target"])
             expr, _ = prepare_expression(adata, assume_normalized=assume)
+            ctx_dir = None
+            if artifacts_dir is not None:
+                ctx_dir = Path(artifacts_dir) / arm / f"ctx{i}"
+                ctx_dir.mkdir(parents=True, exist_ok=True)
+                adata.write_h5ad(ctx_dir / "processed.h5ad", compression="gzip")
+                (ctx_dir / "context.json").write_text(json.dumps(
+                    {"context": rec.get("context"), "n_obs": int(adata.n_obs),
+                     "n_vars": int(adata.n_vars)}, indent=1), encoding="utf-8")
             cache: dict[str, pd.DataFrame] = {}
             for m in methods:
                 t0 = time.time()
@@ -160,6 +184,8 @@ def score_models(records_by_cand, plans, arms: dict, methods: list[str], tfs, ev
                         edges = motif_rank_product(edges, expr)
                     elif combiner == "_cistarget":
                         edges = cistarget_rerank(edges, expr)
+                    if ctx_dir is not None:
+                        _write_edges_artifact(edges, ctx_dir / f"{m}.tsv.gz")
                     r = evaluate_ranking(edges, gi, with_curve=False, universe=universe)
                     vals[m]["auprc_ratio"].append(float(r.get("auprc_ratio", np.nan)))
                     vals[m]["epr"].append(float(r.get("epr", np.nan)))
@@ -181,7 +207,7 @@ def score_models(records_by_cand, plans, arms: dict, methods: list[str], tfs, ev
 
 
 def run_real_task(task: dict, refs: Path | None, workroot: Path, keep: bool = False,
-                  models: list[str] | None = None) -> dict:
+                  models: list[str] | None = None, artifacts_dir: Path | None = None) -> dict:
     from grnbench.autoprep import diagnose, execute_plan, plan_preprocessing
     from grnbench.screen import rank_candidates, screen_candidates
 
@@ -248,10 +274,28 @@ def run_real_task(task: dict, refs: Path | None, workroot: Path, keep: bool = Fa
                 vals = [v.get(f"eval_{m}", np.nan) for v in scores.values()]
                 vals = [v for v in vals if np.isfinite(v)]
                 row[f"permodel_{m}_oracle"] = max(vals) if vals else np.nan
+            task_artifacts = Path(artifacts_dir) / task["id"] if artifacts_dir is not None else None
+            if task_artifacts is not None:
+                task_artifacts.mkdir(parents=True, exist_ok=True)
+                for half, pairs_ in (("selection", res["reference"]["selection"]),
+                                     ("evaluation", res["reference"]["evaluation"])):
+                    pd.DataFrame(sorted(pairs_), columns=["source", "target"]).to_csv(
+                        task_artifacts / f"reference_{half}.tsv", sep="\t", index=False)
+                decisions = {"rules_choices": plan.choices, "candidates": dict(arms), "chosen_plans": {}}
+                for arm, cand in arms.items():
+                    cand_plan = res["plans"].get(cand)
+                    if cand_plan is None:
+                        continue
+                    decisions["chosen_plans"][arm] = {
+                        "candidate": cand, "selection": cand_plan.selection,
+                        "choices": cand_plan.choices, "warnings": cand_plan.warnings}
+                (task_artifacts / "decisions.json").write_text(
+                    json.dumps(decisions, indent=1, default=str), encoding="utf-8")
             if models:
                 row.update(score_models(res["records"], res["plans"],
                                         {"baseline": "baseline", "auto": res["best"]},
-                                        models, tfs, res["reference"]["evaluation"]))
+                                        models, tfs, res["reference"]["evaluation"],
+                                        artifacts_dir=task_artifacts))
         else:
             recs = execute_plan(plan, task["path"], work / "clean", tf_list=tfs)
             row["contexts_ok"] = sum(1 for r in recs if r["processed"])
@@ -268,11 +312,12 @@ def run_real_task(task: dict, refs: Path | None, workroot: Path, keep: bool = Fa
 
 
 def _run_and_save(args):
-    task, refs, out, workroot, models = args
+    task, refs, out, workroot, models, keep_artifacts = args
     path = Path(out) / "rows" / f"{task['id']}.json"
     if path.exists():
         return task["id"], "skipped"
-    row = run_real_task(task, refs, workroot, models=models)
+    artifacts_dir = Path(out) / "artifacts" if keep_artifacts else None
+    row = run_real_task(task, refs, workroot, models=models, artifacts_dir=artifacts_dir)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(row, default=float), encoding="utf-8")
     return task["id"], row.get("error") or f"{row['seconds']}s"
@@ -408,6 +453,20 @@ def report(out: Path) -> str:
     return text
 
 
+def final_report(out: Path, tasks_json: str | None = None) -> None:
+    """Last pipeline step: figures (grnbench viz) and the LaTeX report (grnbench report), as the
+    thesis pipeline emitted its final report. A failure here is logged, never fatal."""
+    try:
+        from grnbench.texreport import build_report
+        from grnbench.viz import build_run
+
+        print(build_run(out, tasks_json=tasks_json) / "index.md")
+        print(build_report(str(out)))
+    except Exception as exc:  # noqa: BLE001 - the numbers above are already written
+        print(f"final report failed ({type(exc).__name__}: {exc}); REPORT_REAL.md is complete",
+              file=sys.stderr)
+
+
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -424,11 +483,18 @@ def main(argv=None) -> int:
     b.add_argument("--workroot", default=None)
     b.add_argument("--models", default=None,
                    help="comma-separated inference methods scored on the baseline and auto pipelines")
+    b.add_argument("--keep-artifacts", action="store_true",
+                   help="write edges, processed h5ad and decisions per task under OUT/artifacts/ "
+                        "(default off; scores are unaffected either way)")
     c = sub.add_parser("report")
     c.add_argument("--out", required=True)
+    c.add_argument("--tasks-for-viz", default=None, help="tasks.json with raw data paths (QC/embedding figures)")
+    c.add_argument("--no-final-report", action="store_true", help="REPORT_REAL.md only (no figures, no LaTeX)")
     args = p.parse_args(argv)
     if args.cmd == "report":
         print(report(Path(args.out)))
+        if not args.no_final_report:
+            final_report(Path(args.out), args.tasks_for_viz)
         return 0
     if args.cmd == "plan":
         tasks = make_tasks(Path(args.data_root))
@@ -443,7 +509,7 @@ def main(argv=None) -> int:
     workroot = Path(args.workroot or tempfile.mkdtemp(prefix="gb_real_"))
     os.environ.setdefault("OMP_NUM_THREADS", "1")
     models = [m.strip() for m in args.models.split(",") if m.strip()] if args.models else None
-    jobs = [(t, args.refs, args.out, workroot, models) for t in tasks]
+    jobs = [(t, args.refs, args.out, workroot, models, args.keep_artifacts) for t in tasks]
     if args.jobs > 1:
         from multiprocessing import get_context
         with get_context("spawn").Pool(args.jobs, maxtasksperchild=1) as pool:

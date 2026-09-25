@@ -14,6 +14,18 @@
   username in the repo) replaces `hpc/sync_to_cluster.sh`; `docs/HPC.md`. `grnbench.sbatch` and
   `beeline_backtest.sbatch` now ask for 8 CPUs (the `stud` QOS cap), not 16.
 - `.gitattributes` keeps shell scripts LF.
+- Day-one team setup: `grnbench board` (runs in flight = issues labelled `running`, open PRs, STATE
+  next steps); session start/end routines in AGENTS.md; short MAP.md and STATE.md.
+- `grnbench viz` (`grnbench.viz`, one style file, Okabe-Ito palette): QC and embeddings before/after,
+  decisions, score distributions, paired lifts, PR curves, top-k network, TF recovery and error
+  analysis, motif lift by TF, calibration, stability, attribution helpers for learned models.
+  `real_bench.py run --keep-artifacts` keeps edges, processed data and decisions for it.
+- `grnbench report` (`grnbench.texreport`): LaTeX report per experiment and `--paper` draft with a
+  bibliography from the KB; numbers only from result files (templates are digit-free, tested);
+  `real_bench.py report` now also writes `viz/` and `latex/`. Structure follows the thesis
+  pipeline's end-of-run report.
+- Shared HPC skill `.claude/skills/grnbench-hpc/SKILL.md` (pointer in `.agents/skills/`), Antigravity
+  rule moved to `.agents/rules/`; onboarding guide extended (from zero, how to work, look inside).
 
 ### Added
 - `grnbench ui`: Streamlit interface (data -> profile -> pipeline -> compare pipelines ->

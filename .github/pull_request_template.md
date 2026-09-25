@@ -18,5 +18,7 @@ python -m pytest -q -p no:cacheprovider
 
 - [ ] CHANGELOG.md `## Unreleased` updated
 - [ ] no secrets, HPC usernames, emails, personal paths or data in the diff
-- [ ] `.projectos/STATE.md` updated if focus or next steps changed
+- [ ] `.projectos/STATE.md` (where things left off) and `.projectos/MAP.md` (where things are) updated if changed
+- [ ] board issues updated or closed (label `done` / `failed`) for runs this PR records
+- [ ] experiment records link their `viz/` figures and `latex/` report
 - [ ] `paper/` touched? claims reproduced by a second person, `python paper/make_figures.py` leaves no diff

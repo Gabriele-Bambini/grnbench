@@ -25,13 +25,26 @@ fix the other file in the same PR.
 
 Initials are used in experiment IDs and branch names.
 
-## 3. Start of every session (in this order)
+## 3. Session routine (every agent, every machine)
 
-1. This file.
-2. `.projectos/STATE.md` (current focus) and `.projectos/PURPOSE.md`.
-3. `.projectos/DECISIONS.md`: every ACTIVE decision. Do not act against one; propose a new D-xxx.
-4. `experiments/README.md`: the registry index. Check whether your idea already ran or failed.
-5. The GitHub Issue you are working on (`gh issue view N`). No issue: create one first (section 6).
+Start:
+1. `git pull` on `main`, then read this file.
+2. `python -m grnbench.board` (or `grnbench board`): runs in flight (issues labelled `running`),
+   open PRs, and the in-progress / next-steps / blockers of `.projectos/STATE.md`.
+   **Never relaunch a run that has an open `running` issue**: comment on the issue instead.
+3. `.projectos/MAP.md` (where things are), `.projectos/PURPOSE.md`, the ACTIVE entries of
+   `.projectos/DECISIONS.md` (do not act against one; propose a new D-xxx).
+4. `experiments/README.md` and the records relevant to your task: did it already run or fail?
+5. The GitHub issue you work on (`gh issue view N`). No issue: create one first (section 6).
+
+End:
+1. Update `.projectos/STATE.md` (and `MAP.md` if you added, moved or removed things) in your PR.
+2. Update or close your board issues (section 6).
+3. Write the handoff in the PR description (section 12).
+
+Team memory lives only in the repo and on GitHub (MAP, STATE, DECISIONS, ATTEMPTS, `experiments/`,
+issues, PRs). Your own tool's memory (Claude memory, Codex/Antigravity notes) stays personal:
+never rely on it for team facts, and never copy personal paths or accounts from it into the repo.
 
 ## 4. Environment and tests (exact commands)
 
@@ -78,8 +91,20 @@ models need `GRNBENCH_CISTARGET_DIR` pointing at the cisTarget files (`experimen
   `experiment`, `engine`, `hpc`, `ui`, `bug`, `decision-needed`.
 - **Weekly status**: every Monday each person comments 3 lines on the pinned issue
   "Weekly status" (done / next / blocked). Nothing else to maintain.
-- `.projectos/STATE.md` is the agents' view of the current focus: update it in the PR that
-  changes the focus or the next steps.
+- `.projectos/STATE.md` = where things left off; `.projectos/MAP.md` = where things are. Both stay
+  short and are updated in every PR that changes them (PR template checkbox).
+- **Live board (what runs right now).** Never a shared file (concurrent edits conflict). Each launched
+  run (local or HPC) gets one issue labelled `running`:
+  - title `<EXP-ID> <short name>`; assignee = the person whose agent launched it;
+  - body: who, machine or HPC, job ids, started at, expected finish, where outputs land, how to
+    check (`bash hpc/hpc.sh status <id>`);
+  - the agent comments when it checks the job (state, ETA), and when results are fetched and
+    recorded it closes the issue with label `done` or `failed` and a one-line result.
+  ```bash
+  gh issue create --label running --assignee @me --title "EXP-... short name" --body "..."
+  gh issue comment N --body "checked: RUNNING 3h10m, 9/20 rows"
+  gh issue edit N --remove-label running --add-label done && gh issue close N --comment "result: ..."
+  ```
 
 ## 7. Experiments (full rules: `experiments/README.md`)
 
@@ -92,6 +117,17 @@ models need `GRNBENCH_CISTARGET_DIR` pointing at the cisTarget files (`experimen
   the path in the record. **Never write into another person's EXP folder**; never reuse an ID.
 - Numbers come from scripts only. Never hand-edit a result or a table.
 - Negative and null results are recorded with the same care as positive ones.
+- **Look inside, not only at scores** (from day one): every record links its exploration and
+  explainability figures. Run real_bench with `--keep-artifacts`; `real_bench.py report` then
+  writes `viz/` (`grnbench viz`) and `latex/` (`grnbench report`). Minimum per run: QC before/after,
+  embeddings by batch and cell type before/after, the pipeline decisions and why, per-model score
+  distributions and paired lifts, PR curves vs random, top-k network vs reference, TF-level
+  recovered/missed edges (error analysis), which TFs drive a motif lift, calibration of edge scores,
+  stability of top edges across contexts/seeds; for learned models, attributions
+  (`viz.gradient_x_input`, `viz.integrated_gradients`). What could not be produced is listed in
+  `viz/index.md` "Not produced": say why in the record.
+- Reports are generated, never typed: `grnbench report <run|EXP>` writes LaTeX with every number
+  from result files (a test forbids digits in templates); no TeX engine -> `.tex` + `report_fallback.md`.
 - Past attempts that are not runs (debugging hypotheses, libraries tried, reverted refactors) go
   to `.projectos/ATTEMPTS.md`. Runs never go there.
 
@@ -111,7 +147,10 @@ models need `GRNBENCH_CISTARGET_DIR` pointing at the cisTarget files (`experimen
 - Provenance lives in `experiments/datasets.tsv` (`python benchmarks/data_manifest.py DATA_ROOT`).
 - Run code from a local clone, never from a Drive folder.
 
-## 10. HPC (full guide: `docs/HPC.md`)
+## 10. HPC (full guide: `docs/HPC.md`; agent procedure: `.claude/skills/grnbench-hpc/SKILL.md`)
+
+Codex and Antigravity: read that skill file before any cluster action (Antigravity also finds it
+through `.agents/skills/grnbench-hpc/`). Claude Code loads it as the `grnbench-hpc` skill.
 
 - Everyone uses their **own** Bocconi account through their own `~/.ssh/config` alias and an
   untracked `.env.hpc`. Scripts take the alias from `.env.hpc`; no username is ever committed.
@@ -131,8 +170,8 @@ Luca; do not just delete it in a new commit (it stays in history).
 
 ## 12. Handoff
 
-The PR description is the handoff: what was done, what is running where (job IDs, EXP IDs),
-what is next, what the next person must not do. Also update `.projectos/STATE.md`.
+The PR description is the handoff: what was done, what is running where (board issue, job IDs,
+EXP IDs), what is next, what the next person must not do. Also update `.projectos/STATE.md`.
 The old Drive `HANDOFF.md` habit is retired (`docs/history/` keeps the last one).
 
 ## 13. Known traps

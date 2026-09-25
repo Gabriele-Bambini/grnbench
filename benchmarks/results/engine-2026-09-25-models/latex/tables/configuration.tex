@@ -1,0 +1,17 @@
+\begin{table}[H]\centering\small
+\caption{Configuration of the run, from the experiment record and the run folder.}
+\begin{tabular}{p{0.3\linewidth}p{0.62\linewidth}}\toprule
+experiment & EXP-20260925-LM-1 \\
+type & exploratory. The comparison family was declared in code (real\_bench.DECLARED\_PAIRS) before the run, but there was no committed registration record. Needs a confirmatory rerun before it feeds a headline claim. \\
+owner & LM (agent run on Luca's laptop) \\
+datasets (rows) & 12 \\
+models & clr, grnboost2, grnboost2\_cistarget, grnboost2\_motif, motif\_prior, pearson\_motif, pearson\_signed, regdiffusion, regdiffusion\_motif, spearman\_signed \\
+arms & auto, baseline \\
+code & commit 942cdea of Luca's offline history (its tree is part of the first commit of this repo); CODE\_COMMIT in the results folder \\
+code commit (run folder) & 942cdea61936cbc96bac0a83c344e5cd03f94bcd \\
+environment & Python 3.11.9 (Windows), requirements/lock-py311.txt + regdiffusion 0.2.3, torch 2.14.0 CPU \\
+machine & local laptop, 3 workers, 03:28-05:18, 13 datasets, 0 errors \\
+seeds & reference split seed 0; at most 3,000 cells per context \\
+run folder & benchmarks/results/engine-2026-09-25-models/test12 \\
+generated & 2026-09-25 18:40 \\
+\bottomrule\end{tabular}\end{table}

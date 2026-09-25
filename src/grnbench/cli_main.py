@@ -22,6 +22,9 @@ Commands:
   eval         evaluation only                         (grnbench-eval)
   compare      paired scores across declared independent experimental units
   calibrate    run a configured score-level calibration pilot
+  viz          build figures + an index.md from a real_bench.py run directory
+  report       LaTeX report of one experiment (run dir or EXP id), or --paper for the draft
+  board        what is running, open PRs, where things left off (run it first)
   methods      list inference methods and availability
   strategies   list preprocessing strategies
   kb           preprocessing knowledge base: options, availability, docs (--write-docs PATH)
@@ -118,6 +121,9 @@ def main(argv: list[str] | None = None) -> int:
         "eval": "grnbench.cli_eval",
         "compare": "grnbench.cli_compare",
         "calibrate": "grnbench.cli_calibrate",
+        "viz": "grnbench.cli_viz",
+        "report": "grnbench.cli_report",
+        "board": "grnbench.board",
     }
     if cmd not in dispatch:
         print(f"grnbench: unknown command '{cmd}'\n", file=sys.stderr)
