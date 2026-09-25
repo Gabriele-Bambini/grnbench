@@ -53,6 +53,9 @@ Known floor (2026-09-25, Windows, Python 3.11.9): `357 passed, 1 failed`. The fa
 scrublet needs scikit-image, which the lock lacks, so doublet calling falls back to `heuristic`
 (issue #2; CI deselects this one test until the lock is fixed). Compare failing test IDs before and
 after your change, not counts. Not installed editable? Prefix commands with `PYTHONPATH=src`.
+CI (`.github/workflows/tests.yml`) is disabled: GitHub refuses to start Actions jobs on this
+account for billing reasons, and we do not pay. The test output pasted in each PR is the check;
+re-enable with `gh workflow enable tests` if that changes.
 Optional models: RegDiffusion needs torch (install line at the top of the lock file); the motif
 models need `GRNBENCH_CISTARGET_DIR` pointing at the cisTarget files (`experiments/datasets.tsv`).
 
