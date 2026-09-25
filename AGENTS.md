@@ -51,7 +51,7 @@ python -m pytest -q -p no:cacheprovider
 Known floor (2026-09-25, Windows, Python 3.11.9): `357 passed, 1 failed`. The failure is
 `tests/test_prep_gaps.py::test_drop_doublets_uses_scrublet_and_logs_what_it_removed`: scanpy's
 scrublet needs scikit-image, which the lock lacks, so doublet calling falls back to `heuristic`
-(open issue; CI deselects this one test until the lock is fixed). Compare failing test IDs before and
+(issue #2; CI deselects this one test until the lock is fixed). Compare failing test IDs before and
 after your change, not counts. Not installed editable? Prefix commands with `PYTHONPATH=src`.
 Optional models: RegDiffusion needs torch (install line at the top of the lock file); the motif
 models need `GRNBENCH_CISTARGET_DIR` pointing at the cisTarget files (`experiments/datasets.tsv`).
@@ -62,7 +62,8 @@ models need `GRNBENCH_CISTARGET_DIR` pointing at the cisTarget files (`experimen
 - Small commits. **No force-push**, ever, on any shared branch.
 - Every PR: fill `.github/pull_request_template.md` (what, why, experiment IDs, tests with real
   output, risks, handoff). Add a line under `## Unreleased` in `CHANGELOG.md`.
-- Review: one approval from a person other than the author. Changes to `paper/`, to
+- Review: one approval from a person other than the author (a team rule: the free plan has no
+  branch protection for private repos, so GitHub does not enforce it; only squash-merge is enabled). Changes to `paper/`, to
   `src/grnbench/eval/` or to statistical code need a reviewer from the "reviews" column above.
 - Merge: **squash-merge** (one commit per PR on `main`; the PR text is the record). Delete the branch.
 - A change of direction, scope, metric, data split or library = a decision `D-xxx` in
