@@ -1,0 +1,82 @@
+{
+  "seed": 13092027,
+  "replicates": 1000,
+  "alpha": 0.05,
+  "margin": 0.1,
+  "tolerance": 0.025,
+  "mc_confidence": 0.95,
+  "scenarios": [
+    {
+      "name": "iid_global_null_n8",
+      "n_units": 8,
+      "means": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "iid_global_null_n32",
+      "n_units": 32,
+      "means": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "iid_partial_null_n16",
+      "n_units": 16,
+      "means": [
+        0,
+        0,
+        0.6,
+        0.6
+      ]
+    },
+    {
+      "name": "iid_partial_null_n32",
+      "n_units": 32,
+      "means": [
+        0,
+        0,
+        0.6,
+        0.6
+      ]
+    },
+    {
+      "name": "iid_margin_boundary_n32",
+      "n_units": 32,
+      "means": [
+        0,
+        0,
+        0.1,
+        0.1
+      ]
+    },
+    {
+      "name": "pseudoreplication_null_8x4",
+      "n_units": 32,
+      "means": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "repeat_units": 4
+    },
+    {
+      "name": "pseudoreplication_partial_8x4",
+      "n_units": 32,
+      "means": [
+        0,
+        0,
+        0.6,
+        0.6
+      ],
+      "repeat_units": 4
+    }
+  ]
+}

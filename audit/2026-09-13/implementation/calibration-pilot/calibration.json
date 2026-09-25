@@ -1,0 +1,296 @@
+{
+  "scope": "score_level_gaussian_pilot",
+  "biological_validation": false,
+  "novelty_established": false,
+  "procedure": "paired_t_holm",
+  "config_sha256": "2aef174bf21dab0e085256020e7a631aae06e59b471be58ef2cce9703e7d4202",
+  "scenarios": [
+    {
+      "name": "iid_global_null_n8",
+      "n_units": 8,
+      "means": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "repeat_units": 1,
+      "shared_noise": 0.5,
+      "independent_noise": 1.0,
+      "n_independent_units": 8,
+      "independence_assumption_holds": true,
+      "truth": "known Gaussian score means, not estimated GRN accuracy",
+      "gate": {
+        "status": "pass",
+        "familywise_false_superiority": {
+          "events": 3,
+          "trials": 200,
+          "rate": 0.015,
+          "lower": 0.004100613335069911,
+          "upper": 0.03830970849856934,
+          "one_sided_confidence": 0.95
+        },
+        "simultaneous_coverage": {
+          "events": 192,
+          "trials": 200,
+          "rate": 0.96,
+          "lower": 0.9289858313839803,
+          "upper": 0.9799432404104906,
+          "one_sided_confidence": 0.95
+        },
+        "error_ceiling": 0.07500000000000001,
+        "coverage_floor": 0.9249999999999999,
+        "interpretation": "scenario-specific Monte Carlo gate; not a global validation certificate"
+      },
+      "mean_power": null,
+      "mean_unresolved_fraction": 0.9975
+    },
+    {
+      "name": "iid_global_null_n32",
+      "n_units": 32,
+      "means": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "repeat_units": 1,
+      "shared_noise": 0.5,
+      "independent_noise": 1.0,
+      "n_independent_units": 32,
+      "independence_assumption_holds": true,
+      "truth": "known Gaussian score means, not estimated GRN accuracy",
+      "gate": {
+        "status": "pass",
+        "familywise_false_superiority": {
+          "events": 0,
+          "trials": 200,
+          "rate": 0.0,
+          "lower": 0.0,
+          "upper": 0.014867039231272056,
+          "one_sided_confidence": 0.95
+        },
+        "simultaneous_coverage": {
+          "events": 196,
+          "trials": 200,
+          "rate": 0.98,
+          "lower": 0.9548195850052813,
+          "upper": 0.9931402808989087,
+          "one_sided_confidence": 0.95
+        },
+        "error_ceiling": 0.07500000000000001,
+        "coverage_floor": 0.9249999999999999,
+        "interpretation": "scenario-specific Monte Carlo gate; not a global validation certificate"
+      },
+      "mean_power": null,
+      "mean_unresolved_fraction": 1.0
+    },
+    {
+      "name": "iid_partial_null_n16",
+      "n_units": 16,
+      "means": [
+        0,
+        0,
+        0.6,
+        0.6
+      ],
+      "repeat_units": 1,
+      "shared_noise": 0.5,
+      "independent_noise": 1.0,
+      "n_independent_units": 16,
+      "independence_assumption_holds": true,
+      "truth": "known Gaussian score means, not estimated GRN accuracy",
+      "gate": {
+        "status": "pass",
+        "familywise_false_superiority": {
+          "events": 0,
+          "trials": 200,
+          "rate": 0.0,
+          "lower": 0.0,
+          "upper": 0.014867039231272056,
+          "one_sided_confidence": 0.95
+        },
+        "simultaneous_coverage": {
+          "events": 193,
+          "trials": 200,
+          "rate": 0.965,
+          "lower": 0.9352674778631515,
+          "upper": 0.9834603649821049,
+          "one_sided_confidence": 0.95
+        },
+        "error_ceiling": 0.07500000000000001,
+        "coverage_floor": 0.9249999999999999,
+        "interpretation": "scenario-specific Monte Carlo gate; not a global validation certificate"
+      },
+      "mean_power": 0.07875,
+      "mean_unresolved_fraction": 0.9475
+    },
+    {
+      "name": "iid_partial_null_n32",
+      "n_units": 32,
+      "means": [
+        0,
+        0,
+        0.6,
+        0.6
+      ],
+      "repeat_units": 1,
+      "shared_noise": 0.5,
+      "independent_noise": 1.0,
+      "n_independent_units": 32,
+      "independence_assumption_holds": true,
+      "truth": "known Gaussian score means, not estimated GRN accuracy",
+      "gate": {
+        "status": "inconclusive",
+        "familywise_false_superiority": {
+          "events": 2,
+          "trials": 200,
+          "rate": 0.01,
+          "lower": 0.0017796814478925691,
+          "upper": 0.031142599414083726,
+          "one_sided_confidence": 0.95
+        },
+        "simultaneous_coverage": {
+          "events": 189,
+          "trials": 200,
+          "rate": 0.945,
+          "lower": 0.9106038618926544,
+          "upper": 0.9688531412103455,
+          "one_sided_confidence": 0.95
+        },
+        "error_ceiling": 0.07500000000000001,
+        "coverage_floor": 0.9249999999999999,
+        "interpretation": "scenario-specific Monte Carlo gate; not a global validation certificate"
+      },
+      "mean_power": 0.22625,
+      "mean_unresolved_fraction": 0.8475
+    },
+    {
+      "name": "iid_margin_boundary_n32",
+      "n_units": 32,
+      "means": [
+        0,
+        0,
+        0.1,
+        0.1
+      ],
+      "repeat_units": 1,
+      "shared_noise": 0.5,
+      "independent_noise": 1.0,
+      "n_independent_units": 32,
+      "independence_assumption_holds": true,
+      "truth": "known Gaussian score means, not estimated GRN accuracy",
+      "gate": {
+        "status": "inconclusive",
+        "familywise_false_superiority": {
+          "events": 7,
+          "trials": 200,
+          "rate": 0.035,
+          "lower": 0.016539635017895092,
+          "upper": 0.06473252213684852,
+          "one_sided_confidence": 0.95
+        },
+        "simultaneous_coverage": {
+          "events": 191,
+          "trials": 200,
+          "rate": 0.955,
+          "lower": 0.9227890249826619,
+          "upper": 0.9763264238434894,
+          "one_sided_confidence": 0.95
+        },
+        "error_ceiling": 0.07500000000000001,
+        "coverage_floor": 0.9249999999999999,
+        "interpretation": "scenario-specific Monte Carlo gate; not a global validation certificate"
+      },
+      "mean_power": null,
+      "mean_unresolved_fraction": 0.9925
+    },
+    {
+      "name": "pseudoreplication_null_8x4",
+      "n_units": 32,
+      "means": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "repeat_units": 4,
+      "shared_noise": 0.5,
+      "independent_noise": 1.0,
+      "n_independent_units": 8,
+      "independence_assumption_holds": false,
+      "truth": "known Gaussian score means, not estimated GRN accuracy",
+      "gate": {
+        "status": "fail",
+        "familywise_false_superiority": {
+          "events": 94,
+          "trials": 200,
+          "rate": 0.47,
+          "lower": 0.41008064461446275,
+          "upper": 0.5305911006341972,
+          "one_sided_confidence": 0.95
+        },
+        "simultaneous_coverage": {
+          "events": 75,
+          "trials": 200,
+          "rate": 0.375,
+          "lower": 0.31787108696167005,
+          "upper": 0.43493219182310017,
+          "one_sided_confidence": 0.95
+        },
+        "error_ceiling": 0.07500000000000001,
+        "coverage_floor": 0.9249999999999999,
+        "interpretation": "scenario-specific Monte Carlo gate; not a global validation certificate"
+      },
+      "mean_power": null,
+      "mean_unresolved_fraction": 0.845
+    },
+    {
+      "name": "pseudoreplication_partial_8x4",
+      "n_units": 32,
+      "means": [
+        0,
+        0,
+        0.6,
+        0.6
+      ],
+      "repeat_units": 4,
+      "shared_noise": 0.5,
+      "independent_noise": 1.0,
+      "n_independent_units": 8,
+      "independence_assumption_holds": false,
+      "truth": "known Gaussian score means, not estimated GRN accuracy",
+      "gate": {
+        "status": "fail",
+        "familywise_false_superiority": {
+          "events": 66,
+          "trials": 200,
+          "rate": 0.33,
+          "lower": 0.2749802282816698,
+          "upper": 0.38883804336444455,
+          "one_sided_confidence": 0.95
+        },
+        "simultaneous_coverage": {
+          "events": 69,
+          "trials": 200,
+          "rate": 0.345,
+          "lower": 0.28921718583727074,
+          "upper": 0.40426217983753127,
+          "one_sided_confidence": 0.95
+        },
+        "error_ceiling": 0.07500000000000001,
+        "coverage_floor": 0.9249999999999999,
+        "interpretation": "scenario-specific Monte Carlo gate; not a global validation certificate"
+      },
+      "mean_power": 0.395,
+      "mean_unresolved_fraction": 0.6733333333333335
+    }
+  ],
+  "limitations": [
+    "No real expression matrix, GRN simulator, or incomplete-label model is tested.",
+    "Means are known exactly in this score-level model; this does not hold for real algorithm rankings.",
+    "Each gate is scenario-specific; no simultaneous confidence across gates is claimed.",
+    "Repeated-unit scenarios intentionally violate independence.",
+    "Power is averaged across independent experiments; dependent method pairs are not counted as independent trials."
+  ]
+}

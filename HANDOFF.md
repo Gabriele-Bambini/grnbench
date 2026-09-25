@@ -1,0 +1,170 @@
+# HANDOFF - grnbench (2026-09-24, from Claude on machine "collab-pc" / <host>)
+
+You are taking over an active project from another Claude session. Read this file first,
+then `.projectos/STATE.md`, `.projectos/PURPOSE.md`, `.projectos/DECISIONS.md` (D-012..D-015)
+and `.projectos/ATTEMPTS.md` (A-014..A-021). `pos brief` prints the same state if the
+ProjectOS CLI is installed on your machine.
+
+---
+
+## 1. The user and how to work with them
+
+- Writes in **Italian**, short and in capitals; answer in Italian, terse. They want action,
+  not questions; ask only for real decisions (and they sometimes dismiss question dialogs).
+- **Direction (D-012/D-013, set by the user - do not re-open):** grnbench is a **product to
+  publish**: a universal, context-aware data-cleaning tool for gene regulatory network (GRN)
+  inference, with a usable interface, GRN models mounted on top, comparison of models,
+  including the user's own model. It is NOT a metascience paper. The user got angry when a
+  previous agent pushed the 2026-09-13 audit's "is the ranking real?" metascience plan
+  (D-011, rejected). Keep statistical honesty as a feature, never as the pitch.
+- The user's method for the engine (D-013): stages -> decision points -> all solutions
+  implemented -> dataset profile (data analysis + README/URL context) -> literature knowledge
+  base with evidence per option -> rule selector -> candidate pipelines tested on the data,
+  with pros/cons, editable. "Deve essere un sistema molto pratico."
+- Last requests: "testala in massa", "prendi un sacco di datasets", "usa HPC",
+  "cartelle ordinate". Downloads listed in section 5 were **approved by the user on
+  2026-09-24** ("OK DOWNLOAD, CARTELLE ORDINATE").
+- Never type passwords/passphrases or change system settings (e.g. enabling services):
+  give the user the command instead.
+
+## 2. What exists (all in this repo, `src/grnbench/`)
+
+| module | role |
+|---|---|
+| `kb.py` | knowledge base: 14 stages, 15 decisions, 56 options, 51 refs, evidence levels. Doc generated: `docs/knowledge/preprocessing_kb.md` (`grnbench kb --write-docs`; a test enforces sync) |
+| `context.py` | facts from matrix, AnnData metadata (CELLxGENE obs), README files, URLs (GEO text records) |
+| `profile.py` | dataset profile (protocol from count values, unfiltered droplets, batch x cell-type Cramer's V, batch silhouette) |
+| `selector.py` | rules -> best available option + best overall + uncertainty + one-change candidates (`always=("context_scope",)`) |
+| `autoprep.py` | `diagnose` (knee cell calling for raw droplets), `plan_preprocessing` (MAD bounds, per-batch bounds, strategy resolution, QC-gate policy, high-mito tissues, contexts <= 4), `execute_plan` (one `run_prep` per context, exact CLI) |
+| `screen.py` | runs candidate pipelines; reference split selection/evaluation halves (anti-circularity); per-model proxies, `best_per_method` |
+| `strategies.py` | + `metacells`, `cpm_log1p_center_batch` |
+| `pipeline.py`/`cli.py` | + `--cell-calling knee`, `--subset-key/value` (after doublets), `--exclude-qc-genes`, `--per-batch-bounds`, `--max-genes/counts-per-cell`, `--max-pct-mito`, `--mito-warn/--mito-fail`, `--cells-per-metacell` |
+| `ingest.py` | + counts from `raw.X`, Ensembl->symbols from a var column (`feature_name` ...) |
+| `simulate.py` | scenario simulator (19 presets + random) with planted network and labelled problems |
+| `demo.py` | synthetic demo dataset (`grnbench demo --out DIR`) |
+| `ui/app.py`, `ui/logic.py` | Streamlit GUI, 7 steps (data -> profile -> pipeline -> compare -> clean -> models incl. user model -> benchmark) |
+
+Benchmarks: `benchmarks/engine_bench.py` (synthetic mass test: plan/run/report),
+`benchmarks/real_bench.py` (real data: plan/run/report), `benchmarks/fetch_cellxgene.py`,
+`benchmarks/data_index.py`. HPC: `hpc/engine_bench.sbatch` (array job, SCRIPT/TASKS/REFS vars),
+`hpc/sync_to_cluster.sh`, `hpc/fetch_engine_datasets.sh`, `hpc/setup_env.sh`.
+
+Tests: `tests/test_engine.py`, `test_context.py`, `test_simulate.py`, `test_ui.py`,
+`test_audit_fixtures.py` + the old suite (325 passed / 3 skipped before the engine work;
+affected modules re-run green after every change).
+
+## 3. Results so far
+
+- **v1 (pre-fix), 72 synthetic datasets:** `benchmarks/results/engine-2026-09-24-v1-prefix/REPORT.md`.
+- **v2 (after fixes), PARTIAL, copied 2026-09-24 13:02:**
+  `benchmarks/results/engine-2026-09-24-v2-partial/` (`synthetic/REPORT.md` 80/97 datasets,
+  `real/REPORT_REAL.md` 17/40, all per-dataset rows as JSON).
+  - Synthetic: auto vs baseline 79% wins, median +38.7%, Wilcoxon p = 8e-12; per model
+    Pearson/Spearman +80-100%, CLR (mutual information) ties; rules alone hurt CLR; screening
+    without a reference = baseline (no gain).
+  - Real (CELLxGENE vs CollecTRI evaluation half): recovery barely above random (AUPRC ratio
+    ~1.2-1.3); auto ~= baseline (ties, small +); **rules alone worse than baseline** (per-cell-type
+    split hurts generic-regulon recovery). Synthetic per-type gains are partly built into the
+    simulator. D-015: headline claims must come from real data.
+- Detection: technology 100% (synthetic + real); organism 100% for human/mouse; non-model
+  species fixed after the v2 snapshot (A-021).
+
+The v2 runs were still going on machine collab-pc (local scratchpad, not on Drive). Do not wait
+for them: rerun on HPC (section 6).
+
+## 4. Code state vs the v2 runs
+
+v2 used a frozen code snapshot taken ~11:47. Fixed in the repo AFTER it (so rerun real data
+with the current repo): curated species label, high-mito tissue gate relaxation
+(`mito_warn/mito_fail`), cell-type column weights, safe folder names, real_bench report and
+case-insensitive detection.
+
+## 5. Data (NOT on Drive - fetch on your machine or on the cluster login node)
+
+`bash hpc/fetch_engine_datasets.sh DEST 30` builds (approved by the user):
+`DEST/INDEX.md`, `references/` (CollecTRI + DoRothEA ABC, human + mouse, via decoupler 2.x),
+`beeline/` (Zenodo 19009603, ~280 MB zips, ~930 MB unpacked), `10x_pbmc3k/filtered|raw/`,
+`scanpy_paul15/`, `cellxgene/<protocol>/<organism>/<tissue>__<id>/` (30 datasets, 913 MB,
+14 protocols, 6 species; `truth.json` = curated assay/organism). Total ~1.9 GB. Keep it off
+Google Drive.
+
+## 6. Next steps (in order)
+
+1. **Environment.** Python 3.11/3.12 with numpy, pandas, scipy, anndata, scanpy, scikit-learn,
+   plotly, streamlit, decoupler (2.x OK), mygene optional. On the cluster:
+   `bash hpc/setup_env.sh` (conda env `grnbench`, `pip install -e .[all,dev]`). Locally the
+   package may not be installed: prefix commands with `PYTHONPATH=src`.
+2. **Sanity:** `PYTHONPATH=src python -m pytest -q -p no:cacheprovider tests/test_engine.py tests/test_context.py tests/test_simulate.py tests/test_ui.py`.
+3. **HPC (Bocconi, SLURM, partition/qos `stud`, conda `/software/miniconda3`):**
+   ```
+   bash hpc/sync_to_cluster.sh bocconi grnbench          # tar over ssh
+   ssh bocconi 'cd grnbench && bash hpc/setup_env.sh'
+   ssh bocconi 'cd grnbench && bash hpc/fetch_engine_datasets.sh ~/grnbench_data 30'   # login node
+   # synthetic: 19 presets x 10 reps + 300 random ~ 490 datasets
+   ssh bocconi 'cd grnbench && source /software/miniconda3/etc/profile.d/conda.sh && conda activate grnbench &&
+     OUT=~/gb_runs/engine_v3 && mkdir -p $OUT logs &&
+     python benchmarks/engine_bench.py plan --presets-reps 10 --random 300 --out $OUT/tasks.json &&
+     N=$(python -c "import json;print(len(json.load(open(\"$OUT/tasks.json\"))))") &&
+     sbatch --array=0-$(( (N+7)/8 - 1 ))%20 --export=ALL,OUT=$OUT,CHUNK=8 hpc/engine_bench.sbatch'
+   # real: 
+   #   python benchmarks/real_bench.py plan --data-root ~/grnbench_data --out $OUT/real_tasks.json
+   #   sbatch --array=0-19%10 --export=ALL,OUT=$OUT,SCRIPT=benchmarks/real_bench.py,TASKS=$OUT/real_tasks.json,REFS=$HOME/grnbench_data/references,CHUNK=2 hpc/engine_bench.sbatch
+   # reports: python benchmarks/engine_bench.py report --out $OUT ; python benchmarks/real_bench.py report --out $OUT
+   ```
+   Per-dataset cost: ~5 min synthetic, ~10 min real (MAX_TFS=150 in real_bench).
+4. Write the consolidated report (synthetic + real) into `benchmarks/results/engine-<date>-v3/`
+   and show the user the headline table (Italian).
+5. Recalibrate the `context_scope` rule in `selector.py` with the bench evidence (pooled for
+   generic regulons; per_cell_type when the goal is a cell-type-specific network - add a
+   "goal" input); regenerate the KB doc.
+6. Simulator realism: partially cell-type-specific networks (so the per-type advantage is not
+   built in); then rerun synthetic.
+7. GUI: show per-model best pipeline from screening, knee cell calling, mito-gate decision.
+8. Pending user decisions: publication route (JOSS first vs Bioinformatics App Note);
+   full README rewrite for the product direction (needs approval).
+
+## 7. Gotchas (learned the hard way)
+
+- **Google Drive (G:) disconnects** (overnight): long runs from the Drive repo died
+  (FileNotFoundError on engine_bench.py). Run benches from a local copy of `src/` +
+  `benchmarks/` and keep the machine awake (runners call `keep_awake()` on Windows). The
+  runners are resumable: rerun the same command, finished datasets are skipped (delete a
+  row JSON to recompute it).
+- **SSH to the cluster:** the key `~/.ssh/id_bocconi` has a passphrase - the user must load it
+  into an agent (`ssh-add`); never type it yourself. `slogin.hpc.unibocconi.it` resolves to a
+  private IP (VPN may be needed). After failed auth attempts the server answers
+  **"Not allowed at this time"** (OpenSSH per-source penalty): stop retrying, wait ~10 min.
+- Do not edit engine code while a run is in progress unless it runs from a snapshot
+  (spawned workers import the current files -> mixed versions).
+- decoupler 2.x removed `dc.get_dorothea/get_collectri`: use `grnbench.tfs.decoupler_network`.
+- Cell-type labels contain `:`/`|`: context folders go through `autoprep.safe_folder_name`.
+- High-mitochondrial tissues (liver, heart, kidney, muscle) would fail the 25% dataset gate:
+  the planner relaxes it from the tissue context (A-020). Elsewhere QC gates fail loudly (D-004).
+- Doublet calling must run on all cells before context subsetting (A-014).
+- BEELINE inputs are log-normalized, not counts: the engine refuses them (by design).
+- GUI: `.claude/launch.json` config `grnbench-ui` (PYTHONPATH=src, port 8501) or `grnbench ui`.
+
+## 2026-09-25 (Lenovo, notte)
+
+Goal from the user: keep the preprocessing pipeline, mount models that actually work.
+
+- Done: literature review + chosen candidates in `docs/models_that_work.md`; new model plugins
+  (motif prior from the public cisTarget rankings, combined by rank product with any
+  co-expression model; pySCENIC-style cisTarget pruning in numpy; RegDiffusion); `real_bench.py
+  --models` scores any list of models on the baseline and auto pipelines with dataset-as-unit
+  paired comparisons. No CollecTRI/DoRothEA-derived prior is used by any model.
+- Result (12 real CELLxGENE test datasets, CollecTRI evaluation half, paired t + Holm):
+  Pearson 1.32 -> Pearson x motif 1.55 AUPRC ratio (+0.23 [+0.16, +0.30], p = 1e-4);
+  RegDiffusion x motif 1.65 (best); GRNBoost2 alone 1.10, EPR 1.02 (at random). Auto vs baseline
+  cleaning: still ties. Full report: `benchmarks/results/engine-2026-09-25-models/REPORT.md`.
+- Code changes are NOT in this Drive folder. They live in the local git repo
+  `~\grnbench-local` on the Lenovo laptop (baseline commit = this folder as of
+  2026-09-25 02:22), awaiting the user's OK to merge into the shared copy. The same changes are in
+  `benchmarks/results/engine-2026-09-25-models/grnbench-models.patch` (git format-patch; apply with
+  `git am` on a git copy, or read it).
+- Needs at runtime: `GRNBENCH_CISTARGET_DIR` pointing at the cisTarget files (hg38/mm10 rankings +
+  hgnc/mgi motif tables, ~1.3 GB, resources.aertslab.org/cistarget); `pip install regdiffusion`
+  (torch) for RegDiffusion. Data on the Lenovo: `~\grnbench-data`.
+- Full test suite on the local copy: 357 passed, 1 failed; the failure
+  (`test_prep_gaps.py::test_drop_doublets_uses_scrublet_and_logs_what_it_removed`) also fails on the
+  untouched baseline.

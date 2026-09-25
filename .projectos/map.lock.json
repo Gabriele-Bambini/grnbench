@@ -1,0 +1,18 @@
+{
+  "fp": {
+    ".": "2f668b9fd3ff",
+    "configs": "de2552176146",
+    "requirements": "bef0d753515f",
+    "docs": "8075597e66eb",
+    "audit": "63e15879753a",
+    "benchmarks": "0a55e594c9f4",
+    "examples": "eb20b5448b14",
+    "hpc": "d0705de51b1c",
+    "src": "6b4289512726",
+    "tests": "2262d317e821"
+  },
+  "mapped_at": "2026-09-23T16:37:00+02:00",
+  "mapped_by": "haiku",
+  "confidence": "high",
+  "git_head": null
+}

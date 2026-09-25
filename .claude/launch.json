@@ -1,0 +1,14 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "grnbench-ui",
+      "runtimeExecutable": "~\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "runtimeArgs": ["-m", "streamlit", "run", "src/grnbench/ui/app.py",
+                      "--server.port", "8501", "--server.headless", "true",
+                      "--browser.gatherUsageStats", "false"],
+      "env": {"PYTHONPATH": "src"},
+      "port": 8501
+    }
+  ]
+}

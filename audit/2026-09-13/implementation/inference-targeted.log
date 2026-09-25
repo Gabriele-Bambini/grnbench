@@ -1,0 +1,18 @@
+...........................s........ss.................................. [ 88%]
+.........                                                                [100%]
+============================== warnings summary ===============================
+tests/test_classical.py: 400 warnings
+  ~\.codex\tmp\grnbench-audit-20260913\Lib\site-packages\sklearn\linear_model\_coordinate_descent.py:404: FutureWarning: 'n_alphas' was deprecated in 1.9 and will be removed in 1.11. 'alphas' now accepts an integer value which removes the need to pass 'n_alphas'. The default value of 'alphas' will change from None to 100 in 1.11. Pass an explicit value to 'alphas' and leave 'n_alphas' to its default value to silence this warning.
+    warnings.warn(
+
+tests/test_features_pipeline.py::test_tf_union_rule_rescues_weak_tf
+tests/test_features_pipeline.py::test_select_features_without_tf_list
+tests/test_features_pipeline.py::test_end_to_end_run
+tests/test_features_pipeline.py::test_auto_strategy_default_is_cpm_log1p
+tests/test_features_pipeline.py::test_auto_recommends_pseudobulk_when_groups_tiny
+tests/test_features_pipeline.py::test_manifest_has_environment_and_fingerprint
+  ~\AppData\Roaming\uv\python\cpython-3.13.5-windows-x86_64-none\Lib\functools.py:934: ImplicitModificationWarning: Transforming to str index.
+    return dispatch(args[0].__class__)(*args, **kw)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+78 passed, 3 skipped, 406 warnings in 86.80s (0:01:26)

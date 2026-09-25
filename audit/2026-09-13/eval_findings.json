@@ -1,0 +1,316 @@
+{
+  "artifact_type": "read-only source audit fixtures, not repair tests",
+  "source_loading": "importlib; package initializers bypassed, real evaluation modules executed",
+  "seed": 42,
+  "findings": [
+    {
+      "case": "default_cutoff_inversion",
+      "input": {
+        "n_candidates": 1000,
+        "n_gold": 100,
+        "A_positive_rank_ranges_inclusive": [
+          [
+            51,
+            90
+          ],
+          [
+            201,
+            260
+          ]
+        ],
+        "B_positive_rank_ranges_inclusive": [
+          [
+            1,
+            25
+          ],
+          [
+            301,
+            375
+          ]
+        ]
+      },
+      "default": {
+        "metric": "epr",
+        "n_boot": 200,
+        "resample": "gold subsample 0.5 (50/100 pairs, no replacement)",
+        "seed": 42,
+        "observed": {
+          "A": 4.0,
+          "B": 2.5
+        },
+        "methods": [
+          "A",
+          "B"
+        ],
+        "pairs": {
+          "A|B": {
+            "p_a_gt_b": 0.0,
+            "diff_mean": -5.124,
+            "diff_ci": [
+              -6.8,
+              -3.589999999999997
+            ],
+            "significant": true,
+            "n_valid_draws": 200
+          }
+        },
+        "n_comparisons": 1,
+        "n_significant": 1,
+        "fraction_resolved": 1.0,
+        "tiers": [
+          [
+            "A",
+            "B"
+          ]
+        ]
+      },
+      "fixed_k_100": {
+        "metric": "epr",
+        "n_boot": 200,
+        "resample": "gold subsample 0.5 (50/100 pairs, no replacement)",
+        "seed": 42,
+        "observed": {
+          "A": 4.0,
+          "B": 2.5
+        },
+        "methods": [
+          "A",
+          "B"
+        ],
+        "pairs": {
+          "A|B": {
+            "p_a_gt_b": 1.0,
+            "diff_mean": 1.4769999999999999,
+            "diff_ci": [
+              0.7999999999999998,
+              2.1999999999999997
+            ],
+            "significant": true,
+            "n_valid_draws": 200
+          }
+        },
+        "n_comparisons": 1,
+        "n_significant": 1,
+        "fraction_resolved": 1.0,
+        "tiers": [
+          [
+            "A"
+          ],
+          [
+            "B"
+          ]
+        ]
+      },
+      "finding_reproduced": true,
+      "interpretation": "Default resampling changes k from 100 to 50, reversing the estimand's ordering."
+    },
+    {
+      "case": "degree_null_duplicates",
+      "original": [
+        {
+          "source": "A",
+          "target": "x",
+          "weight": 4
+        },
+        {
+          "source": "A",
+          "target": "y",
+          "weight": 3
+        },
+        {
+          "source": "B",
+          "target": "x",
+          "weight": 2
+        },
+        {
+          "source": "B",
+          "target": "y",
+          "weight": 1
+        }
+      ],
+      "null": [
+        {
+          "source": "A",
+          "target": "x",
+          "weight": 4
+        },
+        {
+          "source": "A",
+          "target": "x",
+          "weight": 3
+        },
+        {
+          "source": "B",
+          "target": "y",
+          "weight": 2
+        },
+        {
+          "source": "B",
+          "target": "y",
+          "weight": 1
+        }
+      ],
+      "original_unique_outdegree": {
+        "A": 2,
+        "B": 2
+      },
+      "null_unique_outdegree": {
+        "A": 1,
+        "B": 1
+      },
+      "finding_reproduced": true,
+      "interpretation": "Target permutation preserves multigraph row margins, not simple-graph degrees."
+    },
+    {
+      "case": "null_support_and_random_margins",
+      "original": [
+        {
+          "source": "A",
+          "target": "B",
+          "weight": 6
+        },
+        {
+          "source": "A",
+          "target": "C",
+          "weight": 5
+        },
+        {
+          "source": "B",
+          "target": "A",
+          "weight": 4
+        },
+        {
+          "source": "B",
+          "target": "C",
+          "weight": 3
+        },
+        {
+          "source": "C",
+          "target": "A",
+          "weight": 2
+        },
+        {
+          "source": "C",
+          "target": "B",
+          "weight": 1
+        }
+      ],
+      "degree_null": [
+        {
+          "source": "A",
+          "target": "C",
+          "weight": 6
+        },
+        {
+          "source": "A",
+          "target": "A",
+          "weight": 5
+        },
+        {
+          "source": "B",
+          "target": "B",
+          "weight": 4
+        },
+        {
+          "source": "B",
+          "target": "A",
+          "weight": 3
+        },
+        {
+          "source": "C",
+          "target": "B",
+          "weight": 2
+        },
+        {
+          "source": "C",
+          "target": "C",
+          "weight": 1
+        }
+      ],
+      "n_null_self_loops": 3,
+      "random_null_source_row_counts_preserved": true,
+      "random_null_target_row_counts_preserved": true,
+      "finding_reproduced": true,
+      "interpretation": "Degree null leaves the original loop-free support; random mode also preserves both marginal row counts."
+    },
+    {
+      "case": "tier_nontransitivity",
+      "input_pairs": {
+        "A|B": {
+          "significant": false,
+          "diff_mean": 1.0
+        },
+        "A|C": {
+          "significant": false,
+          "diff_mean": 2.0
+        },
+        "B|C": {
+          "significant": true,
+          "diff_mean": 1.0
+        }
+      },
+      "tiers": [
+        [
+          "A",
+          "B",
+          "C"
+        ]
+      ],
+      "finding_reproduced": true,
+      "interpretation": "The same tier can contain a pair explicitly declared significantly different."
+    },
+    {
+      "case": "candidate_list_truncation",
+      "full": {
+        "n_edges": 100,
+        "n_gold_in_list": 2,
+        "prevalence": 0.02,
+        "auprc": 0.51,
+        "auprc_ratio": 25.5,
+        "epr_k": 2,
+        "precision_at_k": 0.5,
+        "epr": 25.0,
+        "auroc": 0.5,
+        "tie_block_at_k": 0,
+        "epr_range": [
+          25.0,
+          25.0
+        ]
+      },
+      "truncated_to_first_edge": {
+        "n_edges": 1,
+        "n_gold_in_list": 1,
+        "prevalence": 1.0,
+        "auprc": 1.0,
+        "auprc_ratio": 1.0,
+        "epr_k": 1,
+        "precision_at_k": 1.0,
+        "epr": 1.0,
+        "auroc": null,
+        "tie_block_at_k": 0,
+        "epr_range": [
+          1.0,
+          1.0
+        ]
+      },
+      "finding_reproduced": true,
+      "interpretation": "Truncation silently removes a missed positive from recall's denominator; cross-list AP is not a common-universe comparison."
+    },
+    {
+      "case": "finite_random_ap_baseline",
+      "n_edges": 4,
+      "n_positives": 1,
+      "all_equally_likely_random_APs": [
+        1.0,
+        0.5,
+        0.3333333333333333,
+        0.25
+      ],
+      "exact_expected_random_AP": 0.5208333333333333,
+      "prevalence": 0.25,
+      "finding_reproduced": true,
+      "interpretation": "Prevalence is not the exact finite-sample expectation of random-ranking AP."
+    }
+  ],
+  "all_six_findings_reproduced": true
+}

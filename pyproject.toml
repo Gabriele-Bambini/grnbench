@@ -1,0 +1,82 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "grnbench"
+version = "0.7.0"
+description = "GRN benchmarking with explicit candidate universes, provenance and calibrated comparison tools"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "GRN-Bench contributors" }]
+dependencies = [
+    "anndata>=0.10",
+    "scanpy>=1.10",
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "scipy>=1.10",
+]
+
+[project.optional-dependencies]
+plot = ["matplotlib>=3.7"]
+# arboreto's latest PyPI release is 0.1.6; ">=1.1" made `pip install .[infer]`
+# unsatisfiable. dask/distributed are pulled in by arboreto but pinned here too
+# because the adapter injects its own client.
+infer = ["arboreto>=0.1.6", "scikit-learn>=1.3", "dask>=2023.1", "distributed>=2023.1"]
+dorothea = ["decoupler>=1.6"]
+# pyarrow: parquet exchange with container plugins. pyyaml: YAML plugin specs
+# (JSON specs need nothing). Both degrade with an explicit message when absent,
+# but a documented capability must have a declared way to install it.
+plugins = ["pyarrow>=12.0", "pyyaml>=6.0"]
+dev = ["pytest>=7.0", "pyarrow>=12.0", "pyyaml>=6.0"]
+ui = ["streamlit>=1.30", "plotly>=5.0", "scikit-learn>=1.3"]
+all = [
+    "matplotlib>=3.7",
+    "arboreto>=0.1.6",
+    "scikit-learn>=1.3",
+    "dask>=2023.1",
+    "distributed>=2023.1",
+    "decoupler>=1.6",
+    "pyarrow>=12.0",
+    "pyyaml>=6.0",
+    "streamlit>=1.30",
+    "plotly>=5.0",
+]
+
+[project.scripts]
+grnbench = "grnbench.cli_main:main"
+grnbench-prep = "grnbench.cli:main"
+grnbench-infer = "grnbench.cli_infer:main"
+grnbench-eval = "grnbench.cli_eval:main"
+grnbench-run = "grnbench.cli_run:main"
+
+[tool.hatch.build]
+# Google Drive sprinkles desktop.ini through synced folders; never ship them.
+exclude = ["desktop.ini", "**/desktop.ini", "**/__pycache__", "**/*.pyc"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/grnbench"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/examples",
+    "/benchmarks",
+    "/hpc",
+    "/configs",
+    "/requirements",
+    "/docs/RESEARCH_PROTOCOL.md",
+    "/README.md",
+    "/CHANGELOG.md",
+    "/LICENSE",
+    "/tfs.txt",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = [
+    # anndata warns before grnbench aggregates duplicated gene symbols on purpose
+    "ignore:Variable names are not unique:UserWarning",
+]

@@ -1,0 +1,9 @@
+{
+  "id": "grnbench",
+  "uid": "d46feac76313454dadd772120af72022",
+  "name": "grnbench",
+  "created": "2026-09-22T20:26:47+02:00",
+  "created_by": "claude",
+  "protocol_version": 1,
+  "engine_version": "1.0.0"
+}

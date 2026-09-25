@@ -1,0 +1,5 @@
+{
+  "name": "ridge",
+  "description": "Ridge regression of each gene on the TF panel (example Python plugin)",
+  "python": "ridge_model.py:RidgeGRN"
+}

@@ -1,0 +1,61 @@
+{
+  "source": "<repo>\\src\\grnbench\\infer\\classical.py",
+  "numpy": "2.5.3",
+  "pandas": "3.0.5",
+  "zero_fixture": {
+    "shape": [
+      16,
+      3
+    ],
+    "n_bins": 8,
+    "expected_mutual_information_A_B": 0.0,
+    "actual_mutual_information_A_B": 2.079441785812378,
+    "actual_clr_A_B": 0.9999999999999998,
+    "mi_equals_maximum_bin_entropy": true,
+    "constant_variable_property_passes": false
+  },
+  "common_row_permutation_fixture": {
+    "shape": [
+      1000,
+      3
+    ],
+    "distribution": "independent Bernoulli(p=0.1)",
+    "generation_seed": 3,
+    "permutation_seed": 5,
+    "original_edges": [
+      {
+        "source": "A",
+        "target": "B",
+        "weight": 1.3091108798980713
+      },
+      {
+        "source": "A",
+        "target": "C",
+        "weight": 1.4117746353149414
+      }
+    ],
+    "permuted_edges": [
+      {
+        "source": "A",
+        "target": "B",
+        "weight": 1.3562214374542236
+      },
+      {
+        "source": "A",
+        "target": "C",
+        "weight": 1.374058485031128
+      }
+    ],
+    "cell_order_invariance_passes": false,
+    "original_target_order": [
+      "C",
+      "B"
+    ],
+    "permuted_target_order": [
+      "C",
+      "B"
+    ],
+    "ranking_flips": false
+  },
+  "interpretation": "Stable rank tie breaking shares row-index information across genes; zero ties become artificial dependence. No real-data inference was run."
+}
