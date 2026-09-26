@@ -329,9 +329,12 @@ DECISIONS = (
                use_when=("plate-based protocols", "already doublet-filtered data", "few cells"),
                evidence="consensus", refs="heumos2023"),
             _o(id="scrublet", name="Scrublet",
-               summary="Simulate doublets from observed cells; kNN score; run per sample.",
+               summary="Simulate doublets from observed cells; kNN score; run per sample. Batches "
+                       "under 100 cells are pooled and scored together; a pool still under 100 "
+                       "cells is kept unscored, and the manifest records both.",
                use_when="droplet data with cluster structure", pros="Python, fast",
-               cons="threshold fails without cluster structure (grnbench refuses >20% calls)",
+               cons=("threshold fails without cluster structure (grnbench refuses >20% calls)",
+                     "pooled small batches mix samples when simulating doublets"),
                evidence="scrna", refs=("scrublet2019", "xi2021"), requires="py:scanpy"),
             _o(id="scdblfinder", name="scDblFinder",
                summary="Gradient-boosted classifier on simulated doublets.",

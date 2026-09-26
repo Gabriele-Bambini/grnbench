@@ -215,33 +215,94 @@ def duplicate_barcodes_report(adata: AnnData) -> int:
 # doublets (heuristic), memory hygiene
 # --------------------------------------------------------------------------- #
 
-def detect_doublets(adata: AnnData, batch_key: str | None = None,
-                    seed: int = 0) -> tuple[str, np.ndarray, str | None]:
-    """Score and call doublets; returns ``(method, is_doublet, warning)``.
+# Scrublet's defaults need more cells than a PCA of 30 components (hard floor
+# 31) and enough simulated doublets to place its automatic threshold. Measured
+# on the four EXP-20260925-LM-2 datasets that fell back (per-batch scrublet on
+# 101 batches, issue #6): batches of <= 30 cells failed; 31-50 cells called a
+# median 74% doublets; 51-100 cells 14% (max 33%); 101-200 cells 3.9% (max
+# 10%); larger batches 1-2%. Real rates are ~1-10%, so 100 is where the
+# threshold becomes usable. Pooling the batches under 100 cells gave pools of
+# 206-556 cells calling 0-3%, in line with the large batches of the same data.
+SCRUBLET_MIN_CELLS = 100
+_POOL = "__pooled_small_batches__"
 
-    Uses scanpy's built-in scrublet on the raw counts in ``adata.X`` (per
-    batch when ``batch_key`` is given), writing ``obs['doublet_score']`` and
-    ``obs['predicted_doublet']``. When scrublet cannot run (too few cells or
-    genes for its PCA/kNN, or any other failure) the joint-extreme heuristic
-    below is used instead and the caller gets a warning to record - the method
-    that actually ran is never left implicit.
+
+def scrublet_groups(labels, min_cells: int = SCRUBLET_MIN_CELLS) -> tuple[np.ndarray, dict]:
+    """Group cells for scrublet: returns ``(group per cell or None, summary)``.
+
+    Batches with at least ``min_cells`` cells are scored on their own (scrublet
+    is meant to run per sample). Smaller batches, including missing labels as
+    one level, are pooled and scored together: a heterotypic doublet still
+    looks like a mix of two programs across samples, and a 13-cell batch
+    cannot fit scrublet's PCA at all. A pool still under ``min_cells`` is not
+    scored (None): its cells are kept and counted in ``unscored_cells``.
+    """
+    lab = pd.Series(labels).astype(object).where(pd.Series(labels).notna(), "<missing>")
+    lab = lab.astype(str).to_numpy()
+    levels, counts = np.unique(lab, return_counts=True)
+    large = set(levels[counts >= min_cells])
+    small = counts < min_cells
+    groups = np.array([x if x in large else _POOL for x in lab], dtype=object)
+    pooled_cells = int(counts[small].sum())
+    unscored = 0 < pooled_cells < min_cells
+    if unscored:
+        groups[groups == _POOL] = None
+    return groups, {"min_cells": int(min_cells), "per_batch": len(large),
+                    "pooled_batches": int(small.sum()), "pooled_cells": pooled_cells,
+                    "unscored_cells": pooled_cells if unscored else 0}
+
+
+def detect_doublets(adata: AnnData, batch_key: str | None = None,
+                    seed: int = 0) -> tuple[str, np.ndarray, str | None, dict]:
+    """Score and call doublets; returns ``(method, is_doublet, warning, groups)``.
+
+    Uses scanpy's built-in scrublet on the raw counts in ``adata.X``, per batch
+    when ``batch_key`` is given, with batches under ``SCRUBLET_MIN_CELLS``
+    pooled (``scrublet_groups``; ``groups`` is its summary). Writes
+    ``obs['doublet_score']`` (NaN for unscored cells) and
+    ``obs['predicted_doublet']``. When no group reaches the minimum, or
+    scrublet fails for any other reason, the joint-extreme heuristic below is
+    used instead and the caller gets a warning to record - the method that
+    actually ran is never left implicit.
     """
     import scanpy as sc
 
-    n_batches = int(adata.obs[batch_key].nunique()) if batch_key else 1
+    labels = adata.obs[batch_key].to_numpy() if batch_key else np.zeros(adata.n_obs)
+    groups, info = scrublet_groups(labels)
+    if not batch_key:   # one group of all cells: nothing was pooled
+        info.update(per_batch=0, pooled_batches=0, pooled_cells=0)
+    info["batch_key"] = batch_key
+    scored = np.array([g is not None for g in groups])
+    notes = []
     try:
-        sc.pp.scrublet(adata, batch_key=batch_key if n_batches > 1 else None,
+        if not scored.any():
+            raise ValueError(f"{adata.n_obs} cells, fewer than the {SCRUBLET_MIN_CELLS} "
+                             "scrublet needs (SCRUBLET_MIN_CELLS)")
+        sub = adata if scored.all() else adata[scored].copy()   # no extra copy when all scored
+        sub.obs["_scrublet_group"] = groups[scored].astype(str)
+        n_groups = sub.obs["_scrublet_group"].nunique()
+        sc.pp.scrublet(sub, batch_key="_scrublet_group" if n_groups > 1 else None,
                        random_state=int(seed), verbose=False)
-        pred = adata.obs["predicted_doublet"]
-        undecided = pred.isna()
-        warning = None
-        if undecided.any():
-            warning = (f"scrublet could not set a doublet threshold for {int(undecided.sum())} "
-                       "cells (automatic threshold detection failed); they are kept")
-        is_dbl = pred.fillna(False).to_numpy(dtype=bool)
+        del sub.obs["_scrublet_group"]
+        if sub is not adata:
+            adata.uns["scrublet"] = sub.uns["scrublet"]   # thresholds stay auditable
+        score = np.full(adata.n_obs, np.nan)
+        score[scored] = sub.obs["doublet_score"].to_numpy(float)
+        pred = sub.obs["predicted_doublet"]
+        if pred.isna().any():
+            notes.append(f"scrublet could not set a doublet threshold for {int(pred.isna().sum())} "
+                         "cells (automatic threshold detection failed); they are kept")
+        is_dbl = np.zeros(adata.n_obs, dtype=bool)
+        is_dbl[scored] = pred.fillna(False).to_numpy(dtype=bool)
+        adata.obs["doublet_score"] = score
         adata.obs["predicted_doublet"] = is_dbl
-        adata.obs["doublet_score"] = adata.obs["doublet_score"].astype(float)
-        return "scrublet", is_dbl, warning
+        if batch_key and info["pooled_batches"]:
+            what = (f"{info['pooled_batches']} batches under {SCRUBLET_MIN_CELLS} cells "
+                    f"({info['pooled_cells']} cells) were pooled")
+            notes.append(what + (f" and left unscored (pool under {SCRUBLET_MIN_CELLS} cells; "
+                                 f"{info['unscored_cells']} cells kept without a doublet call)"
+                                 if info["unscored_cells"] else " and scored together by scrublet"))
+        return "scrublet", is_dbl, "; ".join(notes) or None, info
     except Exception as exc:  # noqa: BLE001 - any scrublet failure -> heuristic, loudly
         _frac, flagged = doublet_heuristic_fraction(adata)
         adata.obs["doublet_score"] = np.nan
@@ -252,7 +313,7 @@ def detect_doublets(adata: AnnData, batch_key: str | None = None,
                "called with the joint top-1% genes+counts heuristic instead - a much cruder call."
                + hint)
         warnings.warn(msg, RuntimeWarning, stacklevel=2)
-        return "heuristic", flagged, msg
+        return "heuristic", flagged, msg, {**info, "unscored_cells": int(adata.n_obs)}
 
 
 def doublet_heuristic_fraction(adata: AnnData,

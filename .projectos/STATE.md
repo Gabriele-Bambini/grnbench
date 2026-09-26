@@ -23,9 +23,9 @@ pre-registered experiments (D-017).
 1. GB: reproduce EXP-20260925-LM-2 by hand from the record (on another OS or machine if possible),
    then fill section 4 and set C4 to `reproduced`. Review, or challenge, the agent-reviewed merges
    #3, #7 and the workflow PR (AGENTS.md section 5: open an issue citing the PR).
-2. Issue #6: a small-batch rule for per-batch scrublet. Batches of 13-25 cells (or empty ones)
-   made it fall back to the heuristic in 4/20 datasets. Either merge small batches or run on all
-   cells below N, and record the choice. Needs a test and the KB option text.
+2. Issue #6 (small-batch scrublet) fixed on `lm/scrublet-small-batches`: batches under 100 cells
+   are pooled for scrublet, a pool under 100 cells stays unscored, the manifest records it. Runs
+   registered before this change keep their recorded fallbacks; new runs use the rule.
 3. First HPC pre-registered experiment, for whichever teammate takes it. Claim it first (an
    `experiment` issue assigned to you), then write the record. Models: RegDiffusion and GRNBoost2,
    each alone and with the motif prior (`regdiffusion_motif`, `grnboost2_motif`; pairs already in

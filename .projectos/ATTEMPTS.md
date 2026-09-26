@@ -186,3 +186,11 @@ STATUS: RUNNING | SUCCESS | PARTIAL | FAILED | ABANDONED | INCONCLUSIVE
 - evidence: tests/test_context.py::test_curated_species_beats_gene_casing
 - lesson: Gene-symbol casing only separates human-like from mouse-like; curated metadata must outrank it.
 - tags: engine,context,organism,real-data
+
+### A-022 | 2026-09-26 | claude | SUCCESS | Minimum batch size for per-batch scrublet (issue #6)
+- goal: Pick the batch size below which per-batch scrublet is not trusted, from data
+- approach: sc.pp.scrublet per batch on the four EXP-20260925-LM-2 datasets that fell back (101 batches, raw counts, cells with >= 200 genes), then the pooling rule on the same data
+- result: <= 30 cells: PCA error; 31-50: median 74% called; 51-100: 14% (max 33%); 101-200: 3.9% (max 10%); > 200: 1-2.5%. Pools of batches under 100 cells (206-556 cells) called 0-3%, like the large batches
+- evidence: hygiene.SCRUBLET_MIN_CELLS comment; tests/test_doublet_small_batches.py; PR for issue #6
+- lesson: scrublet's automatic threshold needs ~100 cells per group; a toy two-program dataset over-calls small pools (20-40%), so accuracy claims come from real data, not the toy
+- tags: engine,doublets,scrublet,real-data

@@ -337,7 +337,8 @@ def run_prep(
                                 "from the features (they track cell quality, not regulation)"})
 
     if drop_doublets:
-        method, is_dbl, dbl_warning = hyg.detect_doublets(adata, batch_key=batch_col, seed=seed)
+        method, is_dbl, dbl_warning, dbl_groups = hyg.detect_doublets(
+            adata, batch_key=batch_col, seed=seed)
         if dbl_warning:
             warnings_list.append(dbl_warning)
         n_dbl = int(is_dbl.sum())
@@ -358,11 +359,12 @@ def run_prep(
         steps.append({"step": "drop_doublets", "method": method,
                       "fallback": method != "scrublet",
                       "fallback_reason": dbl_warning if method != "scrublet" else None,
-                      "n_removed": n_dbl,
+                      "n_removed": n_dbl, "scrublet_groups": dbl_groups,
                       "n_cells_after": int(adata.n_obs), "n_genes_after": int(adata.n_vars),
                       "detail": f"removed {n_dbl} predicted doublets ({method}"
                                 + (f", per batch '{batch_col}'" if batch_col and method == "scrublet" else "")
-                                + "); scores kept in obs['doublet_score']"})
+                                + "); scores kept in obs['doublet_score']"
+                                + (f"; {dbl_warning}" if dbl_warning and method == "scrublet" else "")})
 
     # Context subsetting comes after cell QC and doublet calling on ALL cells:
     # inside one cell type there is no cluster structure, and doublet callers

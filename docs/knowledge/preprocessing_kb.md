@@ -169,10 +169,10 @@ A doublet expresses two programs at once, creating co-expression between genes o
 - **No removal** (`none`; evidence: consensus; grnbench) - Keep every droplet.
   - use when: plate-based protocols; already doublet-filtered data; few cells
   - refs: [heumos2023](https://doi.org/10.1038/s41576-023-00586-w)
-- **Scrublet** (`scrublet`; evidence: scrna; grnbench) - Simulate doublets from observed cells; kNN score; run per sample.
+- **Scrublet** (`scrublet`; evidence: scrna; grnbench) - Simulate doublets from observed cells; kNN score; run per sample. Batches under 100 cells are pooled and scored together; a pool still under 100 cells is kept unscored, and the manifest records both.
   - use when: droplet data with cluster structure
   - pros: Python, fast
-  - cons: threshold fails without cluster structure (grnbench refuses >20% calls)
+  - cons: threshold fails without cluster structure (grnbench refuses >20% calls); pooled small batches mix samples when simulating doublets
   - refs: [scrublet2019](https://doi.org/10.1016/j.cels.2018.11.005); [xi2021](https://doi.org/10.1016/j.cels.2020.11.008)
 - **scDblFinder** (`scdblfinder`; evidence: scrna; external) - Gradient-boosted classifier on simulated doublets.
   - use when: droplet data; R available

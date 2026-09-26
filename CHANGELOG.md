@@ -68,6 +68,11 @@
   scikit-image, which was not installed (issue #2). scikit-image is now a dependency (pyproject +
   lock). A fallback now raises a `RuntimeWarning`, is recorded in the manifest step
   (`fallback`, `fallback_reason`) and in real_bench rows (`<arm>_doublets`) and reports.
+- Per-batch scrublet refused batches of 1-30 cells and the whole dataset fell back to the
+  heuristic (4/20 datasets in EXP-20260925-LM-2, issue #6). Batches under 100 cells
+  (`hygiene.SCRUBLET_MIN_CELLS`) are now pooled and scored together; a pool still under 100 cells
+  is kept unscored; missing batch labels are one level. The manifest step records
+  `scrublet_groups`. On those four datasets every cell is now scored by scrublet.
 - `test_list_methods_reports_unavailability` assumed java on PATH; aracne3 has two
   documented prerequisites.
 
