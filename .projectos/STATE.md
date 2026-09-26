@@ -2,7 +2,8 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-09-25 by LM (setup PR: board, viz, LaTeX report, HPC skill, onboarding guide)
+Updated: 2026-09-26 by LM's agent. PR #3, PR #7 and the shared-workflow PR were merged by the owner
+after independent agent reviews, not human reviews (GB was away).
 
 ## Focus
 Product (D-012/D-013): context-aware GRN data-cleaning engine + interface + mounted models +
@@ -10,15 +11,28 @@ comparison, published as a tool with a paper. Headline claims from real data (D-
 pre-registered experiments (D-017).
 
 ## In progress
-- PR #3 scrublet import fix (issue #2): scikit-image in the lock, doublet fallback recorded per arm. Review: Gabriele. Merged? rebuild your venv from the lock.
-- EXP-20260925-LM-2 (confirmatory) done: motif prior lifts Pearson AUPRC ratio +0.182 [+0.138, +0.227],
-  n = 20, p_Holm 1.4e-7 (H1 supported; EPR lift unresolved). PR open on `lm/confirmatory-motif-prior`;
-  Gabriele to review and reproduce (paper/CLAIMS.md C4 stays `confirmed` until then).
+- Nothing running. No open `running` issues.
+- EXP-20260925-LM-2 (confirmatory, merged in #7): the motif prior lifts Pearson's AUPRC ratio by
+  +0.182 [+0.138, +0.227], n = 20, p_Holm 1.4e-7 (H1 supported; the EPR lift is unresolved).
+  An independent agent reran it from the record on 2026-09-26 and got identical numbers (record
+  section 4, issue #8). Paper claim C4 is therefore `reproduced-computational`. The human
+  reproduction is still pending, so C4 is not `reproduced`.
+- The scrublet fix (#3) is merged. Rebuild your venv from the lock (`scikit-image` is new).
 
 ## Next steps
-1. Review and merge the two PRs above; rebuild your venv from the lock; reproduce EXP-20260925-LM-2.
-2. Small-batch rule for per-batch scrublet (issue #6).
-3. RegDiffusion / GRNBoost2 (+ motif) on HPC as a pre-registered experiment (CPU time too long locally).
+1. GB: reproduce EXP-20260925-LM-2 by hand from the record (on another OS or machine if possible),
+   then fill section 4 and set C4 to `reproduced`. Review, or challenge, the agent-reviewed merges
+   #3, #7 and the workflow PR (AGENTS.md section 5: open an issue citing the PR).
+2. Issue #6: a small-batch rule for per-batch scrublet. Batches of 13-25 cells (or empty ones)
+   made it fall back to the heuristic in 4/20 datasets. Either merge small batches or run on all
+   cells below N, and record the choice. Needs a test and the KB option text.
+3. First HPC pre-registered experiment, for whichever teammate takes it. Claim it first (an
+   `experiment` issue assigned to you), then write the record. Models: RegDiffusion and GRNBoost2,
+   each alone and with the motif prior (`regdiffusion_motif`, `grnboost2_motif`; pairs already in
+   `real_bench.DECLARED_PAIRS`). Unit = dataset. Candidate data: the 20 LM-2 datasets, whose sha256
+   are known, or a fresh set chosen with `--exclude-ids`. Batch all tasks into one job (QOS `stud`:
+   1 running + 1 queued, 8 CPUs; `docs/HPC.md`, skill `grnbench-hpc`). RegDiffusion needs torch
+   on the cluster.
 4. First confirmatory synthetic + real engine experiment on HPC (auto vs baseline cleaning).
 5. Recalibrate `context_scope` in `selector.py` with bench evidence (add a "goal" input); regenerate the KB doc.
 6. Simulator: partially cell-type-specific networks, then rerun synthetic.
@@ -31,5 +45,7 @@ pre-registered experiments (D-017).
 
 ## Notes for the next agent
 - Never quote the 0.6.0 numbers (retracted). Unresolved != equivalent.
+- `reproduced-computational` is not `reproduced`. Never call C4 "reproduced by a second person".
+- Heavy work (suites, runs) goes off laptops: HPC for experiments, a workstation for suites (AGENTS.md section 4).
 - README top still carries the 0.7.0 framing; a README rewrite for the product direction needs team approval.
 - The long "improved plan" list of 2026-09-23 is in the previous STATE.md (`git show 4de687d:.projectos/STATE.md`).

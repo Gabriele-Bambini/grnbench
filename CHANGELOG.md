@@ -26,6 +26,11 @@
   pipeline's end-of-run report.
 - Shared HPC skill `.claude/skills/grnbench-hpc/SKILL.md` (pointer in `.agents/skills/`), Antigravity
   rule moved to `.agents/rules/`; onboarding guide extended (from zero, how to work, look inside).
+- Shared-work workflow: owner merge after an independent agent review when the other person is
+  away (labelled as such; can be reopened); experiments are claimed with an `experiment` issue before
+  the record, and the board lists claimed experiments; a recipe for stacked PRs after a squash;
+  long local runs from a `git worktree`; claim status `reproduced-computational` (agent rerun from
+  the record, human reproduction pending).
 
 ### Added
 - `grnbench ui`: Streamlit interface (data -> profile -> pipeline -> compare pipelines ->
@@ -54,6 +59,9 @@
   human reproduction pending.
 
 ### Fixed
+- `grnbench report --paper`: every experiment section defined the same macro names, so a
+  second confirmed experiment would redefine the first one's numbers. Macros are now prefixed per
+  experiment (test with two experiments).
 - `real_bench._model_matrix` truncated dataset ids to 45 characters; two datasets with a common
   prefix collided and `compare_units` refused the table. Full ids now.
 - Doublet calling silently fell back to a crude heuristic because scanpy's scrublet needs

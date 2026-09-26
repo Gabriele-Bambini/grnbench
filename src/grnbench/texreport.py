@@ -463,7 +463,7 @@ def build_paper(out: Path | None = None, root: Path = ROOT, compile_pdf: bool = 
     exps = []
     for line in claims.splitlines():
         cells = [c.strip() for c in line.split("|")]
-        if len(cells) > 6 and cells[5] in ("confirmed", "reproduced"):
+        if len(cells) > 6 and cells[5] in ("confirmed", "reproduced-computational", "reproduced"):
             exps += [e for e in re.findall(r"EXP-[\w-]+", cells[3]) if e not in exps]
     sections = []
     for exp in exps:
@@ -471,6 +471,12 @@ def build_paper(out: Path | None = None, root: Path = ROOT, compile_pdf: bool = 
         if not fields.get("type", "").lower().startswith(("confirmatory", "**confirmatory")):
             continue
         sub = build_report(exp, out=out / exp, root=root, compile_pdf=False)
+        # every experiment defines the same macro names: prefix them per experiment
+        # (\gbDiff... -> \gbEXP...LMTwoDiff...) so sections do not redefine each other's numbers
+        tag = macro_name(exp)[2:]
+        for f in (out / exp / "values.tex", sub):
+            f.write_text(re.sub(r"\\gb(?=[A-Z])", lambda _m: "\\gb" + tag, f.read_text(encoding="utf-8")),
+                         encoding="utf-8")
         body = sub.read_text(encoding="utf-8")
         body = body.split("\\maketitle", 1)[1].split("\\end{document}", 1)[0]
         body = body.replace("\\input{", f"\\input{{{exp}/")

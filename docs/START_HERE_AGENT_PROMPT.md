@@ -143,19 +143,25 @@ Summarise each in two lines to the person.
 
 1. `git pull`, `python -m grnbench.board`: what runs, what is open, where things left off.
 2. Pick or open an issue, assign yourself, branch `<initials>/<topic>` from `main`.
-3. Experiment? Create its record first (A8.2) and push. Confirmatory = hypothesis, endpoint,
+3. Experiment? Claim it first: its issue labelled `experiment`, assigned to you (the board shows
+   it as claimed). Then create its record (A8.2) and push. Confirmatory = hypothesis, endpoint,
    datasets, exclusions and comparison family (Holm via `grnbench compare`) fixed in the record.
-4. Launch, then open the board issue (label `running`, AGENTS.md section 6).
+4. Launch, then add the label `running` to the same issue (AGENTS.md section 6).
 5. Wait correctly (B3), process the results (B4), update the record.
 6. PR to `main` with the template filled, a CHANGELOG line under `## Unreleased`, test output,
    STATE/MAP updated; one review by another person; squash-merge. No force-push.
+   The other person is away (exam, leave)? The owner may merge after an independent agent review
+   posted on the PR with no blocking finding left open, labelled as such (AGENTS.md section 5);
+   they can reopen or challenge it later.
 
 ## B2. Not colliding with the others
 
 - Never relaunch a run with an open `running` issue; never write into another person's
   `benchmarks/results/<EXP-ID>/`; never reuse an ID (your initials keep your namespace separate).
-- Split work by issue and by file; if two PRs touch the same file, the second rebases (no force-push
-  on shared branches: merge `main` into your branch instead).
+- Split work by issue and by file; if two PRs touch the same file, the second one merges `main`
+  into its branch (no rebase, no force-push on shared branches).
+- Avoid stacked PRs. If one was stacked and its base was squash-merged, follow the recipe in
+  AGENTS.md section 5: merge `origin/main` and keep your side for the files the base PR touched.
 
 ## B3. Waiting for HPC outputs
 
@@ -196,8 +202,15 @@ done
 
 ## B6. Long local runs
 
-- Run from a frozen copy of `src/` + `benchmarks/` (not the tree you are editing) and from a local
-  disk, never from Drive. The runners hold a keep-awake request on Windows; keep the laptop plugged in.
+- Heavy work does not belong on a laptop. Experiments and model runs go to the HPC; full suites
+  and long benches go to a team member's workstation if there is one. The laptop coordinates:
+  it dispatches, polls, and reviews. The rules below are for when a laptop has to run the job anyway.
+- Run from a frozen checkout (`git worktree add ../grnbench-run-<EXP> <commit>`, installed editable
+  in the run's venv), not the tree you are editing, and from a local disk, never from Drive. While
+  it runs, do not `pip install -e` another tree into that venv: `--jobs` workers re-import from it.
+  The runners hold a keep-awake request on Windows; keep the laptop plugged in.
+- Analysis code fixed after the run: fix + test, regenerate the report from the unchanged rows
+  (`real_bench.py report --out <run>`), and record it as a dated deviation in the record.
 - Windows quirks: Git Bash heredocs can eat backslashes (write paths with forward slashes, or write
   files with your editor tool); PowerShell and bash differ (`$env:X` vs `$X`); the HPC helper uses
   the Windows ssh client because Git Bash's ssh cannot see the Windows agent.

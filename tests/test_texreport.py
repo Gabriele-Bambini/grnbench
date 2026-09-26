@@ -54,3 +54,31 @@ def test_report_matches_the_committed_real_bench_report():
                if (r["a"], r["b"]) == ("pearson_motif", "pearson_signed"))
     report = (run / "REPORT_REAL.md").read_text(encoding="utf-8")
     assert f"| pearson_motif | pearson_signed | 12 | {rec['diff']:+.3f} |" in report
+
+
+def test_paper_draft_keeps_each_experiments_macros_apart(tmp_path):
+    """Two confirmatory experiments in one --paper draft: no macro is defined twice, and each
+    section's prose uses its own experiment's numbers."""
+    root = tmp_path / "repo"
+    (root / "experiments").mkdir(parents=True)
+    (root / "paper").mkdir()
+    ledger = ["| # | claim | experiments | files | status | reproduced by |", "|---|---|---|---|---|---|"]
+    for i, (exp, status) in enumerate((("EXP-20260101-AA-1", "confirmed"),
+                                       ("EXP-20260102-BB-1", "reproduced-computational"))):
+        _run(root / "benchmarks" / "results" / exp, n=5 + i)
+        (root / "experiments" / f"{exp}.md").write_text(
+            f"# {exp}\n\n- type: confirmatory\n"
+            "- primary comparison: pearson_motif > pearson_signed | auprc_ratio | auto\n")
+        ledger.append(f"| C{i} | claim | {exp} | x | {status} | - |")
+    (root / "paper" / "CLAIMS.md").write_text("\n".join(ledger) + "\n")
+    main = texreport.build_paper(out=tmp_path / "build", root=root, compile_pdf=False)
+    defined = []
+    for exp in ("EXP-20260101-AA-1", "EXP-20260102-BB-1"):
+        defined += re.findall(r"\\newcommand\{\\(\w+)\}", (tmp_path / "build" / exp / "values.tex").read_text())
+    assert defined and len(defined) == len(set(defined))
+    tex = main.read_text()
+    used = set(re.findall(r"\\(gb[A-Za-z]+)\{\}", tex))
+    assert used and used <= set(defined)
+    tag_b = texreport.macro_name("EXP-20260102-BB-1")[2:]
+    section_b = tex.split("\\section{EXP-20260102-BB-1}")[1]
+    assert all(m.startswith("gb" + tag_b) for m in re.findall(r"\\(gb[A-Za-z]+)\{\}", section_b))

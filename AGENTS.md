@@ -61,12 +61,16 @@ python -m pytest -q -p no:cacheprovider tests/test_engine.py tests/test_context.
 python -m pytest -q -p no:cacheprovider
 ```
 
-Known floor (2026-09-25, fresh venv from the lock, Windows, Python 3.11.9): `368 passed, 1 skipped`
+Known floor (2026-09-26, fresh venv from the lock, Windows, Python 3.11.9): `370 passed, 1 skipped`
 (the skip is the RegDiffusion test when torch/regdiffusion are not installed). Compare failing test
 IDs before and after your change, not counts. Not installed editable? Prefix commands with `PYTHONPATH=src`.
 CI (`.github/workflows/tests.yml`) is disabled: GitHub refuses to start Actions jobs on this
 account for billing reasons, and we do not pay. The test output pasted in each PR is the check;
 re-enable with `gh workflow enable tests` if that changes.
+**Where heavy work runs.** Laptops coordinate: edit, review, dispatch, poll. Experiments and model
+runs go to the Bocconi HPC (section 10). Full test suites and long benches go to a team member's
+workstation when one is available. A laptop runs them only when nothing else can, plugged in and
+from a worktree (section 13).
 Optional models: RegDiffusion needs torch (install line at the top of the lock file); the motif
 models need `GRNBENCH_CISTARGET_DIR` pointing at the cisTarget files (`experiments/datasets.tsv`).
 
@@ -79,7 +83,22 @@ models need `GRNBENCH_CISTARGET_DIR` pointing at the cisTarget files (`experimen
 - Review: one approval from a person other than the author (a team rule: the free plan has no
   branch protection for private repos, so GitHub does not enforce it; only squash-merge is enabled). Changes to `paper/`, to
   `src/grnbench/eval/` or to statistical code need a reviewer from the "reviews" column above.
+- **The other human is unavailable** (exam, leave; they said so, or no answer in 2 working days):
+  the owner may merge after an **independent agent review** is posted on the PR. That means a fresh
+  agent session that did not write the PR reads the diff, runs the full suite in a fresh venv from
+  the lock and, for an experiment, reproduces it from the record (section 7). It posts the result as
+  a PR review with the real output (`gh pr review N --comment`, because an account cannot approve
+  its own PR). Merge only when the review leaves no blocking finding open (fixed on the branch, or
+  waived in the PR text with the reason). The review and the squash commit both say "independent
+  agent review, not a second-human review". The other human can reopen or challenge it later: they open
+  an issue citing the PR, and any claim the PR touched goes back to its previous status until the
+  issue is resolved. An agent review never makes a claim `reproduced` (section 8).
 - Merge: **squash-merge** (one commit per PR on `main`; the PR text is the record). Delete the branch.
+- Avoid stacked PRs (B based on A's branch). If you must stack: when A is squash-merged, GitHub
+  retargets B to `main` but reports conflicts, because B still carries A's original commits. On B,
+  run `git merge origin/main`. For the conflicted files that A touched, keep B's side
+  (`git checkout --ours <files>`). Check that `git diff origin/main --stat` lists only B's changes,
+  then push. Never rebase or force-push a pushed branch.
 - A change of direction, scope, metric, data split or library = a decision `D-xxx` in
   `.projectos/DECISIONS.md` in the same PR (next free number; renumber if `main` took it first).
 
@@ -91,15 +110,22 @@ models need `GRNBENCH_CISTARGET_DIR` pointing at the cisTarget files (`experimen
   "Weekly status" (done / next / blocked). Nothing else to maintain.
 - `.projectos/STATE.md` = where things left off; `.projectos/MAP.md` = where things are. Both stay
   short and are updated in every PR that changes them (PR template checkbox).
+- **Claim an experiment before you work on it.** One issue per experiment, from claim to result.
+  Open it first, before writing the record: label `experiment`, assign yourself, title
+  `<EXP-ID> <short name>`. The board lists open `experiment` issues as claimed, so nobody starts
+  the same question twice. Then commit and push the record, launch, and add `running` to the same
+  issue. A reproduction of someone else's experiment is also a run: it gets its own `experiment`
+  issue (title `<EXP-ID> reproduction`), claimed and labelled the same way.
 - **Live board (what runs right now).** Never a shared file (concurrent edits conflict). Each launched
-  run (local or HPC) gets one issue labelled `running`:
+  run (local or HPC) has one open issue labelled `running`:
   - title `<EXP-ID> <short name>`; assignee = the person whose agent launched it;
   - body: who, machine or HPC, job ids, started at, expected finish, where outputs land, how to
     check (`bash hpc/hpc.sh status <id>`);
   - the agent comments when it checks the job (state, ETA), and when results are fetched and
     recorded it closes the issue with label `done` or `failed` and a one-line result.
   ```bash
-  gh issue create --label running --assignee @me --title "EXP-... short name" --body "..."
+  gh issue create --label experiment --assignee @me --title "EXP-... short name" --body "question, owner"   # claim
+  gh issue edit N --add-label running && gh issue comment N --body "launched: machine, job ids, ETA"
   gh issue comment N --body "checked: RUNNING 3h10m, 9/20 rows"
   gh issue edit N --remove-label running --add-label done && gh issue close N --comment "result: ..."
   ```
@@ -126,6 +152,9 @@ models need `GRNBENCH_CISTARGET_DIR` pointing at the cisTarget files (`experimen
   `viz/index.md` "Not produced": say why in the record.
 - Reports are generated, never typed: `grnbench report <run|EXP>` writes LaTeX with every number
   from result files (a test forbids digits in templates); no TeX engine -> `.tex` + `report_fallback.md`.
+- Analysis code fixed after a run: put the fix and its test in the results PR, regenerate the report
+  from the unchanged rows (`python benchmarks/real_bench.py report --out <RUN>`), and add a dated
+  deviation to the record. Never rerun silently and never patch a generated report by hand.
 - Past attempts that are not runs (debugging hypotheses, libraries tried, reverted refactors) go
   to `.projectos/ATTEMPTS.md`. Runs never go there.
 
@@ -133,7 +162,10 @@ models need `GRNBENCH_CISTARGET_DIR` pointing at the cisTarget files (`experimen
 
 - Tables and figures are generated by `python paper/make_figures.py` from committed result files.
 - `paper/CLAIMS.md` maps every sentence-level claim to experiment IDs and result files.
-- No result enters `paper/` until a second person reproduced it from its record.
+- No result enters a submission until a second person reproduced it from its record. Claim status
+  in `paper/CLAIMS.md`: `draft` -> `confirmed` -> `reproduced-computational` (a different agent reran
+  it from the record alone; human reproduction still pending) -> `reproduced` (a second person reran
+  it). `grnbench report --paper` drafts include `confirmed` and later; a submission only `reproduced`.
 - Log contributions in `paper/CONTRIBUTIONS.md` (CRediT roles) in the PR that does the work.
 
 ## 9. Data
@@ -180,10 +212,16 @@ The old Drive `HANDOFF.md` habit is retired (`docs/history/` keeps the last one)
 - High-mitochondrial tissues (liver, heart, kidney, muscle): the planner relaxes the 25% gate from
   the tissue context (A-020); elsewhere QC gates fail loudly (D-004).
 - Cell-type labels contain `:` or `|`: context folders go through `autoprep.safe_folder_name`.
-- Do not edit engine code while a local run imports it: run long benches from a frozen copy of
-  `src/` + `benchmarks/`. Runners are resumable (finished datasets are skipped).
+- Do not edit engine code while a local run imports it. Run long benches from a frozen checkout:
+  `git worktree add ../grnbench-run-<EXP> <commit>`, installed editable in the run's venv. While the
+  run is going, do not re-run `pip install -e` on another tree in that venv: `--jobs` workers start
+  new interpreters that import whatever the install points at. Runners are resumable (finished
+  datasets are skipped).
 - Long local runs on Windows: the runners hold a keep-awake request; keep the machine plugged in.
 - Shell scripts must stay LF (`.gitattributes` enforces it); CRLF breaks bash on the cluster.
+- Windows: tests that call `bash` use the first one on PATH. If that is WSL's `System32/bash.exe`
+  with no distro installed, `test_hpc_setup_propagates_install_and_test_failures` fails twice. Put
+  Git Bash first on PATH (`C:/Program Files/Git/bin`). It is an environment problem, not a regression.
 - ProjectOS: `pos` is optional (`python .projectos/kit/install.py` changes your global agent
   hooks, so only install it on your own machine if you want it). Without it, edit the markdown
   files directly in the formats they already use.

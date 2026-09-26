@@ -17,7 +17,9 @@ Everything that will appear in the manuscript, and nothing typed by hand that a 
    Exploratory results may be described as exploratory, never as the finding.
 3. **Second-person reproduction**: the claim's status becomes `reproduced` only after someone other
    than the owner reran it from the record (section 4 of the record filled). Only `reproduced`
-   claims go into a submitted draft.
+   claims go into a submitted draft. An agent that did not run the experiment can rerun it from the
+   record first: the status is then `reproduced-computational`, which says a second computation
+   agrees and a human reproduction is still pending. It never counts as `reproduced`.
 4. Tables and figures: add a function to `make_figures.py`, commit the generated output in the
    same PR. A reviewer runs `python paper/make_figures.py` and checks `git diff --exit-code paper/`.
 5. Every number in the text is copied from a generated table, with the table named next to it in

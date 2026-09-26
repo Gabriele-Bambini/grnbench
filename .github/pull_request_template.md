@@ -22,3 +22,4 @@ python -m pytest -q -p no:cacheprovider
 - [ ] board issues updated or closed (label `done` / `failed`) for runs this PR records
 - [ ] experiment records link their `viz/` figures and `latex/` report
 - [ ] `paper/` touched? claims reproduced by a second person, `python paper/make_figures.py` leaves no diff
+- [ ] review: by the other person, or (they are away) an independent agent review posted on this PR, said so in the review and the squash commit (AGENTS.md section 5)

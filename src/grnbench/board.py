@@ -2,7 +2,7 @@
 
     python -m grnbench.board          # or: grnbench board
 
-Live state lives in GitHub (issues labelled ``running``, open PRs); durable state in
+Live state lives in GitHub (issues labelled ``running``, claimed ``experiment`` issues, open PRs); durable state in
 ``.projectos/STATE.md``. Nothing here writes anything. Needs ``gh`` logged in; without it the
 STATE.md part still prints.
 """
@@ -39,6 +39,10 @@ def _section(text: str, title: str, max_lines: int = 12) -> list[str]:
     return out[:max_lines]
 
 
+def _who(issue: dict) -> str:
+    return ",".join(a.get("login", "?") for a in issue.get("assignees", [])) or "unassigned"
+
+
 def board(gh: list[str] | None = None, root: Path | None = None) -> str:
     gh = gh or shlex.split(os.environ.get("GRNBENCH_GH", "gh"))
     root = root or (Path.cwd() if (Path.cwd() / ".projectos").is_dir() else ROOT)
@@ -50,8 +54,15 @@ def board(gh: list[str] | None = None, root: Path | None = None) -> str:
     elif not running:
         lines.append("- nothing running")
     for i in running if isinstance(running, list) else []:
-        who = ",".join(a.get("login", "?") for a in i.get("assignees", [])) or "unassigned"
-        lines.append(f"- #{i['number']} {i['title']} ({who}, updated {i.get('updatedAt', '?')[:16]})")
+        lines.append(f"- #{i['number']} {i['title']} ({_who(i)}, updated {i.get('updatedAt', '?')[:16]})")
+    lines += ["", "## Claimed experiments (issues labelled `experiment`, not yet `running`)"]
+    claimed = _gh(gh, ["issue", "list", "--label", "experiment", "--state", "open",
+                       "--json", "number,title,assignees,labels"])
+    if isinstance(claimed, str):
+        lines.append(f"- ? {claimed}")
+    else:
+        claimed = [i for i in claimed if "running" not in {lb.get("name") for lb in i.get("labels", [])}]
+        lines += [f"- #{i['number']} {i['title']} ({_who(i)})" for i in claimed] or ["- none"]
     lines += ["", "## Open pull requests"]
     prs = _gh(gh, ["pr", "list", "--state", "open", "--json", "number,title,author,headRefName,isDraft"])
     if isinstance(prs, str):
