@@ -15,6 +15,7 @@
 - comparison family: <every pair that will be tested, e.g. pearson_motif vs pearson_signed, ...>
 - test: paired, two-sided, Holm over the family above, alpha 0.05, via `grnbench compare`
   (`grnbench.eval.comparison.compare_units`). Effect size = mean paired difference with CI.
+- primary comparison: <A> > <B> | <metric, e.g. auprc_ratio> | <arm, e.g. auto>   (machine-readable H1)
 - smallest effect that matters (margin): <value or "none declared">
 - seeds: <list>; reference split seed: <n>
 
@@ -25,6 +26,7 @@
 - command(s): <exact CLI, copy-pasteable, paths relative or ~/...>
 - machine: <local OS / HPC job id(s), partition, CPUs, memory>
 - results: `benchmarks/results/<EXP-ID>/` (small) and <large outputs location, outside git>
+- report input: `benchmarks/results/<EXP-ID>` (folder with rows/*.json, read by `grnbench report`)
 
 ## 3. Results (filled by scripts, not by hand)
 
@@ -33,6 +35,9 @@
 - headline: <metric> = <value> [95% CI], n = <k> datasets, <test>, p_Holm = <value>
 - all declared comparisons (including the null ones): <table from the report, or link>
 - verdict: supports | refutes | inconclusive  (inconclusive is not "equal")
+- figures (exploration + explainability, required): `benchmarks/results/<EXP-ID>/viz/index.md`
+  (from `--keep-artifacts` + `grnbench viz`); list what was not produced and why
+- generated report: `benchmarks/results/<EXP-ID>/latex/report.tex` (`grnbench report <EXP-ID>`)
 - deviations from section 1: <none | dated list>
 
 ## 4. Reproduction (required before anything reaches paper/)

@@ -5,3 +5,5 @@
 *.py text eol=lf
 *.png binary
 *.svg text
+# Result files are stored byte-for-byte so SHA256SUMS verify on every OS
+benchmarks/results/** -text

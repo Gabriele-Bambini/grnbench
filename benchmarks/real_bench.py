@@ -343,7 +343,8 @@ def _model_matrix(df: pd.DataFrame, arm: str, metric: str) -> pd.DataFrame:
     cols = {c[2:-len(f"_{arm}_{metric}")]: c for c in df
             if c.startswith("m_") and c.endswith(f"_{arm}_{metric}")}
     mat = pd.DataFrame({m: df[c] for m, c in cols.items()})
-    mat.index = df["task"].str.replace("cxg__", "", regex=False).str[:45]
+    # full ids: a truncated id made two patch-seq datasets collide (EXP-20260925-LM-2)
+    mat.index = df["task"].str.replace("cxg__", "", regex=False)
     return mat
 
 

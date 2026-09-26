@@ -47,7 +47,15 @@
   all cells), `--exclude-qc-genes`, `--per-batch-bounds`, `--max-genes-per-cell`,
   `--max-counts-per-cell`, `--max-pct-mito`, `--cells-per-metacell`.
 
+### Results
+- EXP-20260925-LM-2 (confirmatory, pre-registered): the motif prior lifts Pearson's AUPRC ratio by
+  +0.182 [+0.138, +0.227] on 20 fresh CELLxGENE datasets (p_Holm 1.4e-7); EPR lift unresolved.
+  Reproduced computationally (independent agent rerun from the record, identical numbers);
+  human reproduction pending.
+
 ### Fixed
+- `real_bench._model_matrix` truncated dataset ids to 45 characters; two datasets with a common
+  prefix collided and `compare_units` refused the table. Full ids now.
 - Doublet calling silently fell back to a crude heuristic because scanpy's scrublet needs
   scikit-image, which was not installed (issue #2). scikit-image is now a dependency (pyproject +
   lock). A fallback now raises a `RuntimeWarning`, is recorded in the manifest step

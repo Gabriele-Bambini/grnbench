@@ -24,12 +24,15 @@ One file per run, local or HPC. This is the only place runs are recorded (not
 6. **Report everything.** n and what n is, the exact test, two-sided, effect size with CI, the
    correction and its family, every declared comparison including the null ones. Negative and
    inconclusive results stay in the registry. "Significant" only inside the declared family.
-7. **Reproduction.** Before a result enters `paper/`, a second person (or an agent run by another
+7. **Look inside.** Each record links its figures (`viz/index.md`: QC, embeddings, decisions,
+   PR curves, networks, TF-level errors, motif lift, calibration, stability, attributions) and its
+   generated report (`latex/`). Scores alone are not a result.
+8. **Reproduction.** Before a result enters `paper/`, a second person (or an agent run by another
    person) reruns it from the record alone and fills section 4.
 
 ## Index
 
-Add a row in the same PR that adds a record. Status: registered / running / done / reproduced / abandoned.
+Add a row in the same PR that adds a record. Status: registered / running / done / reproduced-computational (agent rerun from the record, human pending) / reproduced / abandoned.
 
 | ID | question | type | status | verdict | results |
 |---|---|---|---|---|---|
@@ -37,5 +40,6 @@ Add a row in the same PR that adds a record. Status: registered / running / done
 | [EXP-20260924-PRE-1](EXP-20260924-PRE-1.md) | Engine v1 vs baseline, synthetic | exploratory | done | supports (synthetic only) | `benchmarks/results/engine-2026-09-24-v1-prefix/` |
 | [EXP-20260924-PRE-2](EXP-20260924-PRE-2.md) | Engine v2, synthetic + real (partial) | exploratory | abandoned | synthetic supports, real inconclusive | `benchmarks/results/engine-2026-09-24-v2-partial/` |
 | [EXP-20260925-LM-1](EXP-20260925-LM-1.md) | Motif prior lifts recovery on real data? | exploratory | done | supports | `benchmarks/results/engine-2026-09-25-models/` |
+| [EXP-20260925-LM-2](EXP-20260925-LM-2.md) | Confirmatory: motif prior lifts recovery on 20 fresh real datasets? | confirmatory | reproduced-computational | supports (+0.18, n = 20, p_Holm 1e-7) | `benchmarks/results/EXP-20260925-LM-2/` |
 
 `PRE` = run before this registry existed (owner not recorded, not pre-registered).

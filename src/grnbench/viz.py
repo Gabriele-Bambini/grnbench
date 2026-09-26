@@ -321,12 +321,13 @@ def pr_curves(edges_by_model: dict, ref_pairs, out_png):
     ax.set_xlabel("recall")
     ax.set_ylabel("precision")
     ax.legend(frameon=False, fontsize=8)
-    fig.suptitle(f"Which model ranks reference edges highest? ({_n_label(n_edges, 'edges scored')})")
+    fig.suptitle(f"Which model ranks reference edges highest? ({_n_label(n_edges, 'top edges kept per model')};\n"
+                 "precision and recall within those edges, not the full TF x gene universe)")
     fig.tight_layout()
     return _save(fig, out_png), None
 
 
-def topk_network(edges: pd.DataFrame, ref_pairs, k: int, out_png):
+def topk_network(edges: pd.DataFrame, ref_pairs, k: int, out_png, label: str = "predicted"):
     """networkx drawing of the top-k predicted edges, TP vs. FP, TFs distinct."""
     try:
         import networkx as nx
@@ -349,15 +350,15 @@ def topk_network(edges: pd.DataFrame, ref_pairs, k: int, out_png):
     nx.draw_networkx_nodes(g, pos, ax=ax, node_size=60, node_color=node_colors)
     tp_edges = [(u, v) for u, v, d in g.edges(data=True) if d["tp"]]
     fp_edges = [(u, v) for u, v, d in g.edges(data=True) if not d["tp"]]
-    nx.draw_networkx_edges(g, pos, edgelist=fp_edges, ax=ax, edge_color="#D55E00", alpha=0.5, width=0.8)
+    nx.draw_networkx_edges(g, pos, edgelist=fp_edges, ax=ax, edge_color="#999999", alpha=0.5, width=0.8)
     nx.draw_networkx_edges(g, pos, edgelist=tp_edges, ax=ax, edge_color="#009E73", alpha=0.9, width=1.4)
     n_labels = min(len(g.nodes), 30)
     labels = {n: n for n in list(g.nodes)[:n_labels]}
     nx.draw_networkx_labels(g, pos, labels=labels, ax=ax, font_size=6)
     ax.axis("off")
     n_tp = len(tp_edges)
-    fig.suptitle(f"Which top-{len(top)} predicted edges are known regulation? "
-                f"({_n_label(len(top), 'edges')}, {n_tp} match the reference, TF nodes in orange)")
+    fig.suptitle(f"Which top-{len(top)} {label} edges are known regulation? "
+                 f"({_n_label(len(top), 'edges')}, {n_tp} match the reference: green; TF nodes in orange)")
     fig.tight_layout()
     return _save(fig, out_png), None
 
@@ -708,8 +709,10 @@ def build_run(run_dir, out_dir=None, tasks_json=None, max_datasets=None) -> Path
             note(prefix, p, r, f"artifacts/{task}/{arm_used}/{ctx_dirs[0].name if ctx_dirs else ''}",
                 n=f"n = {n_edges_total} edges")
             top_model = max(edges_by_model, key=lambda m: len(edges_by_model[m]))
-            p, r = topk_network(edges_by_model[top_model], ref_pairs, 60, out_dir / f"network_{task}.png")
-            note(prefix, p, r, f"{top_model}.tsv.gz", n="n = 60 edges")
+            net_model = next((m for m in sorted(edges_by_model) if m.endswith("_motif")), top_model)
+            p, r = topk_network(edges_by_model[net_model], ref_pairs, 60, out_dir / f"network_{task}.png",
+                                label=net_model)
+            note(prefix, p, r, f"{net_model}.tsv.gz", n="n = 60 edges")
             p, r = tf_recovery(edges_by_model, ref_pairs, 20, out_dir / f"tf_recovery_{task}.png",
                                out_dir / f"tf_recovery_{task}.tsv")
             note(prefix, p, r, f"artifacts/{task}/{arm_used}", n="n = up to 30 TFs")

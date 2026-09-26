@@ -270,3 +270,16 @@ def test_real_bench_records_which_doublet_caller_ran(tmp_path):
         recs.append({"manifest": str(m)})
     assert doublet_methods(recs) == "heuristic,not run,scrublet"
     assert doublet_methods([]) == "unknown"
+
+
+def test_real_bench_model_matrix_keeps_datasets_with_a_common_prefix_apart():
+    import sys
+    from pathlib import Path
+    import pandas as pd
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "benchmarks"))
+    from real_bench import _model_matrix
+
+    long = "cxg__patch-seq__mus-musculus__primary-motor-cortex__"
+    df = pd.DataFrame({"task": [long + "8f98c236", long + "341a0702"],
+                       "m_pearson_signed_auto_auprc_ratio": [1.1, 1.2]})
+    assert _model_matrix(df, "auto", "auprc_ratio").index.is_unique

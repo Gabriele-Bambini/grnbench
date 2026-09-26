@@ -9,3 +9,4 @@ Agents are tools, not contributors: log the person who directed the agent.
 |---|---|---|---|
 | 2026-09-25 | LM | Software, Investigation, Formal analysis | motif-prior / cisTarget / RegDiffusion models; EXP-20260925-LM-1 |
 | 2026-09-25 | LM | Project administration | GitHub repo, experiment registry, paper/ standard |
+| 2026-09-25 | LM | Investigation, Formal analysis, Data curation | EXP-20260925-LM-2 confirmatory run (pre-registration, 20 datasets) |

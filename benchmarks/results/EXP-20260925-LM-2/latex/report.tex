@@ -1,0 +1,155 @@
+\documentclass{article}
+\usepackage{fullpage,booktabs,graphicx,hyperref,float,array}
+\input{values.tex}
+\title{EXP-20260925-LM-2: Confirmatory - does the motif prior lift GRN recovery on fresh real datasets?}
+\author{grnbench report generated from EXP-20260925-LM-2}
+\date{}
+\begin{document}
+\maketitle
+\section*{Status}
+Experiment EXP-20260925-LM-2, type: confirmatory. Record status: registered. Reproduced by: nobody yet.
+\section{Configuration summary}
+\input{tables/configuration.tex}
+\section{Methods}
+\begin{description}
+\item[type] **confirmatory** (pre-registration = the commit that adds this file, pushed before any dataset of this list was downloaded or scored)
+\item[primary endpoint] AUPRC ratio (AUPRC / prevalence; 1 = random) on the CollecTRI evaluation half, **auto** pipeline arm (the engine's screened choice), mean over contexts within a dataset. pearson\_motif vs motif\_prior (does expression add to the prior alone).
+\item[unit of analysis] dataset. Planned n = 20 (list below); analysed n = datasets with a score for both members of a pair (printed per pair).
+\item[datasets] experiments/EXP-20260925-LM-2.datasets.tsv (20 CELLxGENE Discover datasets, human 16 / mouse 4, 8 protocols), chosen by benchmarks/fetch\_cellxgene.py --max 20 --max-mb 60 --organisms "Homo sapiens,Mus musculus" --exclude-ids experiments/EXP-20260925-LM-2.excluded\_ids.txt --exclude-assay targeted on the public listing of 2026-09-25. Excluded before selection: the 31 dataset ids used by any earlier experiment (EXP-20260925-LM-2.excluded\_ids.txt) and targeted panels (not transcriptomes).
+\item[exclusion rules (fixed now)] (a) a dataset whose download fails or whose sha256 cannot be recorded is replaced by nobody and reported as missing; (b) datasets with fewer than 50 reference edges among their genes are not scored (MIN\_REFERENCE\_EDGES, as in the code); (c) a dataset where a model errors is dropped from the pairs involving that model only, and reported; (d) no other exclusion, no outlier removal.
+\item[comparison family] real\_bench.DECLARED\_PAIRS restricted to the models run = \{(pearson\_motif, pearson\_signed), (pearson\_motif, motif\_prior)\}, both directions = 4 directed hypotheses per metric and arm.
+\item[test] paired t over datasets, two-sided per direction, via compare\_units for each pair (95\% interval of the mean paired difference), Holm over the 4 directed hypotheses of the AUPRC / auto family, alpha 0.05. **H1 is supported** if p\_Holm(pearson\_motif > pearson\_signed) < 0.05 in that family; **refuted** if p\_Holm(pearson\_signed > pearson\_motif) < 0.05; otherwise inconclusive.
+\item[seeds] reference split seed 0 (screen.split\_reference), cell subsample seed 0 (at most 3,000 cells per context, MAX\_SCORE\_CELLS), scrublet seed 0; regulators = the 150 TFs with most reference targets in the data (MAX\_TFS).
+\item[models] pearson\_signed, pearson\_motif, motif\_prior. RegDiffusion is **not** run: about 13 min per dataset per arm on this CPU (about 9 h for 20 datasets x 2 arms), it goes to an HPC experiment.
+\item[code] branch lm/confirmatory-motif-prior, commit recorded in the results folder (CODE\_COMMIT), which includes the scrublet fix (PR \#3: scikit-image present, doublet fallback recorded per arm) and real\_bench --keep-artifacts for the explainability figures.
+\item[environment] fresh venv from requirements/lock-py311.txt (Python 3.11.9, Windows), no torch.
+\item[data] downloaded after this record was pushed, into a local folder outside the repo; sha256 of every file appended to experiments/datasets.tsv in the results PR.
+\item[machine] local laptop (Windows, 3 workers)
+\item[models scored] motif\_prior, pearson\_motif, pearson\_signed
+\end{description}
+
+\section{Results}
+\subsection{Primary comparison}
+\paragraph{Pre-registered primary hypothesis.} pearson\_motif $>$ pearson\_signed on AUPRC ratio, auto pipeline. Mean paired difference \gbDiffAuprcRatioAutoPearsonMotifVsPearsonSigned{} (95\% interval \gbCiLowAuprcRatioAutoPearsonMotifVsPearsonSigned{} to \gbCiHighAuprcRatioAutoPearsonMotifVsPearsonSigned{}), n = \gbNAuprcRatioAutoPearsonMotifVsPearsonSigned{} datasets, paired t, Holm over \gbFamilyAuprcRatioAuto{} directed hypotheses: $p_{\mathrm{Holm}}$ = \gbPHolmAuprcRatioAutoPearsonMotifVsPearsonSigned{}. Verdict by the rule fixed in the record: \textbf{supported}.
+
+\subsection{Performance per model, across datasets}
+\input{tables/models.tex}
+\subsection{Performance per dataset}
+\input{tables/per_dataset.tex}
+\subsection{Comparative summary: declared comparisons}
+\input{tables/comparisons_auprc_ratio_auto.tex}
+\input{tables/comparisons_auprc_ratio_baseline.tex}
+\input{tables/comparisons_epr_auto.tex}
+\input{tables/comparisons_epr_baseline.tex}
+\section{Visualizations and explainability}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/calibration_cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002.png}
+\caption{-   (n = 20000 edges) - built from  motif\_prior.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/calibration_cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__df287f8d.png}
+\caption{-   (n = 20000 edges) - built from  motif\_prior.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/calibration_cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__b94e3bdf.png}
+\caption{-   (n = 20000 edges) - built from  motif\_prior.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/embed_cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002.png}
+\caption{-   (n = 5500 cells) - built from  tasks.json (raw data)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/embed_cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__df287f8d.png}
+\caption{-   (n = 1295 cells) - built from  tasks.json (raw data)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/embed_cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__b94e3bdf.png}
+\caption{-   (n = 5970 cells) - built from  tasks.json (raw data)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/lift_pearson_motif_vs_pearson_signed.png}
+\caption{-   (n = 20 datasets) - built from  rows/ .json (pearson\_motif vs pearson\_signed)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/motif_lift_cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002_pearson_signed.png}
+\caption{-   (n = shared TFs) - built from  pearson\_signed.tsv.gz vs pearson\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/motif_lift_cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__df287f8d_pearson_signed.png}
+\caption{-   (n = shared TFs) - built from  pearson\_signed.tsv.gz vs pearson\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/motif_lift_cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__b94e3bdf_pearson_signed.png}
+\caption{-   (n = shared TFs) - built from  pearson\_signed.tsv.gz vs pearson\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/network_cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002.png}
+\caption{-   (n = 60 edges) - built from  pearson\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/network_cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__df287f8d.png}
+\caption{-   (n = 60 edges) - built from  pearson\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/network_cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__b94e3bdf.png}
+\caption{-   (n = 60 edges) - built from  pearson\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/pr_cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002.png}
+\caption{-   (n = 20000 edges) - built from  artifacts/cxg\_\_10x-3-v2\_\_homo-sapiens\_\_entorhinal-cortex\_\_06b91002/auto/ctx0}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/pr_cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__df287f8d.png}
+\caption{-   (n = 20000 edges) - built from  artifacts/cxg\_\_10x-3-v2\_\_homo-sapiens\_\_peripheral-zone-of-prostate\_\_df287f8d/auto/ctx0}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/pr_cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__b94e3bdf.png}
+\caption{-   (n = 20000 edges) - built from  artifacts/cxg\_\_10x-3-v2\_\_homo-sapiens\_\_superior-frontal-gyrus\_\_b94e3bdf/auto/ctx0}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/qc_cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002.png}
+\caption{-   (n = 5500 cells) - built from  tasks.json (raw data)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/qc_cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__df287f8d.png}
+\caption{-   (n = 1295 cells) - built from  tasks.json (raw data)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/qc_cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__b94e3bdf.png}
+\caption{-   (n = 5970 cells) - built from  tasks.json (raw data)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/scores_auprc_ratio_auto.png}
+\caption{-   (n = 20 datasets) - built from  rows/ .json (auto/auprc\_ratio)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/scores_auprc_ratio_baseline.png}
+\caption{-   (n = 20 datasets) - built from  rows/ .json (baseline/auprc\_ratio)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/scores_epr_auto.png}
+\caption{-   (n = 20 datasets) - built from  rows/ .json (auto/epr)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/scores_epr_baseline.png}
+\caption{-   (n = 20 datasets) - built from  rows/ .json (baseline/epr)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/tf_recovery_cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002.png}
+\caption{-   (n = up to 30 TFs) - built from  artifacts/cxg\_\_10x-3-v2\_\_homo-sapiens\_\_entorhinal-cortex\_\_06b91002/auto}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/tf_recovery_cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__df287f8d.png}
+\caption{-   (n = up to 30 TFs) - built from  artifacts/cxg\_\_10x-3-v2\_\_homo-sapiens\_\_peripheral-zone-of-prostate\_\_df287f8d/auto}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/tf_recovery_cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__b94e3bdf.png}
+\caption{-   (n = up to 30 TFs) - built from  artifacts/cxg\_\_10x-3-v2\_\_homo-sapiens\_\_superior-frontal-gyrus\_\_b94e3bdf/auto}
+\end{figure}
+
+\section{Limitations}
+\begin{itemize}
+\item Doublet calling fell back to the heuristic in 4 of 20 datasets.
+\end{itemize}
+
+\end{document}

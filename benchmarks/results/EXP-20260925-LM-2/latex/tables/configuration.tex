@@ -1,0 +1,17 @@
+\begin{table}[H]\centering\small
+\caption{Configuration of the run, from the experiment record and the run folder.}
+\begin{tabular}{p{0.3\linewidth}p{0.62\linewidth}}\toprule
+experiment & EXP-20260925-LM-2 \\
+type & **confirmatory** (pre-registration = the commit that adds this file, pushed before any dataset of this list was downloaded or scored) \\
+owner & LM   issue: board issue opened at launch   registered: 2026-09-25 \\
+datasets (rows) & 20 \\
+models & motif\_prior, pearson\_motif, pearson\_signed \\
+arms & auto, baseline \\
+code & branch lm/confirmatory-motif-prior, commit recorded in the results folder (CODE\_COMMIT), which includes the scrublet fix (PR \#3: scikit-image present, doublet fallback recorded per arm) and real\_bench --keep-artifacts for the explainability figures. \\
+code commit (run folder) & 67ca8809661baf5c4982a407805cccae2ebcf002 \\
+environment & fresh venv from requirements/lock-py311.txt (Python 3.11.9, Windows), no torch. \\
+machine & local laptop (Windows, 3 workers) \\
+seeds & reference split seed 0 (screen.split\_reference), cell subsample seed 0 (at most 3,000 cells per context, MAX\_SCORE\_CELLS), scrublet seed 0; regulators = the 150 TFs with most reference targets in the data (MAX\_TFS). \\
+run folder & benchmarks/results/EXP-20260925-LM-2 \\
+generated & 2026-09-25 19:50 \\
+\bottomrule\end{tabular}\end{table}

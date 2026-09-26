@@ -7,6 +7,7 @@ assay x organism so protocols and species are all represented, tissues varied.
 dataset - the ground truth the engine's context detection is checked against.
 
     python benchmarks/fetch_cellxgene.py --out DIR --max 30 --max-mb 100 [--dry-run]
+        [--exclude-ids used_ids.txt] [--exclude-assay targeted]
 """
 from __future__ import annotations
 
@@ -88,6 +89,11 @@ def main(argv=None) -> int:
     p.add_argument("--organisms", default=None,
                    help="comma-separated curated organism labels to keep, e.g. 'Homo sapiens,Mus musculus' "
                         "(only these have CollecTRI references to score against)")
+    p.add_argument("--exclude-ids", default=None,
+                   help="file with dataset ids (or 8-character id prefixes), one per line, to skip - "
+                        "e.g. every dataset used by earlier experiments, for a fresh confirmatory set")
+    p.add_argument("--exclude-assay", default=None,
+                   help="comma-separated case-insensitive substrings of assay labels to skip, e.g. 'targeted'")
     a = p.parse_args(argv)
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -96,6 +102,13 @@ def main(argv=None) -> int:
     if a.organisms:
         keep = {o.strip().lower() for o in a.organisms.split(",")}
         datasets = [d for d in datasets if {x.lower() for x in _labels(d.get("organism"))} <= keep]
+    if a.exclude_ids:
+        ids = [x.strip().lower() for x in Path(a.exclude_ids).read_text(encoding="utf-8").split() if x.strip()]
+        datasets = [d for d in datasets if not any(d["dataset_id"].lower().startswith(i) for i in ids)]
+    if a.exclude_assay:
+        subs = [x.strip().lower() for x in a.exclude_assay.split(",") if x.strip()]
+        datasets = [d for d in datasets if not any(s_ in lab.lower() for lab in _labels(d.get("assay"))
+                                                   for s_ in subs)]
     picked = select(datasets, a.max, a.max_mb)
     for d in picked:
         d["folder"] = folder_for(d).as_posix()

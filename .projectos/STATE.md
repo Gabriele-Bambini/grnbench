@@ -11,16 +11,18 @@ pre-registered experiments (D-017).
 
 ## In progress
 - PR #3 scrublet import fix (issue #2): scikit-image in the lock, doublet fallback recorded per arm. Review: Gabriele. Merged? rebuild your venv from the lock.
-- EXP-20260925-LM-2 confirmatory motif-prior experiment on 20 fresh datasets (branch
-  `lm/confirmatory-motif-prior`, pre-registered). Review + reproduction: Gabriele.
+- EXP-20260925-LM-2 (confirmatory) done: motif prior lifts Pearson AUPRC ratio +0.182 [+0.138, +0.227],
+  n = 20, p_Holm 1.4e-7 (H1 supported; EPR lift unresolved). PR open on `lm/confirmatory-motif-prior`;
+  Gabriele to review and reproduce (paper/CLAIMS.md C4 stays `confirmed` until then).
 
 ## Next steps
-1. Review and merge the two PRs above; rebuild your venv from the lock.
-2. RegDiffusion / GRNBoost2 (+ motif) on HPC as a pre-registered experiment (CPU time too long locally).
-3. First confirmatory synthetic + real engine experiment on HPC (auto vs baseline cleaning).
-4. Recalibrate `context_scope` in `selector.py` with bench evidence (add a "goal" input); regenerate the KB doc.
-5. Simulator: partially cell-type-specific networks, then rerun synthetic.
-6. GUI: per-model best pipeline, knee cell calling, mito-gate decision, motif models, viz figures.
+1. Review and merge the two PRs above; rebuild your venv from the lock; reproduce EXP-20260925-LM-2.
+2. Small-batch rule for per-batch scrublet (issue #6).
+3. RegDiffusion / GRNBoost2 (+ motif) on HPC as a pre-registered experiment (CPU time too long locally).
+4. First confirmatory synthetic + real engine experiment on HPC (auto vs baseline cleaning).
+5. Recalibrate `context_scope` in `selector.py` with bench evidence (add a "goal" input); regenerate the KB doc.
+6. Simulator: partially cell-type-specific networks, then rerun synthetic.
+7. GUI: per-model best pipeline, knee cell calling, mito-gate decision, motif models, viz figures.
 
 ## Blockers / open questions
 - Publication route (JOSS / Bioinformatics App Note / Nature-family journal) - team decision.
