@@ -21,9 +21,7 @@ jobs:
           python -m pip install -r requirements/lock-py311.txt
           python -m pip install --no-deps -e .
       - name: Run tests including arboreto adapters
-        # Known floor: scrublet needs scikit-image, which the lock lacks, so doublet calling falls
-        # back to the heuristic. Remove this deselect when the lock gains scikit-image (see the issue).
-        run: python -m pytest -q -p no:cacheprovider --junitxml=test-results.xml --deselect tests/test_prep_gaps.py::test_drop_doublets_uses_scrublet_and_logs_what_it_removed
+        run: python -m pytest -q -p no:cacheprovider --junitxml=test-results.xml
       - name: Preserve test result
         if: always()
         uses: actions/upload-artifact@v4

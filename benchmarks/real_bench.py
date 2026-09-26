@@ -113,6 +113,21 @@ def _split_combined(method: str) -> tuple[str, str | None]:
     return method, None
 
 
+def doublet_methods(records: list[dict]) -> str:
+    """Doublet caller that actually ran in each context of a candidate, read from the run
+    manifests: 'scrublet', 'heuristic' (fallback), or 'not run'. Recorded per arm so a
+    fallback can never hide inside a score."""
+    seen = []
+    for rec in records or []:
+        try:
+            steps = json.loads(Path(rec["manifest"]).read_text(encoding="utf-8"))["steps"]
+        except (KeyError, OSError, TypeError, ValueError):
+            continue
+        step = next((s for s in steps if s.get("step") == "drop_doublets"), None)
+        seen.append(step["method"] if step else "not run")
+    return ",".join(sorted(set(seen))) if seen else "unknown"
+
+
 ARTIFACT_TOP_EDGES = 20000     # per model/arm/context edge dump size when --keep-artifacts
 
 
@@ -265,6 +280,7 @@ def run_real_task(task: dict, refs: Path | None, workroot: Path, keep: bool = Fa
                 for k, v in scores.get(cand, {}).items():
                     row[f"{arm}_{k}"] = v
                 row[f"{arm}_failed_contexts"] = sum(1 for r in res["records"].get(cand, []) if r.get("error"))
+                row[f"{arm}_doublets"] = doublet_methods(res["records"].get(cand, []))
             for m in EVAL_METHODS:
                 best_m = res["best_per_method"].get(m)
                 row[f"permodel_{m}_candidate"] = best_m
@@ -410,7 +426,13 @@ def report(out: Path) -> str:
     lines = [f"# Engine mass test on real datasets - {n} datasets", "",
              f"- ran end to end: {int((~err & ~refused).sum())}",
              f"- refused as expected (not raw counts): {int(refused.sum())}",
-             f"- errors: {int(err.sum())}", ""]
+             f"- errors: {int(err.sum())}"]
+    dbl = [c for c in df if c.endswith("_doublets") and c.split("_")[0] in ("baseline", "auto")]
+    if dbl:
+        fb = df[dbl].astype(str).apply(lambda col: col.str.contains("heuristic")).any(axis=1)
+        lines.append(f"- doublet calling fell back to the heuristic (scrublet failed) in "
+                     f"{int(fb.sum())}/{n} datasets (baseline or auto arm)")
+    lines.append("")
     det = [c for c in df if c.startswith("detect_")]
     if det:
         lines += ["## Detection vs curated metadata", "", "| check | n | correct |", "|---|---|---|"]

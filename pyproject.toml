@@ -16,6 +16,9 @@ dependencies = [
     "numpy>=1.24",
     "pandas>=2.0",
     "scipy>=1.10",
+    # scanpy's scrublet needs scikit-image to pick its doublet threshold; without it doublet
+    # calling falls back to a crude heuristic (issue #2).
+    "scikit-image>=0.22",
 ]
 
 [project.optional-dependencies]

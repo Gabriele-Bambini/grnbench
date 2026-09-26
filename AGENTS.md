@@ -61,11 +61,9 @@ python -m pytest -q -p no:cacheprovider tests/test_engine.py tests/test_context.
 python -m pytest -q -p no:cacheprovider
 ```
 
-Known floor (2026-09-25, Windows, Python 3.11.9): `357 passed, 1 failed`. The failure is
-`tests/test_prep_gaps.py::test_drop_doublets_uses_scrublet_and_logs_what_it_removed`: scanpy's
-scrublet needs scikit-image, which the lock lacks, so doublet calling falls back to `heuristic`
-(issue #2; CI deselects this one test until the lock is fixed). Compare failing test IDs before and
-after your change, not counts. Not installed editable? Prefix commands with `PYTHONPATH=src`.
+Known floor (2026-09-25, fresh venv from the lock, Windows, Python 3.11.9): `368 passed, 1 skipped`
+(the skip is the RegDiffusion test when torch/regdiffusion are not installed). Compare failing test
+IDs before and after your change, not counts. Not installed editable? Prefix commands with `PYTHONPATH=src`.
 CI (`.github/workflows/tests.yml`) is disabled: GitHub refuses to start Actions jobs on this
 account for billing reasons, and we do not pay. The test output pasted in each PR is the check;
 re-enable with `gh workflow enable tests` if that changes.

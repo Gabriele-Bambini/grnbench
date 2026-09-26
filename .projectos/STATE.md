@@ -10,7 +10,7 @@ comparison, published as a tool with a paper. Headline claims from real data (D-
 pre-registered experiments (D-017).
 
 ## In progress
-- PR "scrublet import fix" (#2 / PR #3): scikit-image in the lock, doublet fallback recorded. Review: Gabriele.
+- PR #3 scrublet import fix (issue #2): scikit-image in the lock, doublet fallback recorded per arm. Review: Gabriele. Merged? rebuild your venv from the lock.
 - EXP-20260925-LM-2 confirmatory motif-prior experiment on 20 fresh datasets (branch
   `lm/confirmatory-motif-prior`, pre-registered). Review + reproduction: Gabriele.
 

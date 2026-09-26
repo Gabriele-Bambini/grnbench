@@ -48,6 +48,10 @@
   `--max-counts-per-cell`, `--max-pct-mito`, `--cells-per-metacell`.
 
 ### Fixed
+- Doublet calling silently fell back to a crude heuristic because scanpy's scrublet needs
+  scikit-image, which was not installed (issue #2). scikit-image is now a dependency (pyproject +
+  lock). A fallback now raises a `RuntimeWarning`, is recorded in the manifest step
+  (`fallback`, `fallback_reason`) and in real_bench rows (`<arm>_doublets`) and reports.
 - `test_list_methods_reports_unavailability` assumed java on PATH; aracne3 has two
   documented prerequisites.
 

@@ -136,6 +136,35 @@ def test_drop_doublets_uses_scrublet_and_logs_what_it_removed(tmp_path):
     assert removed_singlets <= 25, f"dropped {removed_singlets} singlets"
 
 
+def test_doublet_fallback_is_loud_and_recorded(tmp_path, monkeypatch):
+    """If scrublet cannot run (e.g. scikit-image missing), the heuristic runs, a
+    RuntimeWarning is raised, and the manifest records the fallback and its reason."""
+    import scanpy as sc
+
+    def broken(*args, **kwargs):
+        raise ValueError("threshold is None and thus scrublet requires skimage, "
+                         "but skimage is not installed.")
+
+    monkeypatch.setattr(sc.pp, "scrublet", broken)
+    src = tmp_path / "in.h5ad"
+    _two_populations_with_doublets().write_h5ad(src)
+    with pytest.warns(RuntimeWarning, match="DOUBLET FALLBACK"):
+        res = run_prep(src, tmp_path / "run", drop_doublets=True, seed=0)
+    step = next(s for s in res.manifest["steps"] if s["step"] == "drop_doublets")
+    assert step["method"] == "heuristic" and step["fallback"] is True
+    assert "scikit-image" in step["fallback_reason"]
+    assert any("DOUBLET FALLBACK" in w for w in res.manifest["warnings"])
+
+
+def test_scrublet_run_is_not_marked_as_fallback(tmp_path):
+    pytest.importorskip("skimage")
+    src = tmp_path / "in.h5ad"
+    _two_populations_with_doublets().write_h5ad(src)
+    res = run_prep(src, tmp_path / "run", drop_doublets=True, seed=0)
+    step = next(s for s in res.manifest["steps"] if s["step"] == "drop_doublets")
+    assert step["method"] == "scrublet" and step["fallback"] is False and step["fallback_reason"] is None
+
+
 def test_doublets_are_never_dropped_by_default(tmp_path):
     src = tmp_path / "in.h5ad"
     _two_populations_with_doublets().write_h5ad(src)

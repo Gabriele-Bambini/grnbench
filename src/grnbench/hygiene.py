@@ -8,6 +8,7 @@ pipeline steps.
 from __future__ import annotations
 
 import re
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -245,9 +246,13 @@ def detect_doublets(adata: AnnData, batch_key: str | None = None,
         _frac, flagged = doublet_heuristic_fraction(adata)
         adata.obs["doublet_score"] = np.nan
         adata.obs["predicted_doublet"] = flagged
-        return "heuristic", flagged, (
-            f"scrublet failed ({type(exc).__name__}: {exc}); doublets were called with the "
-            "joint top-1% genes+counts heuristic instead - a much cruder call")
+        hint = (" Install scikit-image (it is in requirements/lock-py311.txt): scanpy's scrublet "
+                "needs it to pick the doublet threshold." if "skimage" in str(exc) else "")
+        msg = (f"DOUBLET FALLBACK: scrublet failed ({type(exc).__name__}: {exc}); doublets were "
+               "called with the joint top-1% genes+counts heuristic instead - a much cruder call."
+               + hint)
+        warnings.warn(msg, RuntimeWarning, stacklevel=2)
+        return "heuristic", flagged, msg
 
 
 def doublet_heuristic_fraction(adata: AnnData,

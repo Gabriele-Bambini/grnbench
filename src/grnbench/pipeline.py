@@ -355,7 +355,10 @@ def run_prep(
                 "the scores without --drop-doublets, or raise --max-doublet-rate deliberately.")
         if n_dbl:
             adata = adata[~is_dbl].copy()
-        steps.append({"step": "drop_doublets", "method": method, "n_removed": n_dbl,
+        steps.append({"step": "drop_doublets", "method": method,
+                      "fallback": method != "scrublet",
+                      "fallback_reason": dbl_warning if method != "scrublet" else None,
+                      "n_removed": n_dbl,
                       "n_cells_after": int(adata.n_obs), "n_genes_after": int(adata.n_vars),
                       "detail": f"removed {n_dbl} predicted doublets ({method}"
                                 + (f", per batch '{batch_col}'" if batch_col and method == "scrublet" else "")

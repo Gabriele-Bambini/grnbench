@@ -252,3 +252,21 @@ def test_high_mito_tissue_relaxes_the_dataset_gate_only(demo):
     assert plan.value("max_pct_mito_cell") is not None       # per-cell bound still applies
     plain = plan_preprocessing(diag, tf_list=tfs)
     assert "mito_fail" not in plain.decisions
+
+
+def test_real_bench_records_which_doublet_caller_ran(tmp_path):
+    import json
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "benchmarks"))
+    from real_bench import doublet_methods
+
+    recs = []
+    for i, steps in enumerate([[{"step": "drop_doublets", "method": "scrublet"}],
+                               [{"step": "drop_doublets", "method": "heuristic"}],
+                               [{"step": "filter_cells"}]]):
+        m = tmp_path / f"m{i}.json"
+        m.write_text(json.dumps({"steps": steps}))
+        recs.append({"manifest": str(m)})
+    assert doublet_methods(recs) == "heuristic,not run,scrublet"
+    assert doublet_methods([]) == "unknown"
