@@ -82,3 +82,62 @@ def test_paper_draft_keeps_each_experiments_macros_apart(tmp_path):
     tag_b = texreport.macro_name("EXP-20260102-BB-1")[2:]
     section_b = tex.split("\\section{EXP-20260102-BB-1}")[1]
     assert all(m.startswith("gb" + tag_b) for m in re.findall(r"\\(gb[A-Za-z]+)\{\}", section_b))
+
+
+def test_co_primary_hypotheses_each_get_a_verdict(tmp_path):
+    """A record with two primary comparisons (';'-separated, one Holm family) gets one
+    pre-registered verdict paragraph per hypothesis, not only the first."""
+    root = tmp_path / "repo"
+    exp = "EXP-20260103-CC-1"
+    run = root / "benchmarks" / "results" / exp
+    _run(run)
+    (root / "experiments").mkdir(parents=True)
+    (root / "experiments" / f"{exp}.md").write_text(
+        f"# {exp}\n\n- type: confirmatory\n"
+        "- primary comparison: pearson_motif > pearson_signed | auprc_ratio | auto;"
+        " pearson_motif > motif_prior | auprc_ratio | auto\n"
+        f"- report input: `benchmarks/results/{exp}`\n")
+    tex = texreport.build_report(exp, root=root, out=tmp_path / "out", compile_pdf=False).read_text()
+    assert tex.count("Pre-registered primary hypothesis") == 2
+    for b in (r"pearson\_signed", r"motif\_prior"):
+        assert rf"pearson\_motif $>$ {b}" in tex
+
+
+def test_record_fields_handle_commas_code_and_fences(tmp_path):
+    """Keys with commas or backticks are keys, not continuation text; fenced code is not appended
+    to the key above it (the Methods section of EXP-20260926-LM-1 was garbled by both)."""
+    rec = tmp_path / "EXP.md"
+    rec.write_text(
+        "- primary endpoint: AUPRC ratio\n"
+        "- secondary endpoints (reported, not used for H1/H2): EPR; the baseline arm\n"
+        "- environment: conda env\n"
+        "- data (login node, downloads only; `D=~/x`): fetched\n"
+        "  ```\n"
+        "  python fetch.py --out $D\n"
+        "  ```\n"
+        "- machine: HPC\n", encoding="utf-8")
+    f = texreport.record_fields(rec)
+    assert f["primary endpoint"] == "AUPRC ratio"
+    assert f["secondary endpoints (reported, not used for h1/h2)"] == "EPR; the baseline arm"
+    assert f["environment"] == "conda env"
+    assert f["data (login node, downloads only; `d=~/x`)"] == "fetched"
+    assert f["machine"] == "HPC"
+    methods = texreport._methods(f, __import__("pandas").DataFrame())
+    assert "EPR; the baseline arm" in methods and "fetch.py" not in methods
+
+
+def test_primary_comparison_note_with_semicolon_is_not_a_second_hypothesis(tmp_path):
+    """EXP-20260925-LM-2's field continues with '(...; no content change)': only fragments that
+    parse as 'A > B | metric | arm' are hypotheses."""
+    root = tmp_path / "repo"
+    exp = "EXP-20260104-DD-1"
+    _run(root / "benchmarks" / "results" / exp)
+    (root / "experiments").mkdir(parents=True)
+    (root / "experiments" / f"{exp}.md").write_text(
+        f"# {exp}\n\n- type: confirmatory\n"
+        "- primary comparison: pearson_motif > pearson_signed | auprc_ratio | auto\n"
+        "  (restatement added before the run; no content change)\n"
+        f"- report input: `benchmarks/results/{exp}`\n")
+    tex = texreport.build_report(exp, root=root, out=tmp_path / "out", compile_pdf=False).read_text()
+    assert tex.count("Pre-registered primary hypothesis") == 1
+    assert "No machine-readable primary comparison" not in tex

@@ -192,13 +192,19 @@ def record_fields(record: Path | None) -> dict[str, str]:
     """'- key: value' bullets of an experiment record (continuation lines appended)."""
     if record is None:
         return {}
-    fields, key = {}, None
+    fields, key, fence = {}, None, False
     for line in record.read_text(encoding="utf-8").splitlines():
-        m = re.match(r"^- ([A-Za-z][A-Za-z ()/_-]*?):\s*(.*)$", line)
+        if line.strip().startswith("```"):        # fenced code is never part of a value
+            fence = not fence
+            continue
+        if fence:
+            continue
+        # a key is anything up to the first ': ' (commas, semicolons and backticks allowed)
+        m = re.match(r"^- ([A-Za-z][^:]*?):(?:\s+(.*))?$", line)
         if m:
             key = m.group(1).strip().lower()
-            fields[key] = m.group(2).strip()
-        elif key and line.startswith("  ") and not line.strip().startswith("```"):
+            fields[key] = (m.group(2) or "").strip()
+        elif key and line.startswith("  "):
             fields[key] += " " + line.strip()
         elif not line.strip() or line.startswith("#"):
             key = None
@@ -292,8 +298,18 @@ def _tables(df: pd.DataFrame, out: Path) -> tuple[dict, list[str], dict]:
 
 
 def _primary(fields: dict, comps: dict) -> str:
-    """Pre-registered decision rule applied to the data (confirmatory records only)."""
-    spec = fields.get("primary comparison", "")
+    """Pre-registered decision rule applied to the data. Co-primary hypotheses are
+    separated by ';' in the record field and get one paragraph each (same family)."""
+    # Only fragments that parse as "A > B | metric | arm" are hypotheses: a note after the spec
+    # may itself contain ';' (EXP-20260925-LM-2: "...; no content change)").
+    specs = [s for s in fields.get("primary comparison", "").split(";") if _PRIMARY_RE.match(s)] or [""]
+    return "".join(_primary_one(s, fields, comps) for s in specs)
+
+
+_PRIMARY_RE = re.compile(r"\s*`?([\w]+)\s*>\s*([\w]+)\s*\|\s*([\w]+)\s*\|\s*([\w]+)")
+
+
+def _primary_one(spec: str, fields: dict, comps: dict) -> str:
     m = re.match(r"\s*`?([\w]+)\s*>\s*([\w]+)\s*\|\s*([\w]+)\s*\|\s*([\w]+)", spec)
     kind = fields.get("type", "exploratory").split()[0].strip("*").lower()
     if not m:
@@ -319,10 +335,12 @@ def _primary(fields: dict, comps: dict) -> str:
 
 
 def _methods(fields: dict, df: pd.DataFrame) -> str:
-    keys = ["type", "hypothesis", "question", "primary endpoint", "secondary endpoints (reported, not used for h1)",
-            "unit of analysis", "datasets", "exclusions", "exclusion rules (fixed now)", "comparison family",
+    keys = ["type", "hypothesis", "question", "primary endpoint", "secondary endpoints",
+            "unit of analysis", "datasets", "exclusions", "exclusion rules", "comparison family",
             "test", "seeds", "models", "code", "environment", "data", "machine"]
-    items = [f"\\item[{tex_escape(k)}] {tex_escape(fields[k])}" for k in keys if fields.get(k)]
+    # a record key may carry a parenthetical, e.g. "secondary endpoints (reported, not used for h1)"
+    found = [next((f for f in fields if f == k or f.startswith(k + " (")), None) for k in keys]
+    items = [f"\\item[{tex_escape(f)}] {tex_escape(fields[f])}" for f in found if f and fields.get(f)]
     models = sorted({c[2:].rsplit("_auto_", 1)[0] for c in df if c.startswith("m_") and "_auto_auprc_ratio" in c})
     items.append(f"\\item[models scored] {tex_escape(', '.join(models))}")
     return "\\begin{description}\n" + "\n".join(items) + "\n\\end{description}\n"

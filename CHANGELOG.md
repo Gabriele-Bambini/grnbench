@@ -57,6 +57,24 @@
   +0.182 [+0.138, +0.227] on 20 fresh CELLxGENE datasets (p_Holm 1.4e-7); EPR lift unresolved.
   Reproduced computationally (independent agent rerun from the record, identical numbers);
   human reproduction pending.
+- EXP-20260926-LM-1 (confirmatory, pre-registered, first HPC experiment): on the same 20 datasets
+  the motif prior lifts the AUPRC ratio for RegDiffusion by +0.184 [+0.132, +0.237] (n = 19,
+  p_Holm 1.2e-6) and for GRNBoost2 by +0.130 [+0.108, +0.153] (n = 20, p_Holm 3.6e-10). EPR lift
+  resolved for GRNBoost2, not for RegDiffusion. Reproduced computationally (independent agent
+  rerun on the HPC, identical numbers); human reproduction pending.
+- `paper/tables/T_models_real_EXP-20260925-LM-1.md` regenerated: it still had the 45-character
+  truncated dataset ids fixed in #7 (numbers unchanged).
+
+### Added (HPC experiment tooling, EXP-20260926-LM-1)
+- `hpc/engine_bench.sbatch`: `MODELS` (models joined by `+`, since `sbatch --export` splits on
+  commas) and `KEEP_ARTIFACTS=1` reach `real_bench.py run`; the job copies `GIT_COMMIT` to
+  `$OUT/CODE_COMMIT`. `hpc/setup_env.sh`: `WITH_TORCH=1` installs RegDiffusion + CPU torch from the
+  pinned line in the lock header. `hpc/fetch_cistarget.sh`: the six cisTarget v10 files.
+- `fetch_cellxgene.py --from-manifest`: fetch exactly the datasets of an earlier manifest (no
+  listing, no re-selection). `data_manifest.py --check`: verify a data root against
+  `experiments/datasets.tsv` (exit 1 on any mismatch or unlisted file; LF/CRLF-only differences
+  in text files are reported as `ok-eol`).
+- `grnbench report`: several `;`-separated co-primary comparisons in a record each get a verdict.
 
 ### Added (VPN tooling for collaborators)
 - `hpc/vpn.ps1` (Windows GlobalProtect): `status`, `reconnect` (restart PanGPS, wait up to 90 s,
@@ -68,6 +86,12 @@
   Windows ssh-agent: `StartupType Automatic` once, no per-reboot step.
 
 ### Fixed
+- `grnbench report`: record keys containing commas or backticks were read as continuation text and
+  fenced code was appended to the key above, garbling the Methods section; a note after the
+  primary comparison containing `;` was read as a second hypothesis. LaTeX of EXP-20260925-LM-2
+  and EXP-20260926-LM-1 regenerated from unchanged rows (numbers identical).
+- `hpc/engine_bench.sbatch` imports grnbench from the checkout it runs (`PYTHONPATH`), so
+  `CODE_COMMIT` always names the code that ran, not the conda env's editable install.
 - RegDiffusion adapter: genes that are constant in the scored cells (possible after the 3,000-cell
   subsample) are dropped before training instead of making RegDiffusion refuse the whole context
   (`1 genes have 0 variance`; 1/20 datasets in EXP-20260926-LM-1, issue #13). They get no edges.

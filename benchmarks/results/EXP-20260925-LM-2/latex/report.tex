@@ -7,13 +7,15 @@
 \begin{document}
 \maketitle
 \section*{Status}
-Experiment EXP-20260925-LM-2, type: confirmatory. Record status: registered. Reproduced by: nobody yet.
+Experiment EXP-20260925-LM-2, type: confirmatory. Record status: **reproduced-computational** (2026-09-26). A different agent reran the experiment from this record alone and got the same numbers. This is not a second-human reproduction: a Claude Code agent that did not write PR \#3 or PR \#7 ran it for LM, because GB was unavailable (exam). Human reproduction (GB) is still pending, so paper/CLAIMS.md C4 stays below reproduced.. Reproduced by: independent agent rerun (computational, directed by LM), 2026-09-26; human reproduction pending.
 \section{Configuration summary}
 \input{tables/configuration.tex}
 \section{Methods}
 \begin{description}
 \item[type] **confirmatory** (pre-registration = the commit that adds this file, pushed before any dataset of this list was downloaded or scored)
-\item[primary endpoint] AUPRC ratio (AUPRC / prevalence; 1 = random) on the CollecTRI evaluation half, **auto** pipeline arm (the engine's screened choice), mean over contexts within a dataset. pearson\_motif vs motif\_prior (does expression add to the prior alone).
+\item[hypothesis (h1, primary, directional)] on real scRNA-seq, pearson\_motif (Pearson co-expression rank-producted with the cisTarget motif prior) recovers the CollecTRI evaluation half better than pearson\_signed alone.
+\item[primary endpoint] AUPRC ratio (AUPRC / prevalence; 1 = random) on the CollecTRI evaluation half, **auto** pipeline arm (the engine's screened choice), mean over contexts within a dataset.
+\item[secondary endpoints (reported, not used for h1)] EPR; the baseline pipeline arm; pearson\_motif vs motif\_prior (does expression add to the prior alone).
 \item[unit of analysis] dataset. Planned n = 20 (list below); analysed n = datasets with a score for both members of a pair (printed per pair).
 \item[datasets] experiments/EXP-20260925-LM-2.datasets.tsv (20 CELLxGENE Discover datasets, human 16 / mouse 4, 8 protocols), chosen by benchmarks/fetch\_cellxgene.py --max 20 --max-mb 60 --organisms "Homo sapiens,Mus musculus" --exclude-ids experiments/EXP-20260925-LM-2.excluded\_ids.txt --exclude-assay targeted on the public listing of 2026-09-25. Excluded before selection: the 31 dataset ids used by any earlier experiment (EXP-20260925-LM-2.excluded\_ids.txt) and targeted panels (not transcriptomes).
 \item[exclusion rules (fixed now)] (a) a dataset whose download fails or whose sha256 cannot be recorded is replaced by nobody and reported as missing; (b) datasets with fewer than 50 reference edges among their genes are not scored (MIN\_REFERENCE\_EDGES, as in the code); (c) a dataset where a model errors is dropped from the pairs involving that model only, and reported; (d) no other exclusion, no outlier removal.
@@ -149,6 +151,7 @@ Experiment EXP-20260925-LM-2, type: confirmatory. Record status: registered. Rep
 
 \section{Limitations}
 \begin{itemize}
+\item Recorded deviation: (1) the report step first crashed: real\_bench.\_model\_matrix truncated dataset ids to 45 characters and two Patch-seq datasets collided (unit and method identifiers must be unique). Fixed after the run (full ids; test test\_real\_bench\_model\_matrix\_keeps\_datasets\_with\_a\_common\_prefix\_apart) and the report was regenerated from the unchanged rows; the scores and the test are as registered. (2) Figures in git cover 3 of 20 datasets (size rule), all 20 kept outside git.
 \item Doublet calling fell back to the heuristic in 4 of 20 datasets.
 \end{itemize}
 

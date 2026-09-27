@@ -2,7 +2,7 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-09-26 by LM's agent. PR #3, PR #7 and the shared-workflow PR were merged by the owner
+Updated: 2026-09-27 by LM's agent. PR #3, PR #7 and the shared-workflow PR were merged by the owner
 after independent agent reviews, not human reviews (GB was away).
 
 ## Focus
@@ -12,6 +12,13 @@ pre-registered experiments (D-017).
 
 ## In progress
 - Nothing running. No open `running` issues.
+- EXP-20260926-LM-1 (confirmatory, HPC job 670902, results PR on `lm/exp-hpc-motif-models`):
+  the motif prior lifts the AUPRC ratio for RegDiffusion by +0.184 [+0.132, +0.237] (n = 19,
+  p_Holm 1.2e-6) and for GRNBoost2 by +0.130 [+0.108, +0.153] (n = 20, p_Holm 3.6e-10); both
+  supported. EPR: GRNBoost2 lift resolved (+0.61), RegDiffusion unresolved (about 0). Claim C5
+  `reproduced-computational` (agent rerun on the HPC, identical numbers, issue #15); human pending. One dataset lost to a RegDiffusion zero-variance error (issue #13).
+  Edges and processed data (190 MB) stay on the cluster in `~/gb_runs/EXP-20260926-LM-1`.
+- Issue #6 merged (#11): scrublet pools batches under 100 cells.
 - EXP-20260925-LM-2 (confirmatory, merged in #7): the motif prior lifts Pearson's AUPRC ratio by
   +0.182 [+0.138, +0.227], n = 20, p_Holm 1.4e-7 (H1 supported; the EPR lift is unresolved).
   An independent agent reran it from the record on 2026-09-26 and got identical numbers (record
@@ -23,16 +30,9 @@ pre-registered experiments (D-017).
 1. GB: reproduce EXP-20260925-LM-2 by hand from the record (on another OS or machine if possible),
    then fill section 4 and set C4 to `reproduced`. Review, or challenge, the agent-reviewed merges
    #3, #7 and the workflow PR (AGENTS.md section 5: open an issue citing the PR).
-2. Issue #6 (small-batch scrublet) fixed on `lm/scrublet-small-batches`: batches under 100 cells
-   are pooled for scrublet, a pool under 100 cells stays unscored, the manifest records it. Runs
-   registered before this change keep their recorded fallbacks; new runs use the rule.
-3. First HPC pre-registered experiment, for whichever teammate takes it. Claim it first (an
-   `experiment` issue assigned to you), then write the record. Models: RegDiffusion and GRNBoost2,
-   each alone and with the motif prior (`regdiffusion_motif`, `grnboost2_motif`; pairs already in
-   `real_bench.DECLARED_PAIRS`). Unit = dataset. Candidate data: the 20 LM-2 datasets, whose sha256
-   are known, or a fresh set chosen with `--exclude-ids`. Batch all tasks into one job (QOS `stud`:
-   1 running + 1 queued, 8 CPUs; `docs/HPC.md`, skill `grnbench-hpc`). RegDiffusion needs torch
-   on the cluster.
+2. (done, #11) Issue #6 small-batch scrublet rule.
+3. GB: reproduce EXP-20260926-LM-1 by hand (C5 is only `reproduced-computational`). Issue #13 is
+   fixed (#16). A fresh-set rerun would remove the "seen in LM-2" caveat of C5.
 4. First confirmatory synthetic + real engine experiment on HPC (auto vs baseline cleaning).
 5. Recalibrate `context_scope` in `selector.py` with bench evidence (add a "goal" input); regenerate the KB doc.
 6. Simulator: partially cell-type-specific networks, then rerun synthetic.

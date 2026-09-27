@@ -1,0 +1,173 @@
+\documentclass{article}
+\usepackage{fullpage,booktabs,graphicx,hyperref,float,array}
+\input{values.tex}
+\title{EXP-20260926-LM-1: Confirmatory - does the motif prior lift RegDiffusion and GRNBoost2 on real data?}
+\author{grnbench report generated from EXP-20260926-LM-1}
+\date{}
+\begin{document}
+\maketitle
+\section*{Status}
+Experiment EXP-20260926-LM-1, type: confirmatory. Record status: done (2026-09-27; Slurm job 670902, COMPLETED 0:0 in 1 h 10 min, 20/20 datasets, 0 task errors; 8 workers on gnode01, peak memory of the batch step 11.7 GiB of the 32 GB requested). Reproduced by: nobody yet.
+\section{Configuration summary}
+\input{tables/configuration.tex}
+\section{Methods}
+\begin{description}
+\item[type] **confirmatory** (pre-registration = the commit that adds this file, pushed before any of the four models below was run on any dataset of this list)
+\item[hypothesis] co-primary, directional. H1: regdiffusion\_motif (RegDiffusion edges rank-producted with the cisTarget motif prior) recovers the CollecTRI evaluation half better than regdiffusion alone. H2: grnboost2\_motif recovers it better than grnboost2 alone.
+\item[primary endpoint] AUPRC ratio (AUPRC / prevalence; 1 = random) on the CollecTRI evaluation half, **auto** pipeline arm (the engine's screened choice), mean over contexts within a dataset.
+\item[secondary endpoints (reported, not used for h1/h2)] EPR; the baseline pipeline arm; each model's mean AUPRC ratio against random (1.0), descriptive only.
+\item[unit of analysis] dataset. Planned n = 20; analysed n = datasets with a score for both members of a pair (printed per pair by the report).
+\item[datasets] the 20 CELLxGENE datasets of EXP-20260925-LM-2 (experiments/EXP-20260925-LM-2.datasets.tsv; sha256 of every data.h5ad and truth.json in experiments/datasets.tsv). Why not fresh data: (1) none of the four models has ever been scored on them (the exploratory estimates above come from 12 other datasets); (2) their bytes are pinned by sha256, so the cluster copy is checked, not trusted; (3) the same datasets make these results directly comparable with the Pearson results of LM-2 (descriptive only, no test across experiments). What this costs: the motif prior and the pipeline choices on these datasets were already seen in LM-2 with Pearson, so the set is not blind to "the motif prior helps on these data". A fresh-set rerun would remove that.
+\item[exclusion rules (fixed now)] (a) a dataset whose download fails or whose sha256 does not match experiments/datasets.tsv is replaced by nobody and reported as missing (for truth.json a difference in line endings only is accepted, data\_manifest.py --check reports it as ok-eol); (b) datasets with fewer than 50 reference edges among their genes are not scored (MIN\_REFERENCE\_EDGES); (c) a dataset where a model errors is dropped from the pairs involving that model only, and reported; (d) a dataset still unfinished after the job and one resubmission of the same commit (resource limits: TIMEOUT or out of memory) is reported as missing; (e) no other exclusion, no outlier removal.
+\item[comparison family] real\_bench.DECLARED\_PAIRS restricted to the models run = \{(regdiffusion\_motif, regdiffusion), (grnboost2\_motif, grnboost2)\}, both directions = 4 directed hypotheses per metric and arm.
+\item[test] paired t over datasets, two-sided per direction, via compare\_units for each pair (95\% interval of the mean paired difference), Holm over the 4 directed hypotheses of the AUPRC ratio / auto family, alpha 0.05. For each of H1, H2: **supported** if p\_Holm(motif > plain) < 0.05; **refuted** if p\_Holm(plain > motif) < 0.05; otherwise inconclusive (not evidence of equality). Holm over the family already accounts for testing two co-primary hypotheses.
+\item[seeds] reference split seed 0 (screen.split\_reference), cell subsample seed 0 (at most 3,000 cells per context, MAX\_SCORE\_CELLS), scrublet seed 0, RegDiffusion seed 0 (1,000 steps, CPU), GRNBoost2 seed 42 (the adapter defaults); regulators = the 150 TFs with most reference targets in the data (MAX\_TFS).
+\item[models] regdiffusion, regdiffusion\_motif, grnboost2, grnboost2\_motif (exactly these four).
+\item[code] branch lm/exp-hpc-motif-models after merging main with PR \#11 (issue \#6: batches under 100 cells are pooled for scrublet, so the 4 LM-2 datasets that fell back to the heuristic now get scrublet; this changes their processed data relative to LM-2, which is one more reason the comparison with LM-2 is descriptive only). The job copies GIT\_COMMIT (written by hpc/hpc.sh sync) to the results folder as CODE\_COMMIT; that commit must be clean.
+\item[environment] conda env grnbench on the cluster, Python 3.11, requirements/lock-py311.txt plus the RegDiffusion line of its header (regdiffusion 0.2.3, torch 2.14.0 CPU) via WITH\_TORCH=1 bash hpc/setup\_env.sh.
+\item[machine] Bocconi HPC, partition/QOS stud, 1 job, 8 CPUs (8 dataset workers, one thread each), 32 GB. Expected cost: RegDiffusion took 808 s per dataset and arm on the laptop in LM-1; with --keep-artifacts both arms are scored, so about 40 RegDiffusion fits plus screening, roughly 3-6 h on 8 single-threaded workers.
+\item[models scored] grnboost2, grnboost2\_motif, regdiffusion, regdiffusion\_motif
+\end{description}
+
+\section{Results}
+\subsection{Primary comparison}
+\paragraph{Pre-registered primary hypothesis.} regdiffusion\_motif $>$ regdiffusion on AUPRC ratio, auto pipeline. Mean paired difference \gbDiffAuprcRatioAutoRegdiffusionMotifVsRegdiffusion{} (95\% interval \gbCiLowAuprcRatioAutoRegdiffusionMotifVsRegdiffusion{} to \gbCiHighAuprcRatioAutoRegdiffusionMotifVsRegdiffusion{}), n = \gbNAuprcRatioAutoRegdiffusionMotifVsRegdiffusion{} datasets, paired t, Holm over \gbFamilyAuprcRatioAuto{} directed hypotheses: $p_{\mathrm{Holm}}$ = \gbPHolmAuprcRatioAutoRegdiffusionMotifVsRegdiffusion{}. Verdict by the rule fixed in the record: \textbf{supported}.
+\paragraph{Pre-registered primary hypothesis.} grnboost2\_motif $>$ grnboost2 on AUPRC ratio, auto pipeline. Mean paired difference \gbDiffAuprcRatioAutoGrnboostTwoMotifVsGrnboostTwo{} (95\% interval \gbCiLowAuprcRatioAutoGrnboostTwoMotifVsGrnboostTwo{} to \gbCiHighAuprcRatioAutoGrnboostTwoMotifVsGrnboostTwo{}), n = \gbNAuprcRatioAutoGrnboostTwoMotifVsGrnboostTwo{} datasets, paired t, Holm over \gbFamilyAuprcRatioAuto{} directed hypotheses: $p_{\mathrm{Holm}}$ = \gbPHolmAuprcRatioAutoGrnboostTwoMotifVsGrnboostTwo{}. Verdict by the rule fixed in the record: \textbf{supported}.
+
+\subsection{Performance per model, across datasets}
+\input{tables/models.tex}
+\subsection{Performance per dataset}
+\input{tables/per_dataset.tex}
+\subsection{Comparative summary: declared comparisons}
+\input{tables/comparisons_auprc_ratio_auto.tex}
+\input{tables/comparisons_auprc_ratio_baseline.tex}
+\input{tables/comparisons_epr_auto.tex}
+\input{tables/comparisons_epr_baseline.tex}
+\section{Visualizations and explainability}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/calibration_cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002.png}
+\caption{-   (n = 20000 edges) - built from  grnboost2.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/calibration_cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__df287f8d.png}
+\caption{-   (n = 20000 edges) - built from  grnboost2.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/calibration_cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__b94e3bdf.png}
+\caption{-   (n = 20000 edges) - built from  grnboost2.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/embed_cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002.png}
+\caption{-   (n = 5500 cells) - built from  tasks.json (raw data)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/embed_cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__df287f8d.png}
+\caption{-   (n = 1295 cells) - built from  tasks.json (raw data)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/embed_cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__b94e3bdf.png}
+\caption{-   (n = 5970 cells) - built from  tasks.json (raw data)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/lift_grnboost2_motif_vs_grnboost2.png}
+\caption{-   (n = 20 datasets) - built from  rows/ .json (grnboost2\_motif vs grnboost2)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/lift_regdiffusion_motif_vs_regdiffusion.png}
+\caption{-   (n = 19 datasets) - built from  rows/ .json (regdiffusion\_motif vs regdiffusion)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/motif_lift_cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002_grnboost2.png}
+\caption{-   (n = shared TFs) - built from  grnboost2.tsv.gz vs grnboost2\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/motif_lift_cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__df287f8d_grnboost2.png}
+\caption{-   (n = shared TFs) - built from  grnboost2.tsv.gz vs grnboost2\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/motif_lift_cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__df287f8d_regdiffusion.png}
+\caption{-   (n = shared TFs) - built from  regdiffusion.tsv.gz vs regdiffusion\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/motif_lift_cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__b94e3bdf_grnboost2.png}
+\caption{-   (n = shared TFs) - built from  grnboost2.tsv.gz vs grnboost2\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/motif_lift_cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__b94e3bdf_regdiffusion.png}
+\caption{-   (n = shared TFs) - built from  regdiffusion.tsv.gz vs regdiffusion\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/network_cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002.png}
+\caption{-   (n = 60 edges) - built from  grnboost2\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/network_cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__df287f8d.png}
+\caption{-   (n = 60 edges) - built from  grnboost2\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/network_cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__b94e3bdf.png}
+\caption{-   (n = 60 edges) - built from  grnboost2\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/pr_cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002.png}
+\caption{-   (n = 20000 edges) - built from  artifacts/cxg\_\_10x-3-v2\_\_homo-sapiens\_\_entorhinal-cortex\_\_06b91002/auto/ctx0}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/pr_cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__df287f8d.png}
+\caption{-   (n = 20000 edges) - built from  artifacts/cxg\_\_10x-3-v2\_\_homo-sapiens\_\_peripheral-zone-of-prostate\_\_df287f8d/auto/ctx0}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/pr_cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__b94e3bdf.png}
+\caption{-   (n = 20000 edges) - built from  artifacts/cxg\_\_10x-3-v2\_\_homo-sapiens\_\_superior-frontal-gyrus\_\_b94e3bdf/auto/ctx0}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/qc_cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002.png}
+\caption{-   (n = 5500 cells) - built from  tasks.json (raw data)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/qc_cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__df287f8d.png}
+\caption{-   (n = 1295 cells) - built from  tasks.json (raw data)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/qc_cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__b94e3bdf.png}
+\caption{-   (n = 5970 cells) - built from  tasks.json (raw data)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/scores_auprc_ratio_auto.png}
+\caption{-   (n = 20 datasets) - built from  rows/ .json (auto/auprc\_ratio)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/scores_auprc_ratio_baseline.png}
+\caption{-   (n = 20 datasets) - built from  rows/ .json (baseline/auprc\_ratio)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/scores_epr_auto.png}
+\caption{-   (n = 20 datasets) - built from  rows/ .json (auto/epr)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/scores_epr_baseline.png}
+\caption{-   (n = 20 datasets) - built from  rows/ .json (baseline/epr)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/tf_recovery_cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002.png}
+\caption{-   (n = up to 30 TFs) - built from  artifacts/cxg\_\_10x-3-v2\_\_homo-sapiens\_\_entorhinal-cortex\_\_06b91002/auto}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/tf_recovery_cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__df287f8d.png}
+\caption{-   (n = up to 30 TFs) - built from  artifacts/cxg\_\_10x-3-v2\_\_homo-sapiens\_\_peripheral-zone-of-prostate\_\_df287f8d/auto}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/tf_recovery_cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__b94e3bdf.png}
+\caption{-   (n = up to 30 TFs) - built from  artifacts/cxg\_\_10x-3-v2\_\_homo-sapiens\_\_superior-frontal-gyrus\_\_b94e3bdf/auto}
+\end{figure}
+
+\section{Limitations}
+\begin{itemize}
+\item Recorded deviation: deviation 1 above (attempt 1 failed for lack of disk in the compute node's /tmp, one resubmission under rule d); nothing else.
+\item Model error in 1 dataset(s): regdiffusion\_baseline.
+\item Model error in 1 dataset(s): regdiffusion\_motif\_baseline.
+\item Model error in 1 dataset(s): regdiffusion\_auto.
+\item Model error in 1 dataset(s): regdiffusion\_motif\_auto.
+\end{itemize}
+
+\end{document}

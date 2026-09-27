@@ -19,6 +19,11 @@
 #   python benchmarks/real_bench.py plan --data-root ~/grnbench_data --out $OUT/real_tasks.json
 #   sbatch --array=0-N%10 --export=ALL,OUT=$OUT,SCRIPT=benchmarks/real_bench.py,TASKS=$OUT/real_tasks.json,REFS=$HOME/grnbench_data/references,CHUNK=2 \
 #          hpc/engine_bench.sbatch
+#   # one job for a whole registered experiment (QOS stud: 1 running + 1 queued job), with models
+#   # and the artifacts the figures need; GRNBENCH_CISTARGET_DIR for the *_motif models.
+#   # --export splits on commas, so MODELS separates models with '+':
+#   sbatch --time=24:00:00 --export=ALL,OUT=$OUT,SCRIPT=benchmarks/real_bench.py,TASKS=$OUT/real_tasks.json,REFS=$DATA/references,CHUNK=100000,MODELS=regdiffusion+regdiffusion_motif,KEEP_ARTIFACTS=1,GRNBENCH_CISTARGET_DIR=$DATA/cistarget \
+#          hpc/engine_bench.sbatch
 #   # when every element is done:
 #   python benchmarks/engine_bench.py report --out $OUT
 #
@@ -39,11 +44,20 @@ WORK="${TMPDIR:-/tmp}/gb_engine_${SLURM_ARRAY_JOB_ID:-0}_${SLURM_ARRAY_TASK_ID:-
 source "$CONDA_SH" && conda activate "$ENV_NAME" || {
   echo "cannot activate conda env '$ENV_NAME' - run: bash hpc/setup_env.sh" >&2; exit 1; }
 cd "$REPO_DIR" || exit 1
+# Import grnbench from this checkout, whatever the conda env's editable install points at:
+# CODE_COMMIT below names this checkout, so the code that runs must be this checkout's.
+export PYTHONPATH="$REPO_DIR/src${PYTHONPATH:+:$PYTHONPATH}"
 echo "node $(hostname)  cpus $JOBS  task ${SLURM_ARRAY_TASK_ID:-0}  chunk $CHUNK"
 SCRIPT="${SCRIPT:-benchmarks/engine_bench.py}"       # or benchmarks/real_bench.py
 TASKS="${TASKS:-$OUT/tasks.json}"
 EXTRA=()
 [ -n "${REFS:-}" ] && EXTRA+=(--refs "$REFS")         # real_bench: reference networks folder
+[ -n "${MODELS:-}" ] && EXTRA+=(--models "${MODELS//+/,}")   # real_bench: 'a+b' (sbatch --export splits on ',')
+[ "${KEEP_ARTIFACTS:-0}" = 1 ] && EXTRA+=(--keep-artifacts)   # real_bench: edges + processed data for viz
+# The record cites the code the job ran: hpc.sh sync writes GIT_COMMIT next to the code.
+mkdir -p "$OUT"
+[ -f GIT_COMMIT ] && cp GIT_COMMIT "$OUT/CODE_COMMIT"
+echo "code $(cat GIT_COMMIT 2>/dev/null || echo unknown)  python $(python --version 2>&1)  models ${MODELS:-default}"
 python "$SCRIPT" run --tasks "$TASKS" --out "$OUT" "${EXTRA[@]}" \
        --index "${SLURM_ARRAY_TASK_ID:-0}" --chunk "$CHUNK" --jobs "$JOBS" --workroot "$WORK"
 status=$?

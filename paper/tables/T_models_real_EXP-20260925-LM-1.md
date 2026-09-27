@@ -85,16 +85,16 @@ Source: EXP-20260925-LM-1 (exploratory).
 
 | dataset | pearson_signed | spearman_signed | clr | grnboost2 | regdiffusion | motif_prior | pearson_motif | grnboost2_motif | regdiffusion_motif | grnboost2_cistarget |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 10x-3-v2__homo-sapiens__superior-frontal-gyru | 1.14 | 1.27 | 1.15 | 1.04 | 1.27 | 1.54 | 1.48 | 1.19 | 1.63 | 1.10 |
-| 10x-3-v2__mus-musculus__large-intestine__de4e | 1.26 | 1.43 | 1.40 | 1.10 | 1.54 | 1.28 | 1.45 | 1.22 | 1.67 | 1.19 |
+| 10x-3-v2__homo-sapiens__superior-frontal-gyrus__bdacc907 | 1.14 | 1.27 | 1.15 | 1.04 | 1.27 | 1.54 | 1.48 | 1.19 | 1.63 | 1.10 |
+| 10x-3-v2__mus-musculus__large-intestine__de4e7a0c | 1.26 | 1.43 | 1.40 | 1.10 | 1.54 | 1.28 | 1.45 | 1.22 | 1.67 | 1.19 |
 | 10x-3-v3__homo-sapiens__liver__d7476ae2 | 1.97 | 1.94 | 1.62 | 1.07 | 1.94 | 1.44 | 2.05 | 1.18 | 2.07 | 1.12 |
-| 10x-3-v3__mus-musculus__cervical-spinal-cord_ | 0.97 | 1.05 | 1.23 | 1.10 | 1.20 | 1.64 | 1.36 | 1.29 | 1.62 | 1.14 |
+| 10x-3-v3__mus-musculus__cervical-spinal-cord__9fcd3812 | 0.97 | 1.05 | 1.23 | 1.10 | 1.20 | 1.64 | 1.36 | 1.29 | 1.62 | 1.14 |
 | 10x-5-v1__homo-sapiens__lung__703f00e6 | 1.30 | 1.44 | 1.45 | 1.11 | 1.65 | 1.26 | 1.39 | 1.21 | 1.62 | 1.26 |
 | 10x-5-v2__mus-musculus__caecum__0a1ad9d5 | 1.30 | 1.30 | 1.26 | 1.13 | 1.30 | 1.64 | 1.68 | 1.40 | 1.71 | 1.28 |
-| 10x-multiome__homo-sapiens__atrioventricular- | 1.25 | 1.58 | 1.30 | 1.06 | 1.47 | 1.50 | 1.52 | 1.21 | 1.71 | 1.10 |
-| cel-seq2__homo-sapiens__left-main-bronchus__0 | 1.40 | 1.41 | 1.26 | 1.10 | 1.40 | 1.36 | 1.61 | 1.22 | 1.58 | 1.21 |
-| cel-seq__homo-sapiens__epithelium-of-main-bro | 1.16 | 1.17 | 1.32 | 1.05 | 1.35 | 1.43 | 1.41 | 1.21 | 1.58 | 1.17 |
-| patch-seq__mus-musculus__primary-motor-cortex | 1.22 | 1.16 | 1.14 | 1.14 | 1.31 | 1.27 | 1.37 | 1.20 | 1.43 | 1.17 |
+| 10x-multiome__homo-sapiens__atrioventricular-node__680029ee | 1.25 | 1.58 | 1.30 | 1.06 | 1.47 | 1.50 | 1.52 | 1.21 | 1.71 | 1.10 |
+| cel-seq2__homo-sapiens__left-main-bronchus__03da97e9 | 1.40 | 1.41 | 1.26 | 1.10 | 1.40 | 1.36 | 1.61 | 1.22 | 1.58 | 1.21 |
+| cel-seq__homo-sapiens__epithelium-of-main-bronchus__61d327d1 | 1.16 | 1.17 | 1.32 | 1.05 | 1.35 | 1.43 | 1.41 | 1.21 | 1.58 | 1.17 |
+| patch-seq__mus-musculus__primary-motor-cortex__8f98c236 | 1.22 | 1.16 | 1.14 | 1.14 | 1.31 | 1.27 | 1.37 | 1.20 | 1.43 | 1.17 |
 | smart-seq2__homo-sapiens__blood__a5d95a42 | 1.30 | 1.11 | 1.14 | 1.08 | 1.30 | 1.53 | 1.59 | 1.22 | 1.63 | 1.12 |
 | smart-seq2__mus-musculus__aorta__0380ddce | 1.55 | 1.43 | 1.37 | 1.20 | 1.45 | 1.30 | 1.67 | 1.33 | 1.62 | 1.23 |
 

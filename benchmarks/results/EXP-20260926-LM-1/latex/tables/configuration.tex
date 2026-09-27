@@ -1,0 +1,17 @@
+\begin{table}[H]\centering\small
+\caption{Configuration of the run, from the experiment record and the run folder.}
+\begin{tabular}{p{0.3\linewidth}p{0.62\linewidth}}\toprule
+experiment & EXP-20260926-LM-1 \\
+type & **confirmatory** (pre-registration = the commit that adds this file, pushed before any of the four models below was run on any dataset of this list) \\
+owner & LM (agent-run)   issue: \#10   registered: 2026-09-26 \\
+datasets (rows) & 20 \\
+models & grnboost2, grnboost2\_motif, regdiffusion, regdiffusion\_motif \\
+arms & auto, baseline \\
+code & branch lm/exp-hpc-motif-models after merging main with PR \#11 (issue \#6: batches under 100 cells are pooled for scrublet, so the 4 LM-2 datasets that fell back to the heuristic now get scrublet; this changes their processed data relative to LM-2, which is one more reason the comparison with LM-2 is descriptive only). The job copies GIT\_COMMIT (written by hpc/hpc.sh sync) to the results folder as CODE\_COMMIT; that commit must be clean. \\
+code commit (run folder) & 84f28e1edfdee819cce4e5323c719cc59a32b1fc \\
+environment & conda env grnbench on the cluster, Python 3.11, requirements/lock-py311.txt plus the RegDiffusion line of its header (regdiffusion 0.2.3, torch 2.14.0 CPU) via WITH\_TORCH=1 bash hpc/setup\_env.sh. \\
+machine & Bocconi HPC, partition/QOS stud, 1 job, 8 CPUs (8 dataset workers, one thread each), 32 GB. Expected cost: RegDiffusion took 808 s per dataset and arm on the laptop in LM-1; with --keep-artifacts both arms are scored, so about 40 RegDiffusion fits plus screening, roughly 3-6 h on 8 single-threaded workers. \\
+seeds & reference split seed 0 (screen.split\_reference), cell subsample seed 0 (at most 3,000 cells per context, MAX\_SCORE\_CELLS), scrublet seed 0, RegDiffusion seed 0 (1,000 steps, CPU), GRNBoost2 seed 42 (the adapter defaults); regulators = the 150 TFs with most reference targets in the data (MAX\_TFS). \\
+run folder & benchmarks/results/EXP-20260926-LM-1 \\
+generated & 2026-09-27 08:34 \\
+\bottomrule\end{tabular}\end{table}

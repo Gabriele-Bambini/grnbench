@@ -12,7 +12,7 @@
 - machine: local laptop (Windows, 3 workers)
 - seeds: reference split seed 0 (`screen.split_reference`), cell subsample seed 0 (at most 3,000 cells per context, `MAX_SCORE_CELLS`), scrublet seed 0; regulators = the 150 TFs with most reference targets in the data (`MAX_TFS`).
 - run folder: benchmarks/results/EXP-20260925-LM-2
-- generated: 2026-09-25 19:50
+- generated: 2026-09-27 08:34
 
 ## AUPRC ratio, auto pipeline (paired t, Holm over 4 directed hypotheses)
 

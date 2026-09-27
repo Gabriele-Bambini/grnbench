@@ -8,10 +8,16 @@ dataset - the ground truth the engine's context detection is checked against.
 
     python benchmarks/fetch_cellxgene.py --out DIR --max 30 --max-mb 100 [--dry-run]
         [--exclude-ids used_ids.txt] [--exclude-assay targeted]
+    python benchmarks/fetch_cellxgene.py --out DIR --from-manifest experiments/EXP-...datasets.tsv
+
+``--from-manifest`` skips the listing and the selection and fetches exactly the rows of an
+earlier ``manifest.tsv`` (same folders, URLs and truth.json), so a rerun gets the same files
+even if the public listing has changed since. Check them with ``data_manifest.py --check``.
 """
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import sys
 import time
@@ -94,9 +100,16 @@ def main(argv=None) -> int:
                         "e.g. every dataset used by earlier experiments, for a fresh confirmatory set")
     p.add_argument("--exclude-assay", default=None,
                    help="comma-separated case-insensitive substrings of assay labels to skip, e.g. 'targeted'")
+    p.add_argument("--from-manifest", default=None,
+                   help="fetch exactly the datasets of this manifest.tsv (no listing, no selection)")
     a = p.parse_args(argv)
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
+    if a.from_manifest:
+        with open(a.from_manifest, encoding="utf-8") as fh:
+            picked = [dict(r, filesize=int(r["filesize"]), cell_count=int(r["cell_count"]),
+                           collection="", citation="") for r in csv.DictReader(fh, delimiter="\t")]
+        return _write_and_fetch(out, picked, a.dry_run)
     with urlopen(Request(API, headers={"User-Agent": "grnbench"}), timeout=120) as r:
         datasets = json.load(r)
     if a.organisms:
@@ -112,6 +125,10 @@ def main(argv=None) -> int:
     picked = select(datasets, a.max, a.max_mb)
     for d in picked:
         d["folder"] = folder_for(d).as_posix()
+    return _write_and_fetch(out, picked, a.dry_run)
+
+
+def _write_and_fetch(out: Path, picked: list[dict], dry_run: bool) -> int:
     cols = ["folder", "dataset_id", "assay", "organism", "tissue", "suspension_type", "cell_count",
             "filesize", "title", "url"]
     lines = ["\t".join(cols)] + ["\t".join(str(d[c]).replace("\t", " ") for c in cols) for d in picked]
@@ -121,7 +138,7 @@ def main(argv=None) -> int:
     for d in picked:
         print(f"  {d['assay']:28s} {d['organism']:14s} {d['cell_count']:>7} cells "
               f"{d['filesize'] / 1e6:6.1f} MB  {d['title'][:60]}")
-    if a.dry_run:
+    if dry_run:
         return 0
     for d in picked:
         folder = out / d["folder"]

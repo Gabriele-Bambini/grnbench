@@ -1,6 +1,13 @@
 """Data provenance manifest: one row per data file under a data root, with source and sha256.
 
     python benchmarks/data_manifest.py DATA_ROOT > experiments/datasets.tsv
+    python benchmarks/data_manifest.py DATA_ROOT --check experiments/datasets.tsv
+
+``--check`` verifies every data file under DATA_ROOT against the manifest (same path, same
+sha256) and exits 1 if any file differs or is not listed. A text file (.json/.tsv/.txt/.tbl)
+whose only difference is LF vs CRLF line endings counts as a match and is reported as such:
+fetch scripts write text in the platform's line endings, so a truth.json written on Linux
+differs in bytes from the Windows copy that was hashed.
 
 Paths are relative to DATA_ROOT, so the manifest carries no personal path. Commit the TSV;
 never commit the data. Experiment records cite datasets by the `path` column.
@@ -50,5 +57,42 @@ def main(root_arg: str) -> int:
     return 0
 
 
+TEXT_SUFFIXES = {".json", ".tsv", ".txt", ".tbl"}
+
+
+def check(root_arg: str, manifest: str) -> int:
+    """Compare the files under DATA_ROOT with the manifest rows; 0 only if all match."""
+    root = Path(root_arg)
+    with open(manifest, encoding="utf-8") as fh:
+        want = {r["path"]: r["sha256"] for r in csv.DictReader(fh, delimiter="\t")}
+    counts = {"ok": 0, "ok-eol": 0, "MISMATCH": 0, "UNLISTED": 0}
+    for f in sorted(p for p in root.rglob("*") if p.is_file() and p.name not in SKIP):
+        rel = f.relative_to(root).as_posix()
+        if rel not in want:
+            status = "UNLISTED"
+        elif sha256(f) == want[rel]:
+            status = "ok"
+        elif f.suffix in TEXT_SUFFIXES and _eol_sha(f) == want[rel]:
+            status = "ok-eol"
+        else:
+            status = "MISMATCH"
+        counts[status] += 1
+        if status != "ok":
+            print(f"{status}\t{rel}")
+    print(" ".join(f"{k}={v}" for k, v in counts.items()))
+    return 1 if counts["MISMATCH"] or counts["UNLISTED"] else 0
+
+
+def _eol_sha(path: Path) -> str:
+    """sha256 of the file with its line endings flipped (LF <-> CRLF)."""
+    data = path.read_bytes()
+    flipped = (data.replace(b"\r\n", b"\n") if b"\r\n" in data
+               else data.replace(b"\n", b"\r\n"))
+    return hashlib.sha256(flipped).hexdigest()
+
+
 if __name__ == "__main__":
+    if "--check" in sys.argv:
+        i = sys.argv.index("--check")
+        sys.exit(check(sys.argv[1] if i > 1 else ".", sys.argv[i + 1]))
     sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else "."))

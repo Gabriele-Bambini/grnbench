@@ -45,3 +45,6 @@ HANDOFF.md
 *.bbl
 *.blg
 *.toc
+
+# written by hpc/hpc.sh sync (and local smoke tests of the job script)
+GIT_COMMIT
