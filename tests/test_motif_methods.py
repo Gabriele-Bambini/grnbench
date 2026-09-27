@@ -155,3 +155,39 @@ def test_real_bench_models_section_pairs_over_datasets_only():
     assert "| pearson_motif | pearson_signed | 6 |" in text        # AUPRC: all 6 units
     assert "| pearson_motif | pearson_signed | 5 |" in text        # EPR: the NaN unit dropped
     assert "supported" in text and "| pearson_motif |" in text
+
+
+def test_regdiffusion_drops_zero_variance_genes(monkeypatch):
+    """Issue #13: RegDiffusion refuses constant genes ('1 genes have 0 variance'), which appear
+    after the 3,000-cell subsample of real data. The adapter trains on the varying genes only;
+    constant genes get no edges. Stubbed regdiffusion: runs without torch."""
+    import sys
+    import types
+
+    from grnbench.infer.regdiffusion_adapter import regdiffusion_runner
+
+    seen = {}
+
+    class Trainer:
+        def __init__(self, X, **kw):
+            if (np.asarray(X).std(axis=0) == 0).any():
+                raise ValueError("1 genes have 0 variance. Please remove these genes from your data.")
+            seen["n_genes"] = X.shape[1]
+            self.n = X.shape[1]
+
+        def train(self):
+            pass
+
+        def get_adj(self):
+            return np.arange(self.n * self.n, dtype=float).reshape(self.n, self.n) + 1.0
+
+    monkeypatch.setitem(sys.modules, "regdiffusion", types.SimpleNamespace(RegDiffusionTrainer=Trainer))
+    rng = np.random.default_rng(0)
+    expr = pd.DataFrame(rng.normal(size=(50, 5)), columns=["TF1", "TF2", "g1", "g2", "g3"])
+    expr["g2"] = 1.5                       # constant after subsampling
+    expr["TF2"] = 0.0                      # a constant regulator too
+    edges = regdiffusion_runner(expr, tf_names=["TF1", "TF2"], n_steps=1)
+    assert seen["n_genes"] == 3
+    assert set(edges["source"]) == {"TF1"}
+    assert "g2" not in set(edges["target"]) and "TF2" not in set(edges["target"])
+    assert (edges["weight"] > 0).all()

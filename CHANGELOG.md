@@ -68,6 +68,9 @@
   Windows ssh-agent: `StartupType Automatic` once, no per-reboot step.
 
 ### Fixed
+- RegDiffusion adapter: genes that are constant in the scored cells (possible after the 3,000-cell
+  subsample) are dropped before training instead of making RegDiffusion refuse the whole context
+  (`1 genes have 0 variance`; 1/20 datasets in EXP-20260926-LM-1, issue #13). They get no edges.
 - `grnbench report --paper`: every experiment section defined the same macro names, so a
   second confirmed experiment would redefine the first one's numbers. Macros are now prefixed per
   experiment (test with two experiments).

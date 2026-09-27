@@ -26,6 +26,9 @@ def regdiffusion_runner(expr: pd.DataFrame, tf_names: list[str] | None = None, *
 
     from grnbench.infer.classical import _long, _regulators
 
+    # RegDiffusion refuses constant genes, and a cell subsample can make a gene constant
+    # (issue #13). They carry no co-variation, so they get no edges.
+    expr = expr.loc[:, expr.std(axis=0).to_numpy() > 0]
     regulators = _regulators(expr, tf_names)
     X = expr.to_numpy(dtype=np.float32)
     trainer = rd.RegDiffusionTrainer(X, n_steps=int(n_steps), device=device, seed=int(seed))
