@@ -186,6 +186,9 @@ through `.agents/skills/grnbench-hpc/`). Claude Code loads it as the `grnbench-h
   untracked `.env.hpc`. Scripts take the alias from `.env.hpc`; no username is ever committed.
 - The SSH key passphrase is loaded **by the person** into ssh-agent. Agents never type, store or
   ask for passphrases or passwords; `hpc/hpc.sh` runs ssh with `BatchMode=yes`.
+- VPN down (`Could not resolve hostname` / timeout): the agent reconnects it itself first
+  (`hpc/vpn.ps1 reconnect` on Windows, `globalprotect connect` on Linux; `docs/HPC.md` section 1b)
+  and asks the person only for the SSO sign-in, the one-time rights grant, or on macOS.
 - `Not allowed at this time` = lockout after failed logins: **stop, wait 10 minutes**, fix the key.
   Never retry auth in a loop.
 - QOS `stud` allows 1 running + 1 queued job per user and 8 CPUs: batch many tasks into one job.

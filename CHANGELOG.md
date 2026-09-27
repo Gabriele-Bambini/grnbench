@@ -58,6 +58,15 @@
   Reproduced computationally (independent agent rerun from the record, identical numbers);
   human reproduction pending.
 
+### Added (VPN tooling for collaborators)
+- `hpc/vpn.ps1` (Windows GlobalProtect): `status`, `reconnect` (restart PanGPS, wait up to 90 s,
+  no elevation after a one-time grant), `setup` (prints the admin command with your own SID) and
+  `grant <SID>` (idempotent `sc sdset` of one query/start/stop entry). `hpc/hpc.sh`: when the login
+  node does not resolve or answer, the first error line is the VPN command for your OS. Docs:
+  `docs/HPC.md` section 1b per OS (Linux `globalprotect` CLI, macOS none, both cited from Palo
+  Alto docs); agents reconnect the VPN themselves and ask only for SSO, the grant, or on macOS.
+  Windows ssh-agent: `StartupType Automatic` once, no per-reboot step.
+
 ### Fixed
 - `grnbench report --paper`: every experiment section defined the same macro names, so a
   second confirmed experiment would redefine the first one's numbers. Macros are now prefixed per

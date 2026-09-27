@@ -29,11 +29,30 @@ if [ -x /c/Windows/System32/OpenSSH/ssh.exe ] && [ "$SSH" = ssh ]; then
 fi
 SSH_OPTS=(-o BatchMode=yes -o ConnectTimeout=25 -o ServerAliveInterval=30)
 
+# What to run when the login node does not resolve or does not answer (off campus, VPN down).
+vpn_hint() {
+  case "${GRNBENCH_OS:-$(uname -s)}" in
+    MINGW*|MSYS*|CYGWIN*)
+      echo "VPN down? Run first: powershell -NoProfile -ExecutionPolicy Bypass -File hpc/vpn.ps1 reconnect" ;;
+    Linux)
+      echo "VPN down? Run first: globalprotect connect --portal vpnstudents.unibocconi.it   (check: globalprotect show --status)" ;;
+    Darwin)
+      echo "VPN down? Open the GlobalProtect app and connect to vpnstudents.unibocconi.it (macOS has no GlobalProtect CLI)." ;;
+    *)
+      echo "VPN down? Connect GlobalProtect to vpnstudents.unibocconi.it." ;;
+  esac
+  echo "Then retry once. Details: docs/HPC.md section 1b."
+}
+
 r() {
   local err rc=0
   err="$(mktemp)"
   "$SSH" "${SSH_OPTS[@]}" "$HOST" "$@" 2>"$err" || rc=$?
   if [ $rc -ne 0 ]; then
+    # 255 = ssh itself failed; other codes are the remote command's own errors (e.g. a pip timeout)
+    if [ $rc -eq 255 ] && grep -qiE "could not resolve hostname|timed out|no route to host|network is unreachable" "$err"; then
+      vpn_hint >&2
+    fi
     cat "$err" >&2
     if grep -q "Not allowed at this time" "$err"; then
       echo "LOCKED OUT after failed logins. Stop. Wait 10 minutes, then fix the key before retrying." >&2

@@ -21,19 +21,73 @@ All commands below run from the repo root in bash (Git Bash on Windows).
    ```
 
 3. **Passphrase into ssh-agent, by you.** Agents never type, store or ask for it.
-   - Windows (PowerShell): once, as admin, `Set-Service ssh-agent -StartupType Manual`; then
-     `Start-Service ssh-agent` after each reboot and `ssh-add $HOME\.ssh\id_bocconi`.
-     The key stays registered; only the service needs starting.
+   - Windows: once, in an administrator PowerShell,
+     `Set-Service ssh-agent -StartupType Automatic; Start-Service ssh-agent`; then once, in your
+     normal PowerShell, `ssh-add $HOME\.ssh\id_bocconi`. The service now starts at every boot and
+     the key stays registered, so there is no per-reboot step.
    - macOS: `ssh-add --apple-use-keychain ~/.ssh/id_bocconi`. Linux: `eval "$(ssh-agent)"; ssh-add ~/.ssh/id_bocconi`.
 4. **Settings:** `cp .env.hpc.example .env.hpc` and set `GRNBENCH_HPC_HOST=bocconi-hpc`
    (your alias). `.env.hpc` is gitignored; check with `git check-ignore .env.hpc`.
 5. **Check:** `bash hpc/hpc.sh check` prints your user, the host and the Slurm version.
+6. **VPN (off campus).** The login node resolves only inside the Bocconi VPN (Palo Alto
+   GlobalProtect; the student portal is `vpnstudents.unibocconi.it`). Set it up so an agent can
+   reconnect it without you, as far as your OS allows (section 1b).
+
+## 1b. VPN: what can be scripted, per OS
+
+GlobalProtect needs a person for the sign-in (the university's SSO). After one sign-in, the client
+keeps a cookie, and reconnects can reuse it until the portal expires it. That second part is what
+the scripts automate.
+
+**Windows** (`hpc/vpn.ps1`; GlobalProtect has no Windows CLI, so the script restarts its PanGPS
+service, and the tunnel comes back with the cached sign-in):
+
+1. One-time rights grant, by you. In your normal (non-admin) PowerShell, from the repo root:
+   `powershell -NoProfile -ExecutionPolicy Bypass -File hpc/vpn.ps1 setup`. It prints one command
+   with your own account SID filled in. The SID is read at run time, because the admin account
+   may not be yours. Run that printed command in an administrator PowerShell. It is:
+   ```
+   powershell -NoProfile -ExecutionPolicy Bypass -File <repo>\hpc\vpn.ps1 grant <your SID>
+   ```
+   It appends one entry, `(A;;LCSWRPWP;;;<your SID>)` (query status, list dependent services, start, stop), to the PanGPS service
+   permissions with `sc.exe sdset`, and does nothing if it is already there. A GlobalProtect
+   update can reset the permissions: if `reconnect` says it cannot restart the service, repeat this step.
+2. Then anyone at your account (you or an agent), no elevation:
+   ```
+   powershell -NoProfile -ExecutionPolicy Bypass -File hpc/vpn.ps1 status      # VPN up (...); login node resolves / VPN down
+   powershell -NoProfile -ExecutionPolicy Bypass -File hpc/vpn.ps1 reconnect   # about 30 s when the sign-in is cached
+   ```
+   `reconnect` exits 0 only once the login node resolves. The adapter can come up before the name
+   resolves, and ssh fails in between. Measured 2026-09-27: once, ssh still failed about 10 s after
+   the adapter was up; once, the adapter was up at 6 s and the name resolved at 8 s after the
+   service restart, about 28 s in all. It exits 1 after 90 s without a tunnel: the portal
+   wants a sign-in, so open GlobalProtect and connect once. It exits 2 when the grant of step 1
+   is missing. When the tunnel is already up and the login node resolves, it prints
+   `VPN already up ... Nothing restarted.` and leaves the service alone, because a restart cuts
+   every session using the tunnel. It restarts PanGPS only when the tunnel is actually down.
+
+**Linux**: the GlobalProtect app for Linux has a CLI
+([Palo Alto docs, 6.2](https://docs.paloaltonetworks.com/globalprotect/6-2/globalprotect-app-user-guide/globalprotect-app-for-linux/use-the-globalprotect-app-for-linux)):
+`globalprotect connect --portal vpnstudents.unibocconi.it` and `globalprotect show --status`.
+With SAML sign-in, the CLI works from GlobalProtect Linux 6.2.1 and needs Firefox installed (same
+page). Older versions need the GUI app for SAML.
+
+**macOS**: we found no GlobalProtect CLI for macOS in Palo Alto's documentation (unlike Linux).
+The command-line control Palo Alto does document stops and starts the service and the app with
+`launchctl unload` / `launchctl load` of `/Library/LaunchAgents/com.paloaltonetworks.gp.pangps.plist`
+and `/Library/LaunchAgents/com.paloaltonetworks.gp.pangpa.plist`
+([Palo Alto KB](https://knowledgebase.paloaltonetworks.com/KCSArticleDetail?id=kA10g0000008UGsCAM)).
+It does not say that a restart reconnects the tunnel. On macOS, connecting is a person step:
+open GlobalProtect and connect. `bash hpc/hpc.sh check` tells you whether it worked.
+
+On every OS, the real test is `bash hpc/hpc.sh check`. When the login node does not resolve or
+does not answer, the first line of its error is the VPN command for your OS.
 
 If it fails:
 
 | message | meaning | do |
 |---|---|---|
-| `Could not resolve hostname` / timeout | off campus: the login node resolves to a private IP | connect the Bocconi VPN |
+| `Could not resolve hostname` / timeout | off campus, VPN down: the login node's name resolves only inside the VPN | the VPN command `hpc.sh` prints first (section 1b), then retry once |
 | `Permission denied (publickey)` | key not in the agent, or wrong `User` | `ssh-add`, check `~/.ssh/config`; do **not** retry in a loop |
 | `Not allowed at this time` | lockout after failed logins (per-source penalty) | **stop, wait 10 minutes**, fix the cause, try once |
 

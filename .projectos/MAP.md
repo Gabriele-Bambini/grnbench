@@ -11,7 +11,7 @@ Updated: 2026-09-25.
 - Benchmarks: `benchmarks/engine_bench.py` (synthetic, planted network), `benchmarks/real_bench.py`
   (real data vs CollecTRI halves; `--models`, `--keep-artifacts`; `report` also writes figures + LaTeX).
 - Figures: `grnbench viz <run_dir>`. LaTeX: `grnbench report <run_dir|EXP-ID>`, `grnbench report --paper`.
-- HPC: `hpc/hpc.sh`, guide `docs/HPC.md`, agent procedure `.claude/skills/grnbench-hpc/SKILL.md`.
+- HPC: `hpc/hpc.sh`, VPN `hpc/vpn.ps1` (Windows), guide `docs/HPC.md`, agent procedure `.claude/skills/grnbench-hpc/SKILL.md`.
 
 ## Code (`src/grnbench/`)
 | area | modules |

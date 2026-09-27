@@ -17,7 +17,14 @@ human guide is `docs/HPC.md`; this skill is the operating procedure for agents.
   their `~/.ssh/config`). Try again only once, after they confirm.
 - `Not allowed at this time`: lockout after failed logins. **Stop, wait 10 minutes, fix the cause,
   try once.** Never loop on authentication.
-- `Could not resolve hostname` or a timeout: the person connects the Bocconi VPN.
+- `Could not resolve hostname` or a timeout: the VPN is down. **Reconnect it yourself first**
+  (`hpc.sh` prints the command for the OS as the first error line). Windows:
+  `powershell -NoProfile -ExecutionPolicy Bypass -File hpc/vpn.ps1 reconnect`. Linux:
+  `globalprotect connect --portal vpnstudents.unibocconi.it`. Then retry once. Ask the person only when:
+  `reconnect` exits 1 (90 s without a tunnel: the portal wants their SSO sign-in in the
+  GlobalProtect window), exits 2 (the one-time rights grant is missing: they run
+  `hpc/vpn.ps1 setup` and the admin command it prints, `docs/HPC.md` section 1b), or on macOS
+  (no GlobalProtect CLI: they connect in the app).
 - No compute on the login node: downloads, `sbatch`, `squeue`, `sacct`, small file operations only.
 - Never write a username, student ID, home path or host name into the repo, a record or a PR.
   Write `~/...` for cluster paths.

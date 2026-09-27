@@ -87,8 +87,9 @@ Summarise each in two lines to the person.
    install the public key on the cluster (`ssh-copy-id -i ~/.ssh/id_bocconi.pub <user>@<login host>`
    where allowed, or as IT indicates).
 3. PERSON: load the passphrase into ssh-agent.
-   - Windows PowerShell as admin, once: `Set-Service ssh-agent -StartupType Manual`; then after each
-     reboot `Start-Service ssh-agent`, and once `ssh-add $HOME\.ssh\id_bocconi` (the key stays registered).
+   - Windows: once, PowerShell as admin, `Set-Service ssh-agent -StartupType Automatic; Start-Service ssh-agent`;
+     then once, normal PowerShell, `ssh-add $HOME\.ssh\id_bocconi`. The service starts at every boot and the
+     key stays registered: no per-reboot step.
    - macOS: `ssh-add --apple-use-keychain ~/.ssh/id_bocconi` (Keychain remembers it).
    - Linux: `eval "$(ssh-agent)"; ssh-add ~/.ssh/id_bocconi`.
 4. PERSON: add to their own `~/.ssh/config` (never to the repo):
@@ -100,10 +101,23 @@ Summarise each in two lines to the person.
        IdentitiesOnly yes
        ServerAliveInterval 60
    ```
+4b. VPN, so you can reconnect it later without the person (`docs/HPC.md` section 1b):
+   - Windows: you run `powershell -NoProfile -ExecutionPolicy Bypass -File hpc/vpn.ps1 setup` in the
+     person's normal shell. It prints one command with their account SID. PERSON runs that
+     command once in an administrator PowerShell. Then you check with `hpc/vpn.ps1 status`.
+   - Linux: you check `globalprotect show --status`. SAML sign-in from the CLI needs
+     GlobalProtect 6.2.1+ and Firefox; otherwise PERSON connects with the GUI app.
+   - macOS: no GlobalProtect CLI. PERSON connects in the app when you ask.
 5. You: `cp .env.hpc.example .env.hpc`, set `GRNBENCH_HPC_HOST=bocconi-hpc`, check
    `git check-ignore .env.hpc` prints the file name.
 6. You: `bash hpc/hpc.sh check`.
-   - `Could not resolve hostname` / timeout: PERSON connects the Bocconi VPN (the login node resolves to a private IP).
+   - `Could not resolve hostname` / timeout: the VPN is down (the login node resolves to a private IP).
+     You reconnect it first, with the command `hpc.sh` prints on its first error line (Windows:
+     `powershell -NoProfile -ExecutionPolicy Bypass -File hpc/vpn.ps1 reconnect`; Linux:
+     `globalprotect connect --portal vpnstudents.unibocconi.it`), then retry once. PERSON only if
+     it exits 1 (sign in once in the GlobalProtect window), exits 2 (PERSON does the one-time
+     grant: `hpc/vpn.ps1 setup` prints the admin command, `docs/HPC.md` section 1b), or on macOS
+     (no CLI: PERSON connects in the GlobalProtect app).
    - `Permission denied (publickey)`: PERSON re-runs `ssh-add`; try once more only after that.
    - `Not allowed at this time`: lockout after failed logins. STOP, wait 10 minutes, fix the cause, try once.
      Never loop on authentication.
@@ -257,6 +271,7 @@ Reply with this checklist, each line DONE / BLOCKED (why) / SKIPPED (why), with 
 - [ ] quick tests + full suite summary lines; failing IDs vs the floor in AGENTS.md
 - [ ] board output read; AGENTS, MAP, STATE, PURPOSE, DECISIONS, experiments/README, paper/README, docs/HPC.md summarised
 - [ ] `~/.ssh/config` alias (person), key in ssh-agent (person), `.env.hpc` ignored by git
+- [ ] VPN: Windows `hpc/vpn.ps1 status` says up and `reconnect` works without admin (grant done by the person); Linux `globalprotect show --status`; macOS: person connects in the app
 - [ ] `hpc/hpc.sh check` output (user and host may be redacted in your reply)
 - [ ] `hpc/hpc.sh sync` + `setup_env.sh` ended with SETUP_DONE
 - [ ] tiny job: id, sacct State and ExitCode
