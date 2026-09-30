@@ -34,6 +34,9 @@
   the record, human reproduction pending).
 
 ### Added
+- `data_manifest.py --check --require-all`: optional exact-snapshot validation reports registered
+  paths missing from the data root; the default subset-compatible check is unchanged. HPC and
+  onboarding docs now distinguish the dynamic setup cache from registered experiment roots.
 - `grnbench ui`: Streamlit interface (data -> profile -> pipeline -> compare pipelines ->
   clean -> models incl. user models -> benchmark). `grnbench demo`, `grnbench kb`.
 - `grnbench.kb`: preprocessing knowledge base - 14 stages, 15 decision points, 56 options,

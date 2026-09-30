@@ -124,6 +124,12 @@ A='source /software/miniconda3/etc/profile.d/conda.sh && conda activate grnbench
 bash hpc/hpc.sh run "$A && python benchmarks/data_manifest.py ~/grnbench_data" > /tmp/datasets-hpc.tsv
 ```
 
+This snapshots the current setup cache; it does not make that cache identical to the cumulative
+`experiments/datasets.tsv` registry. The CELLxGENE selection and live reference networks can change
+between fetches. A registered experiment uses a separate data root populated from its committed
+selection manifest, then runs `--check` against the registered hashes. If a manifest is intended
+to describe the whole root exactly, add `--require-all` so missing registered paths also fail.
+
 ## 4. Submit
 
 Measured QOS limits (`sacctmgr show qos stud`, 2026-08-22; re-check with

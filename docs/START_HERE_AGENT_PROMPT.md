@@ -135,7 +135,12 @@ Summarise each in two lines to the person.
 - Locally, only if needed: `bash hpc/fetch_engine_datasets.sh ~/grnbench_data 30` (outside the repo,
   never on Google Drive: Drive disconnects killed long runs before). Motif models also need the
   cisTarget files and `GRNBENCH_CISTARGET_DIR`.
-- Provenance: `python benchmarks/data_manifest.py ~/grnbench_data` and compare with `experiments/datasets.tsv`.
+- Provenance: `python benchmarks/data_manifest.py ~/grnbench_data` snapshots the current setup
+  cache. That cache is intentionally broad and partly dynamic (CELLxGENE selection and live
+  reference networks), so do not overwrite `experiments/datasets.tsv` or expect the two files to
+  be identical. Registered experiments use a separate data root populated from their committed
+  selection manifest and verify its files with `--check`. Use `--require-all` only when the
+  supplied manifest is intended to describe that root exactly.
 
 ## A8. First local run, then first registered experiment
 

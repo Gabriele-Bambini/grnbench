@@ -12,6 +12,10 @@ pre-registered experiments (D-017).
 
 ## In progress
 - Nothing running. No open `running` issues.
+- Issue #19: a read-only HPC audit found no random corruption; the setup cache is broader and more
+  dynamic than the cumulative provenance registry. A small follow-up adds optional exact-snapshot
+  checking and clarifies the data-root workflow; no dataset or past result is changed. Issue #21
+  holds the separate decision on pinning future CollecTRI/DoRothEA snapshots.
 - EXP-20260926-LM-1 (confirmatory, HPC job 670902, results PR on `lm/exp-hpc-motif-models`):
   the motif prior lifts the AUPRC ratio for RegDiffusion by +0.184 [+0.132, +0.237] (n = 19,
   p_Holm 1.2e-6) and for GRNBoost2 by +0.130 [+0.108, +0.153] (n = 20, p_Holm 3.6e-10); both

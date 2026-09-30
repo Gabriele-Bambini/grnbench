@@ -2,12 +2,16 @@
 
     python benchmarks/data_manifest.py DATA_ROOT > experiments/datasets.tsv
     python benchmarks/data_manifest.py DATA_ROOT --check experiments/datasets.tsv
+    python benchmarks/data_manifest.py DATA_ROOT --check exact-snapshot.tsv --require-all
 
 ``--check`` verifies every data file under DATA_ROOT against the manifest (same path, same
-sha256) and exits 1 if any file differs or is not listed. A text file (.json/.tsv/.txt/.tbl)
-whose only difference is LF vs CRLF line endings counts as a match and is reported as such:
-fetch scripts write text in the platform's line endings, so a truth.json written on Linux
-differs in bytes from the Windows copy that was hashed.
+sha256) and exits 1 if any file differs or is not listed. The manifest may contain additional
+rows, because an experiment-specific data root can use a subset of the cumulative registry.
+Add ``--require-all`` only when the manifest is meant to be an exact snapshot: registered paths
+missing from DATA_ROOT are then reported as ``MISSING`` and make the check fail. A text file
+(.json/.tsv/.txt/.tbl) whose only difference is LF vs CRLF line endings counts as a match and is
+reported as such: fetch scripts write text in the platform's line endings, so a truth.json written
+on Linux differs in bytes from the Windows copy that was hashed.
 
 Paths are relative to DATA_ROOT, so the manifest carries no personal path. Commit the TSV;
 never commit the data. Experiment records cite datasets by the `path` column.
@@ -60,14 +64,16 @@ def main(root_arg: str) -> int:
 TEXT_SUFFIXES = {".json", ".tsv", ".txt", ".tbl"}
 
 
-def check(root_arg: str, manifest: str) -> int:
-    """Compare the files under DATA_ROOT with the manifest rows; 0 only if all match."""
+def check(root_arg: str, manifest: str, *, require_all: bool = False) -> int:
+    """Compare DATA_ROOT with the manifest, optionally requiring every registered path."""
     root = Path(root_arg)
     with open(manifest, encoding="utf-8") as fh:
         want = {r["path"]: r["sha256"] for r in csv.DictReader(fh, delimiter="\t")}
     counts = {"ok": 0, "ok-eol": 0, "MISMATCH": 0, "UNLISTED": 0}
+    present: set[str] = set()
     for f in sorted(p for p in root.rglob("*") if p.is_file() and p.name not in SKIP):
         rel = f.relative_to(root).as_posix()
+        present.add(rel)
         if rel not in want:
             status = "UNLISTED"
         elif sha256(f) == want[rel]:
@@ -79,8 +85,14 @@ def check(root_arg: str, manifest: str) -> int:
         counts[status] += 1
         if status != "ok":
             print(f"{status}\t{rel}")
+    if require_all:
+        missing = sorted(set(want) - present)
+        counts["MISSING"] = len(missing)
+        for rel in missing:
+            print(f"MISSING\t{rel}")
     print(" ".join(f"{k}={v}" for k, v in counts.items()))
-    return 1 if counts["MISMATCH"] or counts["UNLISTED"] else 0
+    failures = counts["MISMATCH"] + counts["UNLISTED"] + counts.get("MISSING", 0)
+    return 1 if failures else 0
 
 
 def _eol_sha(path: Path) -> str:
@@ -92,7 +104,11 @@ def _eol_sha(path: Path) -> str:
 
 
 if __name__ == "__main__":
+    if "--require-all" in sys.argv and "--check" not in sys.argv:
+        print("--require-all requires --check MANIFEST", file=sys.stderr)
+        sys.exit(2)
     if "--check" in sys.argv:
         i = sys.argv.index("--check")
-        sys.exit(check(sys.argv[1] if i > 1 else ".", sys.argv[i + 1]))
+        sys.exit(check(sys.argv[1] if i > 1 else ".", sys.argv[i + 1],
+                       require_all="--require-all" in sys.argv))
     sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else "."))

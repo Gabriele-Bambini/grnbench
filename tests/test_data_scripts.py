@@ -15,9 +15,12 @@ def _sha(b: bytes) -> str:
     return hashlib.sha256(b).hexdigest()
 
 
-def _check(root: Path, manifest: Path):
-    return subprocess.run([sys.executable, str(ROOT / "benchmarks" / "data_manifest.py"), str(root),
-                           "--check", str(manifest)], capture_output=True, text=True)
+def _check(root: Path, manifest: Path, *, require_all: bool = False):
+    command = [sys.executable, str(ROOT / "benchmarks" / "data_manifest.py"), str(root),
+               "--check", str(manifest)]
+    if require_all:
+        command.append("--require-all")
+    return subprocess.run(command, capture_output=True, text=True)
 
 
 def _manifest(path: Path, rows):
@@ -48,6 +51,23 @@ def test_check_fails_on_changed_binary_and_unlisted_files(tmp_path):
     assert r.returncode == 1
     assert "MISMATCH\tcellxgene/x/data.h5ad" in r.stdout
     assert "UNLISTED\tcellxgene/x/extra.h5ad" in r.stdout
+
+
+def test_check_require_all_reports_registered_files_missing_from_root(tmp_path):
+    data = tmp_path / "data"
+    data.mkdir()
+    (data / "present.h5ad").write_bytes(b"present")
+    _manifest(tmp_path / "m.tsv", [("present.h5ad", _sha(b"present")),
+                                   ("missing.h5ad", _sha(b"missing"))])
+
+    subset = _check(data, tmp_path / "m.tsv")
+    assert subset.returncode == 0, subset.stdout + subset.stderr
+    assert "MISSING" not in subset.stdout
+
+    exact = _check(data, tmp_path / "m.tsv", require_all=True)
+    assert exact.returncode == 1
+    assert "MISSING\tmissing.h5ad" in exact.stdout
+    assert "ok=1 ok-eol=0 MISMATCH=0 UNLISTED=0 MISSING=1" in exact.stdout
 
 
 def test_fetch_from_manifest_keeps_the_recorded_datasets(tmp_path):
