@@ -21,7 +21,7 @@ fix the other file in the same PR.
 |---|---|---|---|
 | Luca | @elle13eth | LM | engine, statistics, paper/ |
 | Gabriele | @Gabriele-Bambini | GB | engine, HPC, paper/ |
-| (third colleague, TBD) | - | - | - |
+| Lorenzo | @lorenzo-de-santis | LD | - |
 
 Initials are used in experiment IDs and branch names.
 

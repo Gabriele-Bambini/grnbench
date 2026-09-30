@@ -2,7 +2,7 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-09-27 by LM's agent. PR #3, PR #7 and the shared-workflow PR were merged by the owner
+Updated: 2026-09-30 by LD's agent. PR #3, PR #7 and the shared-workflow PR were merged by the owner
 after independent agent reviews, not human reviews (GB was away).
 
 ## Focus
@@ -40,7 +40,7 @@ pre-registered experiments (D-017).
 
 ## Blockers / open questions
 - Publication route (JOSS / Bioinformatics App Note / Nature-family journal) - team decision.
-- Licence and copyright holder (D-018, proposed: keep MIT). Third member's GitHub username.
+- Licence and copyright holder (D-018, proposed: keep MIT).
 - No TeX engine on Luca's laptop: `.tex` is generated, PDFs need latexmk/tectonic (START_HERE, from zero).
 
 ## Notes for the next agent

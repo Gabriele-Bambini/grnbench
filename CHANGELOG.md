@@ -3,6 +3,7 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- Registered Lorenzo (`@lorenzo-de-santis`, initials `LD`) in the team metadata.
 - Canonical repo is now the private GitHub repo (D-016). Rules for people and agents in
   `AGENTS.md`; onboarding prompt in `docs/START_HERE_AGENT_PROMPT.md`.
 - Experiment registry `experiments/` with pre-registration (D-017), data provenance manifest
