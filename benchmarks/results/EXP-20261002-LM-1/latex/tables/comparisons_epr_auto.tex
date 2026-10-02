@@ -1,0 +1,10 @@
+\begin{table}[H]\centering\small
+\caption{Declared comparisons, EPR, auto pipeline: paired t over datasets (compare\_units), two-sided per direction, Holm over 10 directed hypotheses; 95\% interval of the mean paired difference.}
+\begin{tabular}{llrrlrrl}\toprule
+A & B & n & mean A$-$B & 95\% interval & $p_{A>B}$ Holm & $p_{B>A}$ Holm & supported \\ \midrule
+pearson\_motif & pearson\_signed & 20 & +0.104 & [-0.095, +0.303] & 1.000 & 1.000 & unresolved \\
+grnboost2\_motif & grnboost2 & 20 & +0.544 & [+0.405, +0.684] & 6e-07 & 1.000 & grnboost2\_motif \\
+regdiffusion\_motif & regdiffusion & 20 & +0.068 & [-0.162, +0.297] & 1.000 & 1.000 & unresolved \\
+grnboost2 & pearson\_signed & 20 & -0.981 & [-1.297, -0.665] & 1.000 & 1.4e-05 & pearson\_signed \\
+regdiffusion & pearson\_signed & 20 & +0.359 & [+0.034, +0.683] & 0.128 & 1.000 & unresolved \\
+\bottomrule\end{tabular}\end{table}

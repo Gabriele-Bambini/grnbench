@@ -2,7 +2,7 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-09-30 by LD's agent. PR #3, PR #7 and the shared-workflow PR were merged by the owner
+Updated: 2026-10-02 by LM's agent. PR #3, PR #7 and the shared-workflow PR were merged by the owner
 after independent agent reviews, not human reviews (GB was away).
 
 ## Focus
@@ -11,7 +11,12 @@ comparison, published as a tool with a paper. Headline claims from real data (D-
 pre-registered experiments (D-017).
 
 ## In progress
-- Nothing running. No open `running` issues.
+- EXP-20261002-LM-1 (confirmatory, fresh-set rerun of C4/C5, HPC job 679411): the motif prior lifts
+  the AUPRC ratio on 20 never-used datasets for Pearson +0.203, RegDiffusion +0.234, GRNBoost2 +0.146
+  (n = 20 each, p_Holm <= 1.6e-6); all three supported. Claim C6 `confirmed`; reproduction pending.
+- EXP-20261002-LM-2 (exploratory, HPC job 679448, issue #28): candidate-level study, every cleaning
+  candidate on 20 real datasets x 7 controlled degradations; motivation: auto without a reference
+  loses to the baseline in all three earlier real runs.
 - Issue #19: a read-only HPC audit found no random corruption; the setup cache is broader and more
   dynamic than the cumulative provenance registry. A small follow-up adds optional exact-snapshot
   checking and clarifies the data-root workflow; no dataset or past result is changed. Issue #21
@@ -45,7 +50,6 @@ pre-registered experiments (D-017).
 ## Blockers / open questions
 - Publication route (JOSS / Bioinformatics App Note / Nature-family journal) - team decision.
 - Licence and copyright holder (D-018, proposed: keep MIT).
-- No TeX engine on Luca's laptop: `.tex` is generated, PDFs need latexmk/tectonic (START_HERE, from zero).
 
 ## Notes for the next agent
 - Never quote the 0.6.0 numbers (retracted). Unresolved != equivalent.

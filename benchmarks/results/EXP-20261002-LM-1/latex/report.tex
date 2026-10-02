@@ -1,0 +1,190 @@
+\documentclass{article}
+\usepackage{fullpage,booktabs,graphicx,hyperref,float,array}
+\input{values.tex}
+\title{EXP-20261002-LM-1: Does the motif prior lift Pearson, GRNBoost2 and RegDiffusion on 20 fresh real datasets?}
+\author{grnbench report generated from EXP-20261002-LM-1}
+\date{}
+\begin{document}
+\maketitle
+\section*{Status}
+Experiment EXP-20261002-LM-1, type: confirmatory. Record status: done (2026-10-02; Slurm job 679411, COMPLETED 0:0 in 1 h 14 min, 20/20 datasets, 0 task errors, 0 model errors; code fcc9d55, the pushed pre-registration).. Reproduced by: nobody yet.
+\section{Configuration summary}
+\input{tables/configuration.tex}
+\section{Methods}
+\begin{description}
+\item[type] **confirmatory** (pre-registration = the commit that adds this file, pushed before any model below was run on any dataset of this list)
+\item[hypothesis] three co-primary, directional. H1: pearson\_motif recovers the CollecTRI evaluation half better than pearson\_signed. H2: regdiffusion\_motif better than regdiffusion. H3: grnboost2\_motif better than grnboost2. (<model>\_motif = the model's edges rank-producted with the cisTarget motif prior, as in C4 and C5.)
+\item[primary endpoint] AUPRC ratio (AUPRC / prevalence; 1 = random) on the CollecTRI evaluation half, **auto** pipeline arm (the engine's screened choice), mean over contexts within a dataset.
+\item[secondary endpoints (reported, not used for h1-h3)] EPR; the baseline pipeline arm; each model's mean AUPRC ratio against random (1.0), descriptive only; the two non-motif pairs of the family below.
+\item[unit of analysis] dataset. Planned n = 20; analysed n = datasets with a score for both members of a pair (printed per pair by the report).
+\item[datasets] 20 CELLxGENE datasets chosen on 2026-10-02 by benchmarks/fetch\_cellxgene.py --max 20 --max-mb 60 --organisms "Homo sapiens,Mus musculus" --exclude-ids experiments/EXP-20261002-LM-1.excluded\_ids.txt --exclude-assay targeted from the public listing of that day. Excluded before selection: the 51 dataset ids used by any earlier experiment (the 31 of EXP-20260925-LM-2.excluded\_ids.txt plus the 20 of LM-2 and LM-1). The fetched selection is committed with this file as EXP-20261002-LM-1.datasets.tsv, and the sha256 of every data.h5ad and truth.json is added to experiments/datasets.tsv in the same commit. No model of this repo has been run on any of them.
+\item[exclusion rules (fixed now)] (a) a dataset whose sha256 does not match experiments/datasets.tsv at run time is reported as missing and replaced by nobody (truth.json differing only in line endings is accepted, ok-eol); (b) datasets with fewer than 50 reference edges among their genes are not scored (MIN\_REFERENCE\_EDGES); (c) a dataset where a model errors is dropped from the pairs involving that model only, and reported; (d) a dataset still unfinished after the job and one resubmission of the same commit (TIMEOUT or out of memory) is reported as missing; (e) no other exclusion, no outlier removal.
+\item[comparison family] real\_bench.DECLARED\_PAIRS restricted to the models run = \{(pearson\_motif, pearson\_signed), (grnboost2\_motif, grnboost2), (regdiffusion\_motif, regdiffusion), (grnboost2, pearson\_signed), (regdiffusion, pearson\_signed)\}, both directions = 10 directed hypotheses per metric and arm.
+\item[test] paired t over datasets, two-sided per direction, via compare\_units for each pair (95\% interval of the mean paired difference), Holm over the 10 directed hypotheses of the AUPRC ratio / auto family, alpha 0.05. For each of H1-H3: **supported** if p\_Holm(motif > plain) < 0.05; **refuted** if p\_Holm(plain > motif) < 0.05; otherwise inconclusive (not evidence of equality).
+\item[seeds] reference split seed 0 (screen.split\_reference), cell subsample seed 0 (at most 3,000 cells per context, MAX\_SCORE\_CELLS), scrublet seed 0, RegDiffusion seed 0 (1,000 steps, CPU), GRNBoost2 seed 42 (the adapter defaults); regulators = the 150 TFs with most reference targets in the data (MAX\_TFS).
+\item[models] pearson\_signed, pearson\_motif, regdiffusion, regdiffusion\_motif, grnboost2, grnboost2\_motif (exactly these six).
+\item[code] branch lm/exp-fresh-motif from main 245ac12 (includes \#16, the RegDiffusion zero-variance fix that cost EXP-20260926-LM-1 one dataset). hpc/hpc.sh sync writes the commit to GIT\_COMMIT; the job runs from a separate cluster checkout \textasciitilde{}/grnbench-fresh1 (a copy of the synced tree) via REPO\_DIR, and copies GIT\_COMMIT into the results as CODE\_COMMIT. That commit must be clean.
+\item[environment] conda env grnbench on the cluster, Python 3.11, requirements/lock-py311.txt plus the RegDiffusion line of its header (regdiffusion 0.2.3, torch CPU), as for EXP-20260926-LM-1. experiment's data plus the registered references): A rerun fetches the same files with fetch\_cellxgene.py --out \$D/cellxgene --from-manifest experiments/EXP-20261002-LM-1.datasets.tsv.
+\item[machine] Bocconi HPC, partition/QOS stud, 1 job, 8 CPUs (8 dataset workers, one thread each), 32 GB. Expected cost: EXP-20260926-LM-1 took 1 h 10 min for four models on 20 datasets; the two Pearson models add little.
+\item[models scored] grnboost2, grnboost2\_motif, pearson\_motif, pearson\_signed, regdiffusion, regdiffusion\_motif
+\end{description}
+
+\section{Results}
+\subsection{Primary comparison}
+\paragraph{Pre-registered primary hypothesis.} pearson\_motif $>$ pearson\_signed on AUPRC ratio, auto pipeline. Mean paired difference \gbDiffAuprcRatioAutoPearsonMotifVsPearsonSigned{} (95\% interval \gbCiLowAuprcRatioAutoPearsonMotifVsPearsonSigned{} to \gbCiHighAuprcRatioAutoPearsonMotifVsPearsonSigned{}), n = \gbNAuprcRatioAutoPearsonMotifVsPearsonSigned{} datasets, paired t, Holm over \gbFamilyAuprcRatioAuto{} directed hypotheses: $p_{\mathrm{Holm}}$ = \gbPHolmAuprcRatioAutoPearsonMotifVsPearsonSigned{}. Verdict by the rule fixed in the record: \textbf{supported}.
+\paragraph{Pre-registered primary hypothesis.} regdiffusion\_motif $>$ regdiffusion on AUPRC ratio, auto pipeline. Mean paired difference \gbDiffAuprcRatioAutoRegdiffusionMotifVsRegdiffusion{} (95\% interval \gbCiLowAuprcRatioAutoRegdiffusionMotifVsRegdiffusion{} to \gbCiHighAuprcRatioAutoRegdiffusionMotifVsRegdiffusion{}), n = \gbNAuprcRatioAutoRegdiffusionMotifVsRegdiffusion{} datasets, paired t, Holm over \gbFamilyAuprcRatioAuto{} directed hypotheses: $p_{\mathrm{Holm}}$ = \gbPHolmAuprcRatioAutoRegdiffusionMotifVsRegdiffusion{}. Verdict by the rule fixed in the record: \textbf{supported}.
+\paragraph{Pre-registered primary hypothesis.} grnboost2\_motif $>$ grnboost2 on AUPRC ratio, auto pipeline. Mean paired difference \gbDiffAuprcRatioAutoGrnboostTwoMotifVsGrnboostTwo{} (95\% interval \gbCiLowAuprcRatioAutoGrnboostTwoMotifVsGrnboostTwo{} to \gbCiHighAuprcRatioAutoGrnboostTwoMotifVsGrnboostTwo{}), n = \gbNAuprcRatioAutoGrnboostTwoMotifVsGrnboostTwo{} datasets, paired t, Holm over \gbFamilyAuprcRatioAuto{} directed hypotheses: $p_{\mathrm{Holm}}$ = \gbPHolmAuprcRatioAutoGrnboostTwoMotifVsGrnboostTwo{}. Verdict by the rule fixed in the record: \textbf{supported}.
+
+\subsection{Performance per model, across datasets}
+\input{tables/models.tex}
+\subsection{Performance per dataset}
+\input{tables/per_dataset.tex}
+\subsection{Comparative summary: declared comparisons}
+\input{tables/comparisons_auprc_ratio_auto.tex}
+\input{tables/comparisons_auprc_ratio_baseline.tex}
+\input{tables/comparisons_epr_auto.tex}
+\input{tables/comparisons_epr_baseline.tex}
+\section{Visualizations and explainability}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/calibration_cxg__10x-3-v2__homo-sapiens__breast__44941fdb.png}
+\caption{-   (n = 20000 edges) - built from  grnboost2.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/calibration_cxg__10x-3-v2__homo-sapiens__cortex-of-kidney__2fc9c59f.png}
+\caption{-   (n = 20000 edges) - built from  grnboost2.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/calibration_cxg__10x-3-v2__homo-sapiens__duodenum__ee195b7d.png}
+\caption{-   (n = 20000 edges) - built from  grnboost2.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/embed_cxg__10x-3-v2__homo-sapiens__breast__44941fdb.png}
+\caption{-   (n = 2276 cells) - built from  tasks.json (raw data)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/embed_cxg__10x-3-v2__homo-sapiens__cortex-of-kidney__2fc9c59f.png}
+\caption{-   (n = 4620 cells) - built from  tasks.json (raw data)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/embed_cxg__10x-3-v2__homo-sapiens__duodenum__ee195b7d.png}
+\caption{-   (n = 5200 cells) - built from  tasks.json (raw data)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/lift_grnboost2_motif_vs_grnboost2.png}
+\caption{-   (n = 20 datasets) - built from  rows/ .json (grnboost2\_motif vs grnboost2)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/lift_pearson_motif_vs_pearson_signed.png}
+\caption{-   (n = 20 datasets) - built from  rows/ .json (pearson\_motif vs pearson\_signed)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/lift_regdiffusion_motif_vs_regdiffusion.png}
+\caption{-   (n = 20 datasets) - built from  rows/ .json (regdiffusion\_motif vs regdiffusion)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/motif_lift_cxg__10x-3-v2__homo-sapiens__breast__44941fdb_grnboost2.png}
+\caption{-   (n = shared TFs) - built from  grnboost2.tsv.gz vs grnboost2\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/motif_lift_cxg__10x-3-v2__homo-sapiens__breast__44941fdb_pearson_signed.png}
+\caption{-   (n = shared TFs) - built from  pearson\_signed.tsv.gz vs pearson\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/motif_lift_cxg__10x-3-v2__homo-sapiens__breast__44941fdb_regdiffusion.png}
+\caption{-   (n = shared TFs) - built from  regdiffusion.tsv.gz vs regdiffusion\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/motif_lift_cxg__10x-3-v2__homo-sapiens__cortex-of-kidney__2fc9c59f_grnboost2.png}
+\caption{-   (n = shared TFs) - built from  grnboost2.tsv.gz vs grnboost2\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/motif_lift_cxg__10x-3-v2__homo-sapiens__cortex-of-kidney__2fc9c59f_pearson_signed.png}
+\caption{-   (n = shared TFs) - built from  pearson\_signed.tsv.gz vs pearson\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/motif_lift_cxg__10x-3-v2__homo-sapiens__cortex-of-kidney__2fc9c59f_regdiffusion.png}
+\caption{-   (n = shared TFs) - built from  regdiffusion.tsv.gz vs regdiffusion\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/motif_lift_cxg__10x-3-v2__homo-sapiens__duodenum__ee195b7d_grnboost2.png}
+\caption{-   (n = shared TFs) - built from  grnboost2.tsv.gz vs grnboost2\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/motif_lift_cxg__10x-3-v2__homo-sapiens__duodenum__ee195b7d_pearson_signed.png}
+\caption{-   (n = shared TFs) - built from  pearson\_signed.tsv.gz vs pearson\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/motif_lift_cxg__10x-3-v2__homo-sapiens__duodenum__ee195b7d_regdiffusion.png}
+\caption{-   (n = shared TFs) - built from  regdiffusion.tsv.gz vs regdiffusion\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/network_cxg__10x-3-v2__homo-sapiens__breast__44941fdb.png}
+\caption{-   (n = 60 edges) - built from  grnboost2\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/network_cxg__10x-3-v2__homo-sapiens__cortex-of-kidney__2fc9c59f.png}
+\caption{-   (n = 60 edges) - built from  grnboost2\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/network_cxg__10x-3-v2__homo-sapiens__duodenum__ee195b7d.png}
+\caption{-   (n = 60 edges) - built from  grnboost2\_motif.tsv.gz}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/pr_cxg__10x-3-v2__homo-sapiens__breast__44941fdb.png}
+\caption{-   (n = 20000 edges) - built from  artifacts/cxg\_\_10x-3-v2\_\_homo-sapiens\_\_breast\_\_44941fdb/auto/ctx0}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/pr_cxg__10x-3-v2__homo-sapiens__cortex-of-kidney__2fc9c59f.png}
+\caption{-   (n = 20000 edges) - built from  artifacts/cxg\_\_10x-3-v2\_\_homo-sapiens\_\_cortex-of-kidney\_\_2fc9c59f/auto/ctx0}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/pr_cxg__10x-3-v2__homo-sapiens__duodenum__ee195b7d.png}
+\caption{-   (n = 20000 edges) - built from  artifacts/cxg\_\_10x-3-v2\_\_homo-sapiens\_\_duodenum\_\_ee195b7d/auto/ctx0}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/qc_cxg__10x-3-v2__homo-sapiens__breast__44941fdb.png}
+\caption{-   (n = 2276 cells) - built from  tasks.json (raw data)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/qc_cxg__10x-3-v2__homo-sapiens__cortex-of-kidney__2fc9c59f.png}
+\caption{-   (n = 4620 cells) - built from  tasks.json (raw data)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/qc_cxg__10x-3-v2__homo-sapiens__duodenum__ee195b7d.png}
+\caption{-   (n = 5200 cells) - built from  tasks.json (raw data)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/scores_auprc_ratio_auto.png}
+\caption{-   (n = 20 datasets) - built from  rows/ .json (auto/auprc\_ratio)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/scores_auprc_ratio_baseline.png}
+\caption{-   (n = 20 datasets) - built from  rows/ .json (baseline/auprc\_ratio)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/scores_epr_auto.png}
+\caption{-   (n = 20 datasets) - built from  rows/ .json (auto/epr)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/scores_epr_baseline.png}
+\caption{-   (n = 20 datasets) - built from  rows/ .json (baseline/epr)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/tf_recovery_cxg__10x-3-v2__homo-sapiens__breast__44941fdb.png}
+\caption{-   (n = up to 30 TFs) - built from  artifacts/cxg\_\_10x-3-v2\_\_homo-sapiens\_\_breast\_\_44941fdb/auto}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/tf_recovery_cxg__10x-3-v2__homo-sapiens__cortex-of-kidney__2fc9c59f.png}
+\caption{-   (n = up to 30 TFs) - built from  artifacts/cxg\_\_10x-3-v2\_\_homo-sapiens\_\_cortex-of-kidney\_\_2fc9c59f/auto}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/tf_recovery_cxg__10x-3-v2__homo-sapiens__duodenum__ee195b7d.png}
+\caption{-   (n = up to 30 TFs) - built from  artifacts/cxg\_\_10x-3-v2\_\_homo-sapiens\_\_duodenum\_\_ee195b7d/auto}
+\end{figure}
+
+\section{Limitations}
+\begin{itemize}
+\item None recorded.
+\end{itemize}
+
+\end{document}

@@ -1,0 +1,10 @@
+\begin{table}[H]\centering\small
+\caption{Declared comparisons, AUPRC ratio, baseline pipeline: paired t over datasets (compare\_units), two-sided per direction, Holm over 10 directed hypotheses; 95\% interval of the mean paired difference.}
+\begin{tabular}{llrrlrrl}\toprule
+A & B & n & mean A$-$B & 95\% interval & $p_{A>B}$ Holm & $p_{B>A}$ Holm & supported \\ \midrule
+pearson\_motif & pearson\_signed & 20 & +0.197 & [+0.149, +0.245] & 2.6e-07 & 1.000 & pearson\_motif \\
+grnboost2\_motif & grnboost2 & 20 & +0.140 & [+0.114, +0.167] & 4.1e-09 & 1.000 & grnboost2\_motif \\
+regdiffusion\_motif & regdiffusion & 20 & +0.218 & [+0.158, +0.278] & 1.3e-06 & 1.000 & regdiffusion\_motif \\
+grnboost2 & pearson\_signed & 20 & -0.230 & [-0.330, -0.130] & 1.000 & 0.00041 & pearson\_signed \\
+regdiffusion & pearson\_signed & 20 & +0.061 & [-0.023, +0.144] & 0.439 & 1.000 & unresolved \\
+\bottomrule\end{tabular}\end{table}

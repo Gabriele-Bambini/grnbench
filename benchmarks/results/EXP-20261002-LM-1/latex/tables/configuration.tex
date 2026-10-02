@@ -1,0 +1,17 @@
+\begin{table}[H]\centering\small
+\caption{Configuration of the run, from the experiment record and the run folder.}
+\begin{tabular}{p{0.3\linewidth}p{0.62\linewidth}}\toprule
+experiment & EXP-20261002-LM-1 \\
+type & **confirmatory** (pre-registration = the commit that adds this file, pushed before any model below was run on any dataset of this list) \\
+owner & LM (agent-run)   issue: \#27   registered: 2026-10-02 \\
+datasets (rows) & 20 \\
+models & grnboost2, grnboost2\_motif, pearson\_motif, pearson\_signed, regdiffusion, regdiffusion\_motif \\
+arms & auto, baseline \\
+code & branch lm/exp-fresh-motif from main 245ac12 (includes \#16, the RegDiffusion zero-variance fix that cost EXP-20260926-LM-1 one dataset). hpc/hpc.sh sync writes the commit to GIT\_COMMIT; the job runs from a separate cluster checkout \textasciitilde{}/grnbench-fresh1 (a copy of the synced tree) via REPO\_DIR, and copies GIT\_COMMIT into the results as CODE\_COMMIT. That commit must be clean. \\
+code commit (run folder) & fcc9d55b7b4d165bbfd008755347f996a65cad44 \\
+environment & conda env grnbench on the cluster, Python 3.11, requirements/lock-py311.txt plus the RegDiffusion line of its header (regdiffusion 0.2.3, torch CPU), as for EXP-20260926-LM-1. experiment's data plus the registered references): A rerun fetches the same files with fetch\_cellxgene.py --out \$D/cellxgene --from-manifest experiments/EXP-20261002-LM-1.datasets.tsv. \\
+machine & Bocconi HPC, partition/QOS stud, 1 job, 8 CPUs (8 dataset workers, one thread each), 32 GB. Expected cost: EXP-20260926-LM-1 took 1 h 10 min for four models on 20 datasets; the two Pearson models add little. \\
+seeds & reference split seed 0 (screen.split\_reference), cell subsample seed 0 (at most 3,000 cells per context, MAX\_SCORE\_CELLS), scrublet seed 0, RegDiffusion seed 0 (1,000 steps, CPU), GRNBoost2 seed 42 (the adapter defaults); regulators = the 150 TFs with most reference targets in the data (MAX\_TFS). \\
+run folder & benchmarks/results/EXP-20261002-LM-1 \\
+generated & 2026-10-02 16:01 \\
+\bottomrule\end{tabular}\end{table}

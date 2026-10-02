@@ -3,6 +3,7 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- EXP-20261002-LM-1: the motif prior lift (C4, C5) replicates on 20 never-used datasets (claim C6).
 - Registered Lorenzo (`@lorenzo-de-santis`, initials `LD`) in the team metadata.
 - Canonical repo is now the private GitHub repo (D-016). Rules for people and agents in
   `AGENTS.md`; onboarding prompt in `docs/START_HERE_AGENT_PROMPT.md`.

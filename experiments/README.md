@@ -42,5 +42,6 @@ Add a row in the same PR that adds a record. Status: registered / running / done
 | [EXP-20260925-LM-1](EXP-20260925-LM-1.md) | Motif prior lifts recovery on real data? | exploratory | done | supports | `benchmarks/results/engine-2026-09-25-models/` |
 | [EXP-20260925-LM-2](EXP-20260925-LM-2.md) | Confirmatory: motif prior lifts recovery on 20 fresh real datasets? | confirmatory | reproduced-computational | supports (+0.18, n = 20, p_Holm 1e-7) | `benchmarks/results/EXP-20260925-LM-2/` |
 | [EXP-20260926-LM-1](EXP-20260926-LM-1.md) | Confirmatory: does the motif prior lift RegDiffusion and GRNBoost2 (LM-2's 20 datasets, HPC)? | confirmatory | reproduced-computational | supports both (RegDiffusion +0.18, n = 19, p_Holm 1e-6; GRNBoost2 +0.13, n = 20, p_Holm 4e-10) | `benchmarks/results/EXP-20260926-LM-1/` |
+| [EXP-20261002-LM-1](EXP-20261002-LM-1.md) | Confirmatory: does the motif prior lift Pearson, GRNBoost2 and RegDiffusion on 20 fresh datasets? | confirmatory | done | supports all three (Pearson +0.20, RegDiffusion +0.23, GRNBoost2 +0.15; n = 20; p_Holm <= 1.6e-6) | `benchmarks/results/EXP-20261002-LM-1/` |
 
 `PRE` = run before this registry existed (owner not recorded, not pre-registered).
