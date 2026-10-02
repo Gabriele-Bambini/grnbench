@@ -3,6 +3,9 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- Engine robustness (found by EXP-20261002-LM-2): screening fails one candidate, never all, when a
+  context cannot be screened; strategies may not emit NaN/inf (`PrepError`); Pearson residuals give a
+  zero-count gene 0 instead of NaN; ComBat drops one-cell batches with a warning.
 - D-020 pins reference networks per registered experiment: historical reproductions keep their
   hashes; new runs prefer versioned upstream releases or use a dated, exact snapshot manifest.
   `data_manifest.py` argument parsing is now order-independent for reliable strict checks.

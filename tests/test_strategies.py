@@ -79,3 +79,34 @@ def test_pearson_residuals_smoke(synthetic_adata):
     assert out.shape == synthetic_adata.shape
     dense = out.X.toarray() if hasattr(out.X, "toarray") else np.asarray(out.X)
     assert np.isfinite(dense).all()
+
+
+def test_pearson_residuals_zero_count_gene_gets_zero_not_nan(synthetic_adata):
+    a = synthetic_adata.copy()
+    counts = a.layers["counts"]
+    counts = counts.toarray() if hasattr(counts, "toarray") else np.array(counts)
+    counts[:, 5] = 0
+    a.layers["counts"] = counts
+    out, _ = apply_strategy("pearson_residuals", a)
+    dense = out.X.toarray() if hasattr(out.X, "toarray") else np.asarray(out.X)
+    assert np.isfinite(dense).all() and (dense[:, 5] == 0).all()
+
+
+def _two_batches(synthetic_adata, sizes):
+    a = synthetic_adata[: sum(sizes.values())].copy()
+    a.obs["b"] = np.repeat(list(sizes), list(sizes.values()))
+    return a
+
+
+def test_combat_drops_one_cell_batches_with_a_warning(synthetic_adata):
+    a = _two_batches(synthetic_adata, {"x": 60, "y": 60, "z": 1})
+    with pytest.warns(UserWarning, match=r"dropped 1 cell\(s\) from 1 batch"):
+        out, _ = apply_strategy("cpm_log1p_combat", a, batch_key="b")
+    assert out.n_obs == 120 and set(out.obs["b"]) == {"x", "y"}
+    assert np.isfinite(np.asarray(out.X)).all()
+
+
+def test_combat_still_errors_when_fewer_than_two_usable_batches(synthetic_adata):
+    a = _two_batches(synthetic_adata, {"x": 60, "y": 1, "z": 1})
+    with pytest.raises(StrategyError, match="2 batches with >= 2 cells"):
+        apply_strategy("cpm_log1p_combat", a, batch_key="b")

@@ -95,6 +95,13 @@ def pearson_residuals(adata: ad.AnnData, theta: float = 100.0, **_) -> ad.AnnDat
     _ensure_counts_layer(out)
     out.X = out.layers["counts"].copy()
     experimental_pp.normalize_pearson_residuals(out, theta=theta)
+    # A gene with no counts has expected value 0, so scanpy returns 0/0 = NaN for the whole
+    # column. Observed = expected = 0: its residual is 0.
+    empty = np.asarray(out.layers["counts"].sum(axis=0)).ravel() == 0
+    if empty.any():
+        X = out.X.toarray() if sp.issparse(out.X) else np.asarray(out.X)
+        X[:, empty] = 0
+        out.X = X
     return out
 
 
@@ -170,12 +177,18 @@ def cpm_log1p_combat(adata: ad.AnnData, batch_key: str, target_sum: float = 1e4,
         raise StrategyError(f"batch key '{batch_key}' not found in obs")
     batches = adata.obs[batch_key].astype(str)
     sizes = batches.value_counts()
-    if len(sizes) < 2:
+    tiny = sizes[sizes < 2]
+    if len(tiny):   # QC can leave a batch with one cell; ComBat cannot fit it
+        if len(sizes) - len(tiny) < 2:
+            raise StrategyError(
+                f"ComBat needs >= 2 batches with >= 2 cells; '{batch_key}' has "
+                f"{len(sizes) - len(tiny)} (batches with 1 cell: {sorted(tiny.index)[:5]})")
+        warnings.warn(f"ComBat: dropped {int(tiny.sum())} cell(s) from {len(tiny)} batch(es) "
+                      f"of '{batch_key}' with < 2 cells: {sorted(tiny.index)[:5]}", stacklevel=2)
+        adata = adata[~batches.isin(tiny.index).to_numpy()].copy()
+        batches = adata.obs[batch_key].astype(str)
+    elif len(sizes) < 2:
         raise StrategyError(f"ComBat needs >= 2 batches; '{batch_key}' has {len(sizes)}")
-    if int(sizes.min()) < 2:
-        raise StrategyError(
-            f"ComBat needs >= 2 cells per batch; smallest batch in '{batch_key}' "
-            f"has {int(sizes.min())}")
     out = cpm_log1p(adata, target_sum=target_sum)
     out.obs[batch_key] = pd.Categorical(batches)
     if sp.issparse(out.X):

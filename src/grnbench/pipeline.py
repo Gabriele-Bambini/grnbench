@@ -457,6 +457,11 @@ def run_prep(
             f"{processed.n_vars} genes) - check --min-group-cells and group sizes; "
             "an empty processed.h5ad cannot feed inference"
         )
+    Xp = processed.X.data if sp.issparse(processed.X) else np.asarray(processed.X)
+    n_bad = int((~np.isfinite(Xp)).sum())
+    if n_bad:
+        raise PrepError(f"strategy '{chosen}' produced {n_bad} non-finite value(s) (NaN/inf) in "
+                        f"the processed matrix; refusing to write it, inference cannot use it")
     steps.append({"step": "strategy", **prov,
                   "n_cells_after": int(processed.n_obs), "n_genes_after": int(processed.n_vars)})
 

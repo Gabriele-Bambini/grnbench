@@ -260,3 +260,21 @@ def test_drop_doublets_refuses_an_implausible_call_rate(tmp_path, monkeypatch):
     step = next(s for s in res.manifest["steps"] if s["step"] == "drop_doublets")
     assert step["n_removed"] == 300  # every other of 600 cells
     assert res.manifest["thresholds"]["doublet_rate_max"] == 0.6
+
+
+def test_non_finite_strategy_output_is_refused(tmp_path, monkeypatch):
+    import grnbench.pipeline as pl
+    real = pl.apply_strategy
+
+    def poisoned(name, adata, **kw):
+        out, prov = real(name, adata, **kw)
+        out.X = out.X.toarray() if sp.issparse(out.X) else np.asarray(out.X)
+        out.X[0, 0] = np.nan
+        return out, prov
+
+    monkeypatch.setattr(pl, "apply_strategy", poisoned)
+    src = tmp_path / "in.h5ad"
+    _batched().write_h5ad(src)
+    with pytest.raises(PrepError, match="non-finite"):
+        run_prep(src, tmp_path / "run", strategy="cpm_log1p")
+    assert not (tmp_path / "run" / "processed.h5ad").exists()

@@ -221,6 +221,34 @@ def test_screening_ranks_candidates_on_the_selection_half_only(demo, tmp_path):
     assert (tmp_path / "scr" / "screening_summary.json").exists()
 
 
+def test_screening_fails_one_candidate_not_all_when_a_context_has_nan(demo, tmp_path, monkeypatch):
+    import grnbench.autoprep as autoprep
+    from grnbench.screen import screen_candidates
+    paths, tfs, diag = demo
+    real = autoprep.execute_plan
+
+    def poison_pooled(plan, *a, **kw):
+        recs = real(plan, *a, **kw)
+        if plan.value("context_scope") == "pooled":
+            for rec in recs:
+                if rec["processed"]:
+                    adata = ad.read_h5ad(rec["processed"])
+                    X = adata.X.toarray() if sparse.issparse(adata.X) else np.asarray(adata.X)
+                    X[:, 0] = np.nan
+                    adata.X = X
+                    adata.write_h5ad(rec["processed"])
+        return recs
+
+    monkeypatch.setattr(autoprep, "execute_plan", poison_pooled)
+    res = screen_candidates(diag, paths["counts"], tmp_path / "scr", tf_list=tfs, max_candidates=1,
+                            extra=[{"name": "pooled", "choices": {"context_scope": "pooled"}}])
+    rows = res["rows"]
+    bad = rows[rows["candidate"] == "pooled"]
+    assert bad["error"].notna().all() and bad["error"].str.contains("non-finite").all()
+    assert rows[rows["candidate"] == "recommended"]["error"].isna().all()
+    assert res["best"] == "recommended"
+
+
 def test_context_folder_names_are_valid_on_every_os():
     from grnbench.autoprep import safe_folder_name
     for label in ["cell_type=EC:c1", "cell_type=CD4+ T|naive", r'a/b\c?*<>"']:

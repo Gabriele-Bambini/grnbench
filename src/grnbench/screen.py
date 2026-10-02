@@ -127,6 +127,10 @@ def screen_processed(path, tf_list=None, reference_pairs=None, batch_key: str | 
 
     t0 = time.time()
     adata = ad.read_h5ad(path)
+    X = adata.X.data if hasattr(adata.X, "toarray") else np.asarray(adata.X)
+    n_bad = int((~np.isfinite(X)).sum())
+    if n_bad:
+        raise ValueError(f"processed matrix has {n_bad} non-finite value(s) (NaN/inf); cannot screen")
     if adata.n_obs > MAX_SCREEN_CELLS:
         idx = np.sort(np.random.default_rng(seed).choice(adata.n_obs, MAX_SCREEN_CELLS, replace=False))
         adata = adata[idx].copy()
@@ -304,10 +308,13 @@ def screen_candidates(diag, input_path, out_dir, *, tf_list=None, reference_pair
                         # then macro-averaged.  Scoring it against the union would reward edges
                         # that are correct in only one context as if they were universally true.
                         groups = select_by_context
-                row.update(screen_processed(rec["processed"], tf_list, select_half,
-                                            plan.value("batch_key"), method, seed,
-                                            proxy_methods=proxy_methods,
-                                            reference_groups=groups))
+                try:
+                    row.update(screen_processed(rec["processed"], tf_list, select_half,
+                                                plan.value("batch_key"), method, seed,
+                                                proxy_methods=proxy_methods,
+                                                reference_groups=groups))
+                except Exception as exc:  # noqa: BLE001 - one bad context fails its candidate only
+                    row["error"] = rec["error"] = f"screening failed: {type(exc).__name__}: {exc}"
             rows.append(row)
     table = pd.DataFrame(rows)
     table.to_csv(out / "screening.csv", index=False)
