@@ -1,0 +1,17 @@
+\begin{table}[H]\centering\small
+\caption{Configuration of the run, from the experiment record and the run folder.}
+\begin{tabular}{p{0.3\linewidth}p{0.62\linewidth}}\toprule
+experiment & EXP-20261001-LD-1 \\
+type & exploratory. This run validates new simulator/runner machinery and estimates stress curves; it cannot support a headline or paper claim without a separately registered confirmatory rerun \\
+owner & LD (agent-run)   issue: \#23   registered: 2026-10-01 \\
+datasets (rows) & 40 \\
+models & clr, grnboost2, pearson\_signed, regdiffusion \\
+arms & auto, baseline \\
+code & clean commit on branch ld/contextual-stress-bench; hpc/hpc.sh sync writes its hash to GIT\_COMMIT, and each job copies that into CODE\_COMMIT. The task SHA256 and score-affecting options are pinned separately in tasks.json and RUN\_CONFIG.json. \\
+code commit (run folder) & 9743907d659510c4b63d53473adae7cc7bfc79b0 \\
+environment & Bocconi HPC conda env grnbench, Python 3.11, requirements/lock-py311.txt plus its pinned RegDiffusion/CPU-torch header line via WITH\_TORCH=1 bash hpc/setup\_env.sh. \\
+machine & Bocconi HPC, partition/QOS stud, one job at a time, 8 CPUs, 32 GB, 24 h. Work files use \textasciitilde{}/gb\_tmp, not compute-node /tmp; resubmission uses the identical command and output folder. \\
+seeds & scenario seeds 0-4; union-truth split seed = scenario seed; score-cell subsample seed 0; GRNBoost2 seed 42; RegDiffusion seed 0. Shared edges are split before context expansion, so the same shared edge can never enter selection for one type and evaluation for another. \\
+run folder & benchmarks/results/EXP-20261001-LD-1/real \\
+generated & 2026-10-02 14:31 \\
+\bottomrule\end{tabular}\end{table}

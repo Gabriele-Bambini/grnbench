@@ -24,6 +24,7 @@ the same context, then add the cisTarget motif prior (GRNBENCH_CISTARGET_DIR).
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -37,7 +38,10 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from engine_bench import BASELINE, EVAL_METHODS, keep_awake, score_candidates  # noqa: E402
+from engine_bench import (BASELINE, EVAL_METHODS, RETRYABLE_STATUSES, TERMINAL_STATUSES,
+                          _atomic_json, _normalise_status, enforce_completeness, keep_awake,
+                          ensure_run_config, load_task_manifest, score_candidates,
+                          write_task_manifest)  # noqa: E402
 
 MIN_REFERENCE_EDGES = 50
 # Regulators scored: the TFs with the most reference targets present in the data. Evaluation
@@ -46,27 +50,72 @@ MIN_REFERENCE_EDGES = 50
 MAX_TFS = 150
 
 
+def _portable_user_path(path: str | Path) -> str:
+    """Use ``~/`` for paths below the current home; never serialize a personal home path."""
+    p = Path(path)
+    try:
+        return (Path("~") / p.resolve().relative_to(Path.home().resolve())).as_posix()
+    except ValueError:
+        return str(p)
+
+
+def portable_task_manifest(tasks_path: str | Path, out_path: str | Path) -> dict:
+    """Rewrite task paths below HOME as ``~/`` while retaining the source manifest hash."""
+    tasks, meta = load_task_manifest(tasks_path)
+    portable = json.loads(json.dumps(tasks))
+    for task in portable:
+        if task.get("path"):
+            task["path"] = _portable_user_path(task["path"])
+    payload = write_task_manifest(out_path, portable,
+                                  task_type=f"{meta.get('task_type', 'real')}_portable")
+    payload["source_tasks_sha256"] = meta["tasks_sha256"]
+    _atomic_json(Path(out_path), payload)
+    return payload
+
+
+def _expand_task_paths(tasks: list[dict]) -> list[dict]:
+    """Expand portable ``~/`` paths after manifest validation, without changing its hash."""
+    for task in tasks:
+        if task.get("path"):
+            task["path"] = str(Path(task["path"]).expanduser())
+    return tasks
+
+
+def reference_fingerprints(refs: str | Path | None) -> dict[str, str]:
+    """Content hashes only (never a personal cluster path) for immutable run config."""
+    if refs is None:
+        return {}
+    root = Path(refs)
+    out = {}
+    for name in ("collectri_human.tsv", "collectri_mouse.tsv"):
+        path = root / name
+        if path.exists():
+            out[name] = hashlib.sha256(path.read_bytes()).hexdigest()
+    return out
+
+
 def make_tasks(data_root: Path) -> list[dict]:
     root = Path(data_root)
     tasks = []
     for truth in sorted(root.glob("cellxgene/**/truth.json")):
         rel = truth.parent.relative_to(root / "cellxgene").as_posix().replace("/", "__")
-        tasks.append({"id": f"cxg__{rel}", "path": str(truth.parent / "data.h5ad"),
+        tasks.append({"id": f"cxg__{rel}", "path": _portable_user_path(truth.parent / "data.h5ad"),
                       "truth": json.loads(truth.read_text(encoding="utf-8")), "kind": "cellxgene"})
     pbmc = next(iter(sorted(root.glob("10x_pbmc3k/filtered/**/matrix.mtx*"))), None)
     if pbmc is not None:
-        tasks.append({"id": "pbmc3k_filtered", "path": str(pbmc.parent), "kind": "10x",
+        tasks.append({"id": "pbmc3k_filtered", "path": _portable_user_path(pbmc.parent), "kind": "10x",
                       "truth": {"technology": "umi", "organism": "human"}})
     raw = next(iter(sorted(root.glob("10x_pbmc3k/raw/**/matrix.mtx*"))), None)
     if raw is not None:
-        tasks.append({"id": "pbmc3k_raw", "path": str(raw.parent), "kind": "10x_raw",
+        tasks.append({"id": "pbmc3k_raw", "path": _portable_user_path(raw.parent), "kind": "10x_raw",
                       "truth": {"technology": "umi", "organism": "human", "raw_droplets": True}})
     paul = root / "scanpy_paul15" / "paul15.h5ad"
     if paul.exists():
-        tasks.append({"id": "paul15", "path": str(paul), "kind": "h5ad",
+        tasks.append({"id": "paul15", "path": _portable_user_path(paul), "kind": "h5ad",
                       "truth": {"technology": "umi", "organism": "mouse", "time_course": True}})
     for expr in sorted(root.glob("beeline/**/ExpressionData.csv"))[:7]:
-        tasks.append({"id": f"beeline__{expr.parent.name}", "path": str(expr), "kind": "beeline",
+        tasks.append({"id": f"beeline__{expr.parent.name}", "path": _portable_user_path(expr),
+                      "kind": "beeline",
                       "truth": {"expect_refusal": "not raw counts (BEELINE inputs are normalized)"}})
     return tasks
 
@@ -222,13 +271,14 @@ def score_models(records_by_cand, plans, arms: dict, methods: list[str], tfs, ev
 
 
 def run_real_task(task: dict, refs: Path | None, workroot: Path, keep: bool = False,
-                  models: list[str] | None = None, artifacts_dir: Path | None = None) -> dict:
+                  models: list[str] | None = None, artifacts_dir: Path | None = None,
+                  attempt: int = 1) -> dict:
     from grnbench.autoprep import diagnose, execute_plan, plan_preprocessing
     from grnbench.screen import rank_candidates, screen_candidates
 
     t0 = time.time()
     row = {"task": task["id"], "scenario": f"real_{task['kind']}", "seed": 0, "error": None,
-           "truth": json.dumps(task["truth"])}
+           "truth": json.dumps(task["truth"]), "status": "running", "attempt": int(attempt)}
     work = Path(workroot) / task["id"]
     shutil.rmtree(work, ignore_errors=True)
     try:
@@ -240,6 +290,7 @@ def run_real_task(task: dict, refs: Path | None, workroot: Path, keep: bool = Fa
                 row["refused_as_expected"] = True
                 row["refusal"] = f"{type(exc).__name__}: {exc}"[:500]
                 row["seconds"] = round(time.time() - t0, 1)
+                row["status"] = "expected_refusal"
                 return row
             raise
         if task["truth"].get("expect_refusal"):
@@ -318,9 +369,11 @@ def run_real_task(task: dict, refs: Path | None, workroot: Path, keep: bool = Fa
             row["contexts_failed"] = sum(1 for r in recs if r["error"])
             if row["contexts_failed"]:
                 row["context_errors"] = " | ".join(r["error"] for r in recs if r["error"])[:1000]
+        row["status"] = "completed"
     except Exception as exc:  # noqa: BLE001 - robustness is part of what is measured
         row["error"] = f"{type(exc).__name__}: {exc}"
         row["traceback"] = traceback.format_exc()[-4000:]
+        row["status"] = "transient_error"
     row["seconds"] = round(time.time() - t0, 1)
     if not keep:
         shutil.rmtree(work, ignore_errors=True)
@@ -328,15 +381,30 @@ def run_real_task(task: dict, refs: Path | None, workroot: Path, keep: bool = Fa
 
 
 def _run_and_save(args):
-    task, refs, out, workroot, models, keep_artifacts = args
+    task, refs, out, workroot, models, keep_artifacts, max_attempts, retry_permanent = args
     path = Path(out) / "rows" / f"{task['id']}.json"
+    previous = None
     if path.exists():
-        return task["id"], "skipped"
+        try:
+            previous = json.loads(path.read_text(encoding="utf-8"))
+            status = _normalise_status(previous)
+            if status in TERMINAL_STATUSES and not (status == "permanent_error" and retry_permanent):
+                return task["id"], status, "skipped terminal result"
+        except (OSError, ValueError):
+            previous = {"attempt": 0, "error": "unreadable previous row"}
+    attempt = int((previous or {}).get("attempt", 0)) + 1
     artifacts_dir = Path(out) / "artifacts" if keep_artifacts else None
-    row = run_real_task(task, refs, workroot, models=models, artifacts_dir=artifacts_dir)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(row, default=float), encoding="utf-8")
-    return task["id"], row.get("error") or f"{row['seconds']}s"
+    row = run_real_task(task, refs, workroot, models=models, artifacts_dir=artifacts_dir,
+                        attempt=attempt)
+    if row["status"] == "transient_error" and attempt >= max_attempts:
+        row["status"] = "permanent_error"
+    prior_errors = list((previous or {}).get("prior_errors", []))
+    if previous and previous.get("error"):
+        prior_errors.append({"attempt": previous.get("attempt"), "error": previous["error"]})
+    if prior_errors:
+        row["prior_errors"] = prior_errors
+    _atomic_json(path, row)
+    return task["id"], row["status"], row.get("error") or f"{row['seconds']}s"
 
 
 def _model_matrix(df: pd.DataFrame, arm: str, metric: str) -> pd.DataFrame:
@@ -415,8 +483,31 @@ def models_section(df: pd.DataFrame) -> list[str]:
     return lines
 
 
-def report(out: Path) -> str:
+def _outcome_label(row) -> str:
+    """Human-readable terminal outcome without calling a scoreless row 'scored'."""
+    if isinstance(row.get("error"), str):
+        return "ERROR: " + str(row["error"])[:60]
+    if row.get("refused_as_expected") is True:
+        return "refused: not counts"
+    score_keys = [k for k in row.index
+                  if ((k.startswith("m_") and k.endswith("_auto_auprc_ratio"))
+                      or (k.startswith("permodel_") and k.endswith("_auto")))]
+    if any(pd.notna(row.get(k)) for k in score_keys):
+        return "ok, scored"
+    contexts = row.get("contexts_ok")
+    if pd.notna(contexts):
+        reason = "; no reference edges" if row.get("reference_edges") == 0 else ""
+        return f"completed, unscored ({int(contexts)} contexts{reason})"
+    return "completed, no model score"
+
+
+def report(out: Path, tasks_path: str | Path | None = None, *, partial: bool = False) -> str:
     """REPORT_REAL.md: one row per dataset plus detection / robustness / recovery summaries."""
+    if tasks_path is None:  # runs planned before D-019 (e.g. EXP-20260926-LM-1) saved tasks.json
+        tasks_path = next((p for p in (Path(out) / "real_tasks.json", Path(out) / "tasks.json")
+                           if p.exists()), Path(out) / "real_tasks.json")
+    tasks_path = Path(tasks_path)
+    audit = enforce_completeness(Path(out), tasks_path, partial=partial)
     rows = [json.loads(p.read_text(encoding="utf-8")) for p in sorted((Path(out) / "rows").glob("*.json"))]
     df = pd.DataFrame(rows)
     df.to_csv(Path(out) / "all_rows_real.csv", index=False)
@@ -424,10 +515,17 @@ def report(out: Path) -> str:
     err = df["error"].notna() if "error" in df else pd.Series(False, index=df.index)
     refused = (df["refused_as_expected"].map(lambda v: v is True) if "refused_as_expected" in df
                else pd.Series(False, index=df.index))
-    lines = [f"# Engine mass test on real datasets - {n} datasets", "",
-             f"- ran end to end: {int((~err & ~refused).sum())}",
+    requested = [c for c in df if c.startswith("m_") and c.endswith("_auto_auprc_ratio")]
+    has_requested_score = (df[requested].apply(pd.to_numeric, errors="coerce").notna().any(axis=1)
+                           if requested else pd.Series(False, index=df.index))
+    lines = [f"# {'PARTIAL - ' if partial and not audit['complete'] else ''}Engine mass test on real datasets - "
+             f"{audit['task_count']} planned datasets", "",
+             f"- completed without a top-level error: {int((~err & ~refused).sum())}",
+             f"- with a requested-model reference score: {int(has_requested_score.sum())}",
+             f"- completed without a requested-model score: {int((~err & ~refused & ~has_requested_score).sum())}",
              f"- refused as expected (not raw counts): {int(refused.sum())}",
-             f"- errors: {int(err.sum())}"]
+             f"- permanent errors: {audit['status_counts'].get('permanent_error', 0)}",
+             f"- missing or retryable: {len(audit['missing']) + len(audit['incomplete'])}"]
     dbl = [c for c in df if c.endswith("_doublets") and c.split("_")[0] in ("baseline", "auto")]
     if dbl:
         fb = df[dbl].astype(str).apply(lambda col: col.str.contains("heuristic")).any(axis=1)
@@ -442,20 +540,22 @@ def report(out: Path) -> str:
             lines.append(f"| {c[7:]} | {len(v)} | {v.mean():.0%} |")
         lines.append("")
     m_cols = [c for c in df if c.startswith("permodel_") and c.endswith("_auto")]
-    scored = df[df.get("reference_edges", pd.Series(0, index=df.index)).fillna(0) >= MIN_REFERENCE_EDGES]
-    if len(scored) and m_cols:
+    reference_scored = df[df.get("reference_edges", pd.Series(0, index=df.index)).fillna(0)
+                          >= MIN_REFERENCE_EDGES]
+    if len(reference_scored) and m_cols:
         lines += ["## Reference recovery (CollecTRI evaluation half, AUPRC ratio; 1 = random)", "",
                   "| model | n | auto > baseline | auto = baseline | mean auto | mean baseline | mean rules |",
                   "|---|---|---|---|---|---|---|"]
         for m in EVAL_METHODS:
-            a, b = scored.get(f"permodel_{m}_auto"), scored.get(f"permodel_{m}_baseline")
+            a = reference_scored.get(f"permodel_{m}_auto")
+            b = reference_scored.get(f"permodel_{m}_baseline")
             if a is None:
                 continue
             keep = a.notna() & b.notna()
             d = (a - b)[keep]
             lines.append(f"| {m} | {int(keep.sum())} | {(d > 1e-9).mean():.0%} | {(d.abs() <= 1e-9).mean():.0%} | "
                          f"{a[keep].mean():.2f} | {b[keep].mean():.2f} | "
-                         f"{scored.loc[keep, f'permodel_{m}_rules'].mean():.2f} |")
+                         f"{reference_scored.loc[keep, f'permodel_{m}_rules'].mean():.2f} |")
         lines.append("")
     lines += models_section(df)
     lines += ["## Per dataset", "",
@@ -463,8 +563,7 @@ def report(out: Path) -> str:
               "|---|---|---|---|---|---|---|---|"]
     for _, r in df.iterrows():
         truth = json.loads(r["truth"]) if isinstance(r.get("truth"), str) else {}
-        outcome = ("ERROR: " + str(r["error"])[:60]) if isinstance(r.get("error"), str) else             ("refused: not counts" if r.get("refused_as_expected") is True else
-             (f"ok ({int(r['contexts_ok'])} contexts)" if pd.notna(r.get("contexts_ok")) else "ok, scored"))
+        outcome = _outcome_label(r)
         def pair(m):
             a, b = r.get(f"permodel_{m}_auto"), r.get(f"permodel_{m}_baseline")
             return "-" if a is None or pd.isna(a) else f"{a:.2f}/{b:.2f}"
@@ -509,39 +608,67 @@ def main(argv=None) -> int:
     b.add_argument("--keep-artifacts", action="store_true",
                    help="write edges, processed h5ad and decisions per task under OUT/artifacts/ "
                         "(default off; scores are unaffected either way)")
+    b.add_argument("--max-attempts", type=int, default=2,
+                   help="row failures become permanent after this many invocations")
+    b.add_argument("--retry-permanent", action="store_true")
     c = sub.add_parser("report")
     c.add_argument("--out", required=True)
+    c.add_argument("--tasks", default=None)
+    c.add_argument("--partial", action="store_true",
+                   help="write a visibly watermarked report even when tasks are missing/retryable")
     c.add_argument("--tasks-for-viz", default=None, help="tasks.json with raw data paths (QC/embedding figures)")
     c.add_argument("--no-final-report", action="store_true", help="REPORT_REAL.md only (no figures, no LaTeX)")
+    d = sub.add_parser("portable-manifest")
+    d.add_argument("--tasks", required=True, help="executed task manifest")
+    d.add_argument("--out", required=True, help="portable output manifest")
     args = p.parse_args(argv)
     if args.cmd == "report":
-        print(report(Path(args.out)))
+        print(report(Path(args.out), args.tasks, partial=args.partial))
         if not args.no_final_report:
             final_report(Path(args.out), args.tasks_for_viz)
         return 0
     if args.cmd == "plan":
         tasks = make_tasks(Path(args.data_root))
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.out).write_text(json.dumps(tasks, indent=0), encoding="utf-8")
-        print(f"{len(tasks)} real-data tasks -> {args.out}")
+        manifest = write_task_manifest(args.out, tasks, task_type="real")
+        print(f"{len(tasks)} real-data tasks -> {args.out} sha256={manifest['tasks_sha256']}")
         return 0
-    tasks = json.loads(Path(args.tasks).read_text(encoding="utf-8"))
+    if args.cmd == "portable-manifest":
+        payload = portable_task_manifest(args.tasks, args.out)
+        print(f"{payload['task_count']} portable tasks -> {args.out} "
+              f"sha256={payload['tasks_sha256']} source={payload['source_tasks_sha256']}")
+        return 0
+    tasks, manifest_meta = load_task_manifest(args.tasks)
+    tasks = _expand_task_paths(tasks)
     if args.index is not None:
         tasks = tasks[args.index * args.chunk:(args.index + 1) * args.chunk]
     keep_awake()
     workroot = Path(args.workroot or tempfile.mkdtemp(prefix="gb_real_"))
     os.environ.setdefault("OMP_NUM_THREADS", "1")
     models = [m.strip() for m in args.models.split(",") if m.strip()] if args.models else None
-    jobs = [(t, args.refs, args.out, workroot, models, args.keep_artifacts) for t in tasks]
+    ensure_run_config(args.out, manifest_meta, runner="real_bench",
+                      scientific_config={"models": models or [], "screen_methods": EVAL_METHODS,
+                                         "max_tfs": MAX_TFS,
+                                         "min_reference_edges": MIN_REFERENCE_EDGES,
+                                         "reference_split": "within_tf_half",
+                                         "reference_sha256": reference_fingerprints(args.refs)})
+    if args.max_attempts < 1:
+        p.error("--max-attempts must be >= 1")
+    jobs = [(t, args.refs, args.out, workroot, models, args.keep_artifacts,
+             args.max_attempts, args.retry_permanent) for t in tasks]
+    retryable = False
     if args.jobs > 1:
         from multiprocessing import get_context
         with get_context("spawn").Pool(args.jobs, maxtasksperchild=1) as pool:
-            for tid, status in pool.imap_unordered(_run_and_save, jobs):
-                print(f"{tid}: {status}", flush=True)
+            for tid, status, detail in pool.imap_unordered(_run_and_save, jobs):
+                retryable |= status in RETRYABLE_STATUSES
+                print(f"{tid}: {status}: {detail}", flush=True)
     else:
         for j in jobs:
-            print("%s: %s" % _run_and_save(j), flush=True)
-    return 0
+            tid, status, detail = _run_and_save(j)
+            retryable |= status in RETRYABLE_STATUSES
+            print(f"{tid}: {status}: {detail}", flush=True)
+    return 2 if retryable else 0
 
 
 if __name__ == "__main__":

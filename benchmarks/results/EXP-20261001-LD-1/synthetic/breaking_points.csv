@@ -1,0 +1,145 @@
+shared_edge_fraction,model,stressor,statistical_break,half_clean_break,operational_break
+0.25,pearson_signed,ambient,not reached,not reached,not reached
+0.25,pearson_signed,batch_confounding,not reached,not reached,not reached
+0.25,pearson_signed,batch_depth,not reached,not reached,not reached
+0.25,pearson_signed,cells,not reached,severe,not reached
+0.25,pearson_signed,damaged,not reached,not reached,not reached
+0.25,pearson_signed,depth,not reached,extreme,not reached
+0.25,pearson_signed,doublets,not reached,not reached,not reached
+0.25,pearson_signed,mixed,mixed_4,mixed_3,not reached
+0.25,pearson_signed,type_imbalance,not reached,not reached,not reached
+0.25,clr,ambient,not reached,extreme,not reached
+0.25,clr,batch_confounding,not reached,not reached,not reached
+0.25,clr,batch_depth,not reached,not reached,not reached
+0.25,clr,cells,not reached,severe,not reached
+0.25,clr,damaged,not reached,not reached,not reached
+0.25,clr,depth,not reached,moderate,not reached
+0.25,clr,doublets,not reached,not reached,not reached
+0.25,clr,mixed,mixed_4,mixed_1,not reached
+0.25,clr,type_imbalance,not reached,not reached,not reached
+0.25,grnboost2,ambient,not reached,not reached,not reached
+0.25,grnboost2,batch_confounding,not reached,not reached,not reached
+0.25,grnboost2,batch_depth,not reached,not reached,not reached
+0.25,grnboost2,cells,not reached,severe,not reached
+0.25,grnboost2,damaged,not reached,not reached,not reached
+0.25,grnboost2,depth,not reached,severe,not reached
+0.25,grnboost2,doublets,not reached,not reached,not reached
+0.25,grnboost2,mixed,not reached,mixed_2,not reached
+0.25,grnboost2,type_imbalance,not reached,not reached,not reached
+0.25,regdiffusion,ambient,not reached,extreme,not reached
+0.25,regdiffusion,batch_confounding,not reached,not reached,not reached
+0.25,regdiffusion,batch_depth,not reached,not reached,not reached
+0.25,regdiffusion,cells,not reached,severe,not reached
+0.25,regdiffusion,damaged,not reached,not reached,not reached
+0.25,regdiffusion,depth,not reached,moderate,not reached
+0.25,regdiffusion,doublets,not reached,not reached,not reached
+0.25,regdiffusion,mixed,mixed_3,mixed_1,not reached
+0.25,regdiffusion,type_imbalance,not reached,not reached,not reached
+0.5,pearson_signed,ambient,not reached,not reached,not reached
+0.5,pearson_signed,batch_confounding,not reached,not reached,not reached
+0.5,pearson_signed,batch_depth,not reached,not reached,not reached
+0.5,pearson_signed,cells,not reached,severe,not reached
+0.5,pearson_signed,damaged,not reached,not reached,not reached
+0.5,pearson_signed,depth,not reached,extreme,not reached
+0.5,pearson_signed,doublets,not reached,not reached,not reached
+0.5,pearson_signed,mixed,not reached,mixed_3,not reached
+0.5,pearson_signed,type_imbalance,not reached,not reached,not reached
+0.5,clr,ambient,not reached,extreme,not reached
+0.5,clr,batch_confounding,not reached,not reached,not reached
+0.5,clr,batch_depth,not reached,not reached,not reached
+0.5,clr,cells,not reached,severe,not reached
+0.5,clr,damaged,not reached,not reached,not reached
+0.5,clr,depth,not reached,moderate,not reached
+0.5,clr,doublets,not reached,not reached,not reached
+0.5,clr,mixed,mixed_3,mixed_1,not reached
+0.5,clr,type_imbalance,not reached,not reached,not reached
+0.5,grnboost2,ambient,not reached,not reached,not reached
+0.5,grnboost2,batch_confounding,not reached,not reached,not reached
+0.5,grnboost2,batch_depth,not reached,not reached,not reached
+0.5,grnboost2,cells,not reached,severe,not reached
+0.5,grnboost2,damaged,not reached,not reached,not reached
+0.5,grnboost2,depth,not reached,severe,not reached
+0.5,grnboost2,doublets,not reached,not reached,not reached
+0.5,grnboost2,mixed,not reached,mixed_2,not reached
+0.5,grnboost2,type_imbalance,not reached,not reached,not reached
+0.5,regdiffusion,ambient,not reached,extreme,not reached
+0.5,regdiffusion,batch_confounding,not reached,not reached,not reached
+0.5,regdiffusion,batch_depth,not reached,not reached,not reached
+0.5,regdiffusion,cells,not reached,severe,not reached
+0.5,regdiffusion,damaged,not reached,not reached,not reached
+0.5,regdiffusion,depth,not reached,moderate,not reached
+0.5,regdiffusion,doublets,not reached,not reached,not reached
+0.5,regdiffusion,mixed,mixed_2,mixed_2,not reached
+0.5,regdiffusion,type_imbalance,not reached,not reached,not reached
+0.75,pearson_signed,ambient,not reached,not reached,not reached
+0.75,pearson_signed,batch_confounding,not reached,not reached,not reached
+0.75,pearson_signed,batch_depth,not reached,not reached,not reached
+0.75,pearson_signed,cells,not reached,severe,not reached
+0.75,pearson_signed,damaged,not reached,not reached,not reached
+0.75,pearson_signed,depth,not reached,extreme,not reached
+0.75,pearson_signed,doublets,not reached,not reached,not reached
+0.75,pearson_signed,mixed,not reached,mixed_3,not reached
+0.75,pearson_signed,type_imbalance,not reached,not reached,not reached
+0.75,clr,ambient,not reached,not reached,not reached
+0.75,clr,batch_confounding,not reached,not reached,not reached
+0.75,clr,batch_depth,not reached,not reached,not reached
+0.75,clr,cells,not reached,severe,not reached
+0.75,clr,damaged,not reached,not reached,not reached
+0.75,clr,depth,not reached,moderate,not reached
+0.75,clr,doublets,not reached,not reached,not reached
+0.75,clr,mixed,mixed_4,mixed_1,not reached
+0.75,clr,type_imbalance,not reached,not reached,not reached
+0.75,grnboost2,ambient,not reached,not reached,not reached
+0.75,grnboost2,batch_confounding,not reached,not reached,not reached
+0.75,grnboost2,batch_depth,not reached,not reached,not reached
+0.75,grnboost2,cells,not reached,extreme,not reached
+0.75,grnboost2,damaged,not reached,not reached,not reached
+0.75,grnboost2,depth,not reached,severe,not reached
+0.75,grnboost2,doublets,not reached,not reached,not reached
+0.75,grnboost2,mixed,not reached,mixed_2,not reached
+0.75,grnboost2,type_imbalance,not reached,not reached,not reached
+0.75,regdiffusion,ambient,not reached,extreme,not reached
+0.75,regdiffusion,batch_confounding,not reached,not reached,not reached
+0.75,regdiffusion,batch_depth,not reached,not reached,not reached
+0.75,regdiffusion,cells,not reached,extreme,not reached
+0.75,regdiffusion,damaged,not reached,not reached,not reached
+0.75,regdiffusion,depth,extreme,moderate,not reached
+0.75,regdiffusion,doublets,not reached,not reached,not reached
+0.75,regdiffusion,mixed,mixed_4,mixed_2,not reached
+0.75,regdiffusion,type_imbalance,not reached,not reached,not reached
+1.0,pearson_signed,ambient,not reached,not reached,not reached
+1.0,pearson_signed,batch_confounding,not reached,not reached,not reached
+1.0,pearson_signed,batch_depth,not reached,not reached,not reached
+1.0,pearson_signed,cells,not reached,severe,not reached
+1.0,pearson_signed,damaged,not reached,not reached,not reached
+1.0,pearson_signed,depth,not reached,extreme,not reached
+1.0,pearson_signed,doublets,not reached,not reached,not reached
+1.0,pearson_signed,mixed,not reached,mixed_2,not reached
+1.0,pearson_signed,type_imbalance,not reached,not reached,not reached
+1.0,clr,ambient,not reached,extreme,not reached
+1.0,clr,batch_confounding,not reached,not reached,not reached
+1.0,clr,batch_depth,not reached,not reached,not reached
+1.0,clr,cells,not reached,severe,not reached
+1.0,clr,damaged,not reached,not reached,not reached
+1.0,clr,depth,not reached,moderate,not reached
+1.0,clr,doublets,not reached,not reached,not reached
+1.0,clr,mixed,mixed_4,mixed_1,not reached
+1.0,clr,type_imbalance,not reached,not reached,not reached
+1.0,grnboost2,ambient,not reached,not reached,not reached
+1.0,grnboost2,batch_confounding,not reached,not reached,not reached
+1.0,grnboost2,batch_depth,not reached,not reached,not reached
+1.0,grnboost2,cells,not reached,extreme,not reached
+1.0,grnboost2,damaged,not reached,not reached,not reached
+1.0,grnboost2,depth,not reached,severe,not reached
+1.0,grnboost2,doublets,not reached,not reached,not reached
+1.0,grnboost2,mixed,not reached,mixed_2,not reached
+1.0,grnboost2,type_imbalance,not reached,not reached,not reached
+1.0,regdiffusion,ambient,not reached,extreme,not reached
+1.0,regdiffusion,batch_confounding,not reached,not reached,not reached
+1.0,regdiffusion,batch_depth,not reached,not reached,not reached
+1.0,regdiffusion,cells,extreme,not reached,not reached
+1.0,regdiffusion,damaged,not reached,not reached,not reached
+1.0,regdiffusion,depth,moderate,moderate,not reached
+1.0,regdiffusion,doublets,not reached,not reached,not reached
+1.0,regdiffusion,mixed,mixed_3,mixed_2,not reached
+1.0,regdiffusion,type_imbalance,not reached,not reached,not reached

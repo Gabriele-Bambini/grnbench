@@ -23,6 +23,7 @@ evaluation half - an upper bound for the candidate set).
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -36,12 +37,18 @@ import numpy as np
 import pandas as pd
 
 EVAL_METHODS = ["pearson_signed", "spearman_signed", "clr"]
+DEFAULT_BENCH_MODELS = ["pearson_signed", "clr", "grnboost2", "regdiffusion"]
+BENCH_METHOD_PARAMS = {"grnboost2": {"n_estimators": 100},
+                       "regdiffusion": {"n_steps": 100}}
 BASELINE = {"cell_qc_thresholds": "fixed", "doublets": "none", "context_scope": "pooled",
             "normalization": "cpm_log1p", "batch": "none", "sparsity": "single_cells",
             "hvg": "tf_plus_1000", "gene_filter": "min_cells", "subsample": "none",
             "confounders": "none"}
 BAD_STATES = ("damaged", "empty", "doublet", "raw_empty")
 MAX_SCORE_CELLS = 3000
+TASK_SCHEMA_VERSION = 1
+TERMINAL_STATUSES = {"completed", "expected_refusal", "permanent_error"}
+RETRYABLE_STATUSES = {"pending", "running", "transient_error"}
 
 
 # -- task list ----------------------------------------------------------------------------- #
@@ -56,10 +63,175 @@ def make_tasks(presets_reps: int, n_random: int, presets=None) -> list[dict]:
     return tasks
 
 
+STRESS_FACTORS = {
+    "depth": [
+        ("mild", {"median_library": 1500.0}, 1500.0),
+        ("moderate", {"median_library": 800.0}, 800.0),
+        ("severe", {"median_library": 400.0}, 400.0),
+        ("extreme", {"median_library": 200.0}, 200.0),
+    ],
+    "cells": [
+        ("mild", {"n_cells": 1500}, 1500),
+        ("moderate", {"n_cells": 800}, 800),
+        ("severe", {"n_cells": 400}, 400),
+        ("extreme", {"n_cells": 200}, 200),
+    ],
+    "doublets": [
+        ("mild", {"doublet_frac": 0.03}, 0.03),
+        ("moderate", {"doublet_frac": 0.06}, 0.06),
+        ("severe", {"doublet_frac": 0.10}, 0.10),
+        ("extreme", {"doublet_frac": 0.15}, 0.15),
+    ],
+    "ambient": [
+        ("mild", {"ambient_frac": 0.05}, 0.05),
+        ("moderate", {"ambient_frac": 0.10}, 0.10),
+        ("severe", {"ambient_frac": 0.20}, 0.20),
+        ("extreme", {"ambient_frac": 0.30}, 0.30),
+    ],
+    "damaged": [
+        ("mild", {"damaged_frac": 0.03}, 0.03),
+        ("moderate", {"damaged_frac": 0.06}, 0.06),
+        ("severe", {"damaged_frac": 0.10}, 0.10),
+        ("extreme", {"damaged_frac": 0.20}, 0.20),
+    ],
+    "batch_confounding": [
+        ("mild", {"n_batches": 3, "batch_shift_sd": 0.4, "batch_confounding": 0.25}, 0.25),
+        ("moderate", {"n_batches": 3, "batch_shift_sd": 0.4, "batch_confounding": 0.50}, 0.50),
+        ("severe", {"n_batches": 3, "batch_shift_sd": 0.4, "batch_confounding": 0.75}, 0.75),
+        ("extreme", {"n_batches": 3, "batch_shift_sd": 0.4, "batch_confounding": 1.00}, 1.00),
+    ],
+    "batch_depth": [
+        ("mild", {"n_batches": 2, "batch_depth_ratio": 1.25}, 1.25),
+        ("moderate", {"n_batches": 2, "batch_depth_ratio": 1.50}, 1.50),
+        ("severe", {"n_batches": 2, "batch_depth_ratio": 2.00}, 2.00),
+        ("extreme", {"n_batches": 2, "batch_depth_ratio": 3.00}, 3.00),
+    ],
+    "type_imbalance": [
+        ("mild", {"type_balance_ratio": 2.0}, 2.0),
+        ("moderate", {"type_balance_ratio": 5.0}, 5.0),
+        ("severe", {"type_balance_ratio": 10.0}, 10.0),
+        ("extreme", {"type_balance_ratio": 20.0}, 20.0),
+    ],
+}
+
+
+def make_stress_tasks(n_seeds: int = 5,
+                      shared_fractions=(1.0, 0.75, 0.5, 0.25)) -> list[dict]:
+    """Controlled 740-task grid: clean + 8 one-factor curves + 4 mixed curves.
+
+    Every biological regime has 37 scenarios and every scenario has ``n_seeds``
+    independent replicates.  The explicit task metadata drives the generated
+    breaking-point table; scenario names are never parsed to recover design.
+    """
+    tasks = []
+    for shared in shared_fractions:
+        sf = f"sf{int(round(100 * shared)):03d}"
+        base = {"n_cells": 3000, "median_library": 3000.0,
+                "type_balance_ratio": 1.0, "shared_edge_fraction": float(shared)}
+        designs = [("clean", 0, "baseline", 0.0, {})]
+        for stressor, levels in STRESS_FACTORS.items():
+            for severity, (label, changes, value) in enumerate(levels, start=1):
+                designs.append((stressor, severity, label, value, changes))
+        for severity in range(1, 5):
+            changes = {}
+            values = {}
+            for stressor, levels in STRESS_FACTORS.items():
+                _label, change, value = levels[severity - 1]
+                changes.update(change)
+                values[stressor] = value
+            designs.append(("mixed", severity, f"mixed_{severity}", severity,
+                            {**changes, "_mixed_values": values}))
+        for stressor, severity, label, value, raw_changes in designs:
+            changes = dict(raw_changes)
+            mixed_values = changes.pop("_mixed_values", None)
+            scenario = {**base, **changes}
+            for seed in range(n_seeds):
+                task = {
+                    "id": f"{sf}__{stressor}__l{severity}__s{seed}",
+                    "kind": "stress",
+                    "name": f"{sf}_{stressor}_{label}",
+                    "seed": seed,
+                    "shared_edge_fraction": float(shared),
+                    "stressor": stressor,
+                    "severity": severity,
+                    "severity_label": label,
+                    "severity_value": value,
+                    "scenario": scenario,
+                }
+                if mixed_values is not None:
+                    task["mixed_values"] = mixed_values
+                tasks.append(task)
+    return tasks
+
+
+def _canonical_tasks(tasks: list[dict]) -> bytes:
+    return json.dumps(tasks, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
+
+
+def task_digest(tasks: list[dict]) -> str:
+    return hashlib.sha256(_canonical_tasks(tasks)).hexdigest()
+
+
+def write_task_manifest(path: str | Path, tasks: list[dict], *, task_type: str) -> dict:
+    ids = [str(t.get("id")) for t in tasks]
+    if len(ids) != len(set(ids)):
+        raise ValueError("task ids must be unique")
+    payload = {"schema_version": TASK_SCHEMA_VERSION, "task_type": task_type,
+               "task_count": len(tasks), "tasks_sha256": task_digest(tasks), "tasks": tasks}
+    _atomic_json(Path(path), payload)
+    return payload
+
+
+def load_task_manifest(path: str | Path) -> tuple[list[dict], dict]:
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    if isinstance(payload, list):                 # legacy manifests remain runnable
+        tasks = payload
+        meta = {"schema_version": 0, "task_type": "legacy", "task_count": len(tasks),
+                "tasks_sha256": task_digest(tasks)}
+    elif isinstance(payload, dict) and isinstance(payload.get("tasks"), list):
+        tasks = payload["tasks"]
+        meta = {k: v for k, v in payload.items() if k != "tasks"}
+        if int(meta.get("task_count", -1)) != len(tasks):
+            raise ValueError(f"{path}: task_count does not match tasks")
+        actual = task_digest(tasks)
+        if meta.get("tasks_sha256") != actual:
+            raise ValueError(f"{path}: task manifest hash mismatch")
+    else:
+        raise ValueError(f"{path}: expected a task list or versioned task manifest")
+    ids = [str(t.get("id")) for t in tasks]
+    if len(ids) != len(set(ids)) or any(i in ("", "None") for i in ids):
+        raise ValueError(f"{path}: task ids must be present and unique")
+    return tasks, meta
+
+
+def ensure_run_config(out: str | Path, manifest_meta: dict, *, runner: str,
+                      scientific_config: dict) -> dict:
+    """Pin score-affecting run options on first invocation and reject drift."""
+    payload = {"schema_version": 1, "runner": runner,
+               "tasks_sha256": manifest_meta["tasks_sha256"],
+               "scientific_config": scientific_config}
+    payload["config_sha256"] = hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    path = Path(out) / "RUN_CONFIG.json"
+    if path.exists():
+        previous = json.loads(path.read_text(encoding="utf-8"))
+        if previous != payload:
+            raise ValueError(
+                f"{path}: run configuration differs from the existing immutable configuration; "
+                "use a new output directory"
+            )
+    else:
+        _atomic_json(path, payload)
+    return payload
+
+
 # -- one task ----------------------------------------------------------------------------- #
 
 def _scenario(task):
-    from grnbench.simulate import PRESETS, random_scenario
+    from grnbench.simulate import PRESETS, Scenario, random_scenario
+    if task["kind"] == "stress":
+        return Scenario(name=task["name"], seed=int(task["seed"]), **task["scenario"])
     if task["kind"] == "random":
         return random_scenario(task["seed"])
     return PRESETS[task["name"]].with_seed(task["seed"])
@@ -110,17 +282,31 @@ def qc_accuracy(records, obs_all: pd.DataFrame, strategy: str) -> dict:
     return out
 
 
-def score_candidates(records_by_cand, plans, tfs, eval_pairs) -> dict[str, dict]:
+def _truth_groups(rec: dict, eval_pairs, eval_pairs_by_context: dict[str, set] | None):
+    if not eval_pairs_by_context:
+        return {"all": set(eval_pairs)}
+    value = rec.get("subset_value")
+    if value is not None and str(value) in eval_pairs_by_context:
+        return {str(value): eval_pairs_by_context[str(value)]}
+    return eval_pairs_by_context
+
+
+def score_candidates(records_by_cand, plans, tfs, eval_pairs,
+                     eval_pairs_by_context: dict[str, set] | None = None,
+                     methods: list[str] | None = None,
+                     method_params: dict[str, dict] | None = None) -> dict[str, dict]:
     import anndata as ad
     from grnbench.eval.metrics import GoldIndex, evaluate_ranking
     from grnbench.infer import run_method
     from grnbench.tfs import resolve_tf_names
 
-    gi = GoldIndex.coerce(set(eval_pairs))
+    methods = methods or EVAL_METHODS
+    method_params = method_params or {}
     scores = {}
     for name, recs in records_by_cand.items():
         strategy = plans[name].value("strategy")
-        per_method = {m: [] for m in EVAL_METHODS}
+        per_method = {m: {"auprc_ratio": [], "epr": []} for m in methods}
+        per_method_errors = {m: [] for m in methods}
         for rec in recs:
             if not rec.get("processed"):
                 continue
@@ -132,29 +318,75 @@ def score_candidates(records_by_cand, plans, tfs, eval_pairs) -> dict[str, dict]
             sources = resolve_tf_names(genes, tfs)
             universe = pd.DataFrame([(s, g) for s in sources for g in genes if s != g],
                                     columns=["source", "target"])
-            for m in EVAL_METHODS:
+            groups = _truth_groups(rec, eval_pairs, eval_pairs_by_context)
+            for m in methods:
                 try:
-                    edges, _ = run_method(m, adata, tf_list=tfs, assume_normalized=strategy != "raw_counts")
-                    r = evaluate_ranking(edges, gi, with_curve=False, universe=universe)
-                    per_method[m].append(float(r.get("auprc_ratio", np.nan)))
-                except Exception:  # noqa: BLE001 - a failing method is recorded as NaN
-                    per_method[m].append(np.nan)
-        row = {f"eval_{m}": float(np.nanmean(v)) if v and np.isfinite(v).any() else np.nan
-               for m, v in per_method.items()}
-        vals = [v for v in row.values() if np.isfinite(v)]
+                    edges, _ = run_method(m, adata, tf_list=tfs,
+                                          assume_normalized=strategy != "raw_counts",
+                                          **method_params.get(m, {}))
+                    for pairs in groups.values():
+                        gi = GoldIndex.coerce(set(pairs))
+                        r = evaluate_ranking(edges, gi, with_curve=False, universe=universe)
+                        for metric in ("auprc_ratio", "epr"):
+                            per_method[m][metric].append(float(r.get(metric, np.nan)))
+                except Exception as exc:  # noqa: BLE001 - a failing method is recorded as NaN
+                    per_method[m]["auprc_ratio"].append(np.nan)
+                    per_method[m]["epr"].append(np.nan)
+                    per_method_errors[m].append(f"{type(exc).__name__}: {exc}"[:300])
+        row = {}
+        for method, metrics in per_method.items():
+            for metric, values in metrics.items():
+                finite = [v for v in values if np.isfinite(v)]
+                key = f"eval_{method}" if metric == "auprc_ratio" else f"eval_{method}_{metric}"
+                row[key] = float(np.mean(finite)) if finite else np.nan
+            if per_method_errors[method]:
+                row[f"eval_{method}_error"] = " | ".join(sorted(set(per_method_errors[method])))[:1000]
+        vals = [row[f"eval_{m}"] for m in methods if np.isfinite(row[f"eval_{m}"])]
         row["eval_mean"] = float(np.mean(vals)) if vals else np.nan
-        row["n_contexts"] = sum(1 for r in recs if r.get("processed"))
+        row["n_contexts"] = sum(len(_truth_groups(r, eval_pairs, eval_pairs_by_context))
+                                for r in recs if r.get("processed"))
         scores[name] = row
     return scores
 
 
-def run_task(task: dict, workroot: Path, keep: bool = False) -> dict:
+def score_selected_models(records_by_cand, plans, arms: dict[str, str | None], tfs,
+                          eval_pairs, eval_pairs_by_context, methods: list[str]) -> dict:
+    """Score requested models only on distinct candidates used by an arm.
+
+    Screening remains deliberately cheap and chooses one common ``auto``
+    pipeline from the selection half.  Expensive models are then evaluated on
+    the held-out half for baseline/rules/auto without multiplying their cost by
+    every rejected candidate.
+    """
+    chosen = {cand: records_by_cand[cand] for cand in set(arms.values())
+              if cand is not None and cand in records_by_cand}
+    scores = score_candidates(chosen, plans, tfs, eval_pairs, eval_pairs_by_context,
+                              methods=methods, method_params=BENCH_METHOD_PARAMS)
+    out = {}
+    for arm, cand in arms.items():
+        if cand not in scores:
+            continue
+        for method in methods:
+            out[f"m_{method}_{arm}_auprc_ratio"] = scores[cand].get(f"eval_{method}", np.nan)
+            out[f"m_{method}_{arm}_epr"] = scores[cand].get(f"eval_{method}_epr", np.nan)
+            if scores[cand].get(f"eval_{method}_error"):
+                out[f"m_{method}_{arm}_error"] = scores[cand][f"eval_{method}_error"]
+    return out
+
+
+def run_task(task: dict, workroot: Path, keep: bool = False,
+             models: list[str] | None = None, attempt: int = 1) -> dict:
     from grnbench.autoprep import diagnose, plan_preprocessing
     from grnbench.screen import rank_candidates, screen_candidates
     from grnbench.simulate import write_scenario
 
     t0 = time.time()
-    row = {"task": task["id"], "scenario": task["name"], "seed": task["seed"], "error": None}
+    row = {"task": task["id"], "scenario": task["name"], "seed": task["seed"], "error": None,
+           "status": "running", "attempt": int(attempt)}
+    for key in ("shared_edge_fraction", "stressor", "severity", "severity_label",
+                "severity_value", "mixed_values"):
+        if key in task:
+            row[key] = task[key]
     work = Path(workroot) / task["id"]
     shutil.rmtree(work, ignore_errors=True)
     try:
@@ -164,6 +396,11 @@ def run_task(task: dict, workroot: Path, keep: bool = False) -> dict:
         tfs = paths["tfs"].read_text(encoding="utf-8").split()
         gold = pd.read_csv(paths["gold"], sep="\t")
         pairs = set(zip(gold["source"].astype(str), gold["target"].astype(str)))
+        pairs_by_context = {}
+        for context, context_path in paths.get("gold_by_context", {}).items():
+            frame = pd.read_csv(context_path, sep="\t")
+            pairs_by_context[str(context)] = set(zip(frame["source"].astype(str),
+                                                      frame["target"].astype(str)))
         diag = diagnose(paths["counts"])
         plan = plan_preprocessing(diag, tf_list=tfs)
         row.update(check_detection(diag, plan, scn.expected()))
@@ -173,7 +410,8 @@ def run_task(task: dict, workroot: Path, keep: bool = False) -> dict:
         res = screen_candidates(diag, paths["counts"], work / "screen", tf_list=tfs,
                                 reference_pairs=pairs, max_candidates=4, seed=task["seed"],
                                 extra=[{"name": "baseline", "choices": BASELINE}],
-                                proxy_methods=EVAL_METHODS)
+                                proxy_methods=EVAL_METHODS,
+                                reference_pairs_by_context=pairs_by_context)
         for name, recs in res["records"].items():
             for rec, ctx in zip(recs, res["plans"][name].contexts):
                 rec["subset_key"], rec["subset_value"] = ctx.get("subset_key"), ctx.get("subset_value")
@@ -182,7 +420,9 @@ def run_task(task: dict, workroot: Path, keep: bool = False) -> dict:
         row["n_gate_refusals"] = sum("QC gate failure" in e for e in errs)
         if errs:
             row["first_context_error"] = errs[0][:300]
-        scores = score_candidates(res["records"], res["plans"], tfs, res["reference"]["evaluation"])
+        scores = score_candidates(res["records"], res["plans"], tfs,
+                                  res["reference"]["evaluation"],
+                                  res["reference"].get("evaluation_by_context"))
         noref = res["rows"].drop(columns=[c for c in res["rows"] if c.startswith("reference_")])
         noref_rank, _ = rank_candidates(noref)
         arms = {"baseline": "baseline", "rules": "recommended", "auto": res["best"],
@@ -211,26 +451,75 @@ def run_task(task: dict, workroot: Path, keep: bool = False) -> dict:
             vals = {k: v.get(f"eval_{m}", np.nan) for k, v in scores.items()}
             vals = {k: v for k, v in vals.items() if np.isfinite(v)}
             row[f"permodel_{m}_oracle"] = max(vals.values()) if vals else np.nan
+        if models:
+            row.update(score_selected_models(
+                res["records"], res["plans"],
+                {k: arms[k] for k in ("baseline", "rules", "auto")},
+                tfs, res["reference"]["evaluation"],
+                res["reference"].get("evaluation_by_context"), models,
+            ))
         row["candidates"] = json.dumps({k: {kk: vv for kk, vv in v.items()} for k, v in scores.items()},
                                        default=float)
+        row["status"] = "completed"
     except Exception as exc:  # noqa: BLE001 - robustness is part of what is measured
         row["error"] = f"{type(exc).__name__}: {exc}"
         row["traceback"] = traceback.format_exc()[-4000:]
+        row["status"] = "transient_error"
     row["seconds"] = round(time.time() - t0, 1)
     if not keep:
         shutil.rmtree(work, ignore_errors=True)
     return row
 
 
-def _run_and_save(args):
-    task, out, workroot, keep = args
-    path = Path(out) / "rows" / f"{task['id']}.json"
-    if path.exists():
-        return task["id"], "skipped"
-    row = run_task(task, workroot, keep)
+def _atomic_json(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(row, default=float), encoding="utf-8")
-    return task["id"], row.get("error") or f"{row['seconds']}s"
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(payload, fh, default=float)
+        fh.flush()
+        os.fsync(fh.fileno())
+    os.replace(tmp, path)
+
+
+def _normalise_status(row: dict) -> str:
+    status = row.get("status")
+    if status:
+        return str(status)
+    if row.get("refused_as_expected") is True:
+        return "expected_refusal"
+    return "completed" if not row.get("error") else "transient_error"
+
+
+def _run_and_save(args):
+    task, out, workroot, keep, models, max_attempts, retry_permanent = args
+    path = Path(out) / "rows" / f"{task['id']}.json"
+    previous = None
+    if path.exists():
+        try:
+            previous = json.loads(path.read_text(encoding="utf-8"))
+            status = _normalise_status(previous)
+            if status in TERMINAL_STATUSES and not (status == "permanent_error" and retry_permanent):
+                return task["id"], status, "skipped terminal result"
+        except (OSError, ValueError):
+            previous = {"attempt": 0, "error": "unreadable previous row"}
+    attempt = int((previous or {}).get("attempt", 0)) + 1
+    row = run_task(task, workroot, keep, models=models, attempt=attempt)
+    if row["status"] == "transient_error" and attempt >= max_attempts:
+        row["status"] = "permanent_error"
+    prior_errors = list((previous or {}).get("prior_errors", []))
+    if previous and previous.get("error"):
+        prior_errors.append({"attempt": previous.get("attempt"), "error": previous["error"]})
+    if prior_errors:
+        row["prior_errors"] = prior_errors
+    _atomic_json(path, row)
+    if keep:
+        source = Path(workroot) / task["id"]
+        target = Path(out) / "artifacts" / task["id"]
+        if source.exists():
+            shutil.rmtree(target, ignore_errors=True)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(source), str(target))
+    return task["id"], row["status"], row.get("error") or f"{row['seconds']}s"
 
 
 def keep_awake() -> None:
@@ -245,17 +534,268 @@ def keep_awake() -> None:
     ctypes.windll.kernel32.SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED)
 
 
+def is_sentinel_task(task: dict) -> bool:
+    """Pre-declared small artifact set: clean, extreme depth and extreme mixed, seed 0."""
+    return (task.get("kind") == "stress" and int(task.get("seed", -1)) == 0
+            and (task.get("stressor") == "clean"
+                 or (int(task.get("severity", -1)) == 4
+                     and task.get("stressor") in {"depth", "mixed"})))
+
+
 # -- report ------------------------------------------------------------------------------------ #
 
-def report(out: Path) -> str:
+def audit_completeness(out: Path, tasks: list[dict], manifest_meta: dict) -> dict:
+    planned = [str(t["id"]) for t in tasks]
+    rows, invalid_files = [], []
+    for path in sorted((out / "rows").glob("*.json")):
+        try:
+            row = json.loads(path.read_text(encoding="utf-8"))
+            row["_row_file"] = path.name
+            rows.append(row)
+        except (OSError, ValueError) as exc:
+            invalid_files.append({"file": path.name, "error": f"{type(exc).__name__}: {exc}"})
+    by_id: dict[str, list[dict]] = {}
+    for row in rows:
+        by_id.setdefault(str(row.get("task")), []).append(row)
+    missing = [task for task in planned if task not in by_id]
+    duplicate_rows = sorted(task for task, group in by_id.items() if len(group) > 1)
+    extra = sorted(task for task in by_id if task not in set(planned))
+    status_by_task = {task: _normalise_status(by_id[task][0])
+                      for task in planned if task in by_id and len(by_id[task]) == 1}
+    incomplete = sorted(task for task, status in status_by_task.items()
+                        if status not in TERMINAL_STATUSES)
+    counts = {status: sum(s == status for s in status_by_task.values())
+              for status in sorted(TERMINAL_STATUSES | RETRYABLE_STATUSES)}
+    config_errors = []
+    config_path = out / "RUN_CONFIG.json"
+    if int(manifest_meta.get("schema_version", 0)) >= 1:
+        try:
+            config = json.loads(config_path.read_text(encoding="utf-8"))
+            if config.get("tasks_sha256") != manifest_meta.get("tasks_sha256"):
+                config_errors.append("RUN_CONFIG tasks_sha256 differs from task manifest")
+            claimed = config.get("config_sha256")
+            unhashed = {k: v for k, v in config.items() if k != "config_sha256"}
+            actual = hashlib.sha256(
+                json.dumps(unhashed, sort_keys=True, separators=(",", ":")).encode()
+            ).hexdigest()
+            if claimed != actual:
+                config_errors.append("RUN_CONFIG config_sha256 mismatch")
+        except (OSError, ValueError) as exc:
+            config_errors.append(f"RUN_CONFIG unavailable: {type(exc).__name__}: {exc}")
+    complete = not (missing or incomplete or duplicate_rows or extra or invalid_files or config_errors)
+    return {
+        "schema_version": 1,
+        "complete": complete,
+        "task_count": len(planned),
+        "tasks_sha256": manifest_meta.get("tasks_sha256", task_digest(tasks)),
+        "status_counts": counts,
+        "missing": missing,
+        "incomplete": incomplete,
+        "duplicate_rows": duplicate_rows,
+        "extra_rows": extra,
+        "invalid_row_files": invalid_files,
+        "run_config_errors": config_errors,
+        "unexpected_errors": [task for task, status in status_by_task.items()
+                              if status == "permanent_error"],
+    }
+
+
+def enforce_completeness(out: Path, tasks_path: str | Path, *, partial: bool = False) -> dict:
+    tasks, meta = load_task_manifest(tasks_path)
+    audit = audit_completeness(out, tasks, meta)
+    complete_path, partial_path = out / "COMPLETE.json", out / "PARTIAL.json"
+    if audit["complete"]:
+        _atomic_json(complete_path, audit)
+        partial_path.unlink(missing_ok=True)
+    elif partial:
+        _atomic_json(partial_path, audit)
+        complete_path.unlink(missing_ok=True)
+    else:
+        raise RuntimeError(
+            "run is incomplete: "
+            f"missing={len(audit['missing'])}, retryable={len(audit['incomplete'])}, "
+            f"duplicates={len(audit['duplicate_rows'])}, extra={len(audit['extra_rows'])}, "
+            f"invalid={len(audit['invalid_row_files'])}, config={len(audit['run_config_errors'])}; "
+            "rerun tasks or pass --partial for a watermarked report"
+        )
+    return audit
+
+
+def _mean_ci(values) -> tuple[float, float, float]:
+    from scipy.stats import t
+    x = np.asarray([v for v in values if np.isfinite(v)], dtype=float)
+    if len(x) == 0:
+        return np.nan, np.nan, np.nan
+    mean = float(x.mean())
+    if len(x) < 2 or float(x.std(ddof=1)) == 0:
+        return mean, mean, mean
+    half = float(t.ppf(0.975, len(x) - 1) * x.std(ddof=1) / np.sqrt(len(x)))
+    return mean, mean - half, mean + half
+
+
+def _write_stress_figures(levels: pd.DataFrame, out: Path) -> Path:
+    """Plot every controlled stress curve; values come only from ``stress_levels.csv``."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    viz = out / "viz"
+    viz.mkdir(exist_ok=True)
+    made = []
+    regimes = sorted(levels["shared_edge_fraction"].dropna().unique(), reverse=True)
+    for stressor, stress in levels.groupby("stressor", sort=True):
+        fig, axes = plt.subplots(2, 2, figsize=(11, 7.5), sharex=True, sharey=True)
+        for ax, shared in zip(axes.flat, regimes):
+            panel = stress[stress["shared_edge_fraction"] == shared]
+            for model, curve in panel.groupby("model", sort=True):
+                curve = curve.sort_values("severity")
+                x = np.r_[0, curve["severity"].to_numpy(dtype=float)]
+                y = np.r_[curve["clean_mean_auprc_ratio"].iloc[0],
+                          curve["mean_auprc_ratio"].to_numpy(dtype=float)]
+                lo = np.r_[curve["clean_ci95_low"].iloc[0],
+                           curve["ci95_low"].to_numpy(dtype=float)]
+                hi = np.r_[curve["clean_ci95_high"].iloc[0],
+                           curve["ci95_high"].to_numpy(dtype=float)]
+                ax.plot(x, y, marker="o", label=model)
+                ax.fill_between(x, lo, hi, alpha=0.12)
+            labels = ["clean", *curve["severity_label"].astype(str).tolist()]
+            ax.set_xticks(range(len(labels)), labels, rotation=25, ha="right")
+            ax.axhline(1.0, color="black", linestyle="--", linewidth=0.8)
+            ax.set_title(f"shared edges = {shared:.0%}")
+            ax.set_ylabel("AUPRC ratio (1 = random)")
+            ax.grid(alpha=0.2)
+        handles, labels = axes.flat[0].get_legend_handles_labels()
+        fig.legend(handles, labels, loc="upper center", ncol=max(1, len(labels)))
+        fig.suptitle(f"Controlled stress: {stressor} (mean and 95% t interval; n = 5 seeds)", y=0.995)
+        fig.tight_layout(rect=(0, 0, 1, 0.94))
+        name = "".join(c if c.isalnum() or c in "-_" else "_" for c in str(stressor))
+        path = viz / f"stress_{name}.png"
+        fig.savefig(path, dpi=120)
+        plt.close(fig)
+        made.append(path.name)
+    lines = ["# Synthetic stress-curve figures", "",
+             "Generated from `stress_levels.csv`; each point is the mean across five simulator seeds, "
+             "and bands are 95% Student-t intervals. AUPRC ratio 1 is random.", ""]
+    lines.extend(f"- [{name}]({name})" for name in made)
+    lines.append("")
+    (viz / "index.md").write_text("\n".join(lines), encoding="utf-8")
+    return viz
+
+
+def stress_breaking_points(df: pd.DataFrame, out: Path) -> list[str]:
+    """Generate descriptive breakpoints for every model/regime/stressor.
+
+    These are diagnostic thresholds, not confirmatory hypothesis tests: five
+    simulator seeds estimate a 95% t interval; a later registered experiment
+    must confirm any claim on real datasets.
+    """
+    if "stressor" not in df:
+        return []
+    model_cols = {c[len("m_"):-len("_auto_auprc_ratio")]: c for c in df
+                  if c.startswith("m_") and c.endswith("_auto_auprc_ratio")}
+    if not model_cols:
+        return []
+    records, summaries = [], []
+    for shared, regime in df.groupby("shared_edge_fraction", dropna=False):
+        clean = regime[regime["stressor"] == "clean"]
+        for model, col in model_cols.items():
+            clean_mean, clean_lo, clean_hi = _mean_ci(clean[col].dropna())
+            for stressor, curve in regime[regime["stressor"] != "clean"].groupby("stressor"):
+                levels = []
+                for severity, level in curve.groupby("severity"):
+                    mean, lo, hi = _mean_ci(level[col].dropna())
+                    finite_rate = float(level[col].notna().mean())
+                    rec = {"shared_edge_fraction": shared, "model": model,
+                           "stressor": stressor, "severity": int(severity),
+                           "severity_label": str(level["severity_label"].iloc[0]),
+                           "severity_value": level["severity_value"].iloc[0],
+                           "n": int(level[col].notna().sum()), "mean_auprc_ratio": mean,
+                           "ci95_low": lo, "ci95_high": hi,
+                           "clean_mean_auprc_ratio": clean_mean,
+                           "clean_ci95_low": clean_lo, "clean_ci95_high": clean_hi,
+                           "relative_to_clean": (mean / clean_mean
+                                                 if np.isfinite(mean) and clean_mean > 0 else np.nan),
+                           "finite_rate": finite_rate,
+                           "above_random_95ci": bool(np.isfinite(lo) and lo > 1.0)}
+                    records.append(rec)
+                    levels.append(rec)
+                statistical = ("clean" if not (np.isfinite(clean_lo) and clean_lo > 1.0) else
+                               next((r["severity_label"] for r in levels
+                                     if not r["above_random_95ci"]), "not reached"))
+                relative = next((r["severity_label"] for r in levels
+                                 if np.isfinite(r["relative_to_clean"])
+                                 and r["relative_to_clean"] <= 0.5), "not reached")
+                operational = next((r["severity_label"] for r in levels
+                                    if r["finite_rate"] < 1.0), "not reached")
+                summaries.append({"shared_edge_fraction": shared, "model": model,
+                                  "stressor": stressor, "statistical_break": statistical,
+                                  "half_clean_break": relative,
+                                  "operational_break": operational})
+    pd.DataFrame(records).to_csv(out / "stress_levels.csv", index=False)
+    pd.DataFrame(summaries).to_csv(out / "breaking_points.csv", index=False)
+    _write_stress_figures(pd.DataFrame(records), out)
+    lines = ["", "## Controlled stress-test breaking points", "",
+             "Exploratory diagnostics: `statistical` is the first level whose 95% t interval no longer "
+             "lies wholly above random (AUPRC ratio 1); `half-clean` is the first level at or below "
+             "50% of the clean mean; `operational` is the first level with any missing model score.", "",
+             "| shared edges | model | stressor | statistical | half-clean | operational |",
+             "|---|---|---|---|---|---|"]
+    for row in summaries:
+        lines.append(f"| {row['shared_edge_fraction']:.0%} | {row['model']} | {row['stressor']} | "
+                     f"{row['statistical_break']} | {row['half_clean_break']} | "
+                     f"{row['operational_break']} |")
+    return lines + [""]
+
+
+def synthetic_models_section(df: pd.DataFrame) -> list[str]:
+    models = sorted({c[len("m_"):-len("_auto_auprc_ratio")] for c in df
+                     if c.startswith("m_") and c.endswith("_auto_auprc_ratio")})
+    if not models:
+        return []
+    lines = ["", "## Requested inference models", "",
+             "The same held-out context truths are used for all arms. The common `auto` pipeline is "
+             "chosen by the fast proxy methods on the selection half; expensive models never see "
+             "the evaluation half during pipeline selection.", ""]
+    for metric, label in (("auprc_ratio", "AUPRC ratio"), ("epr", "EPR")):
+        lines += [f"### {label} (1 = random)", "",
+                  "| model | n auto | mean baseline | mean rules | mean auto | auto > baseline |",
+                  "|---|---|---|---|---|---|"]
+        for model in models:
+            auto = df.get(f"m_{model}_auto_{metric}", pd.Series(np.nan, index=df.index))
+            base = df.get(f"m_{model}_baseline_{metric}", pd.Series(np.nan, index=df.index))
+            rules = df.get(f"m_{model}_rules_{metric}", pd.Series(np.nan, index=df.index))
+            paired = auto.notna() & base.notna()
+            lines.append(f"| {model} | {int(auto.notna().sum())} | {base.mean():.3f} | "
+                         f"{rules.mean():.3f} | {auto.mean():.3f} | "
+                         f"{int((auto[paired] > base[paired]).sum())}/{int(paired.sum())} |")
+        lines.append("")
+    errors = [c for c in df if c.startswith("m_") and c.endswith("_error")]
+    if errors:
+        lines += ["### Model errors", ""]
+        for col in errors:
+            for task, error in zip(df["task"], df[col]):
+                if isinstance(error, str):
+                    lines.append(f"- `{task}` / `{col[2:-6]}`: {error[:300]}")
+        lines.append("")
+    return lines
+
+
+def report(out: Path, tasks_path: str | Path | None = None, *, partial: bool = False) -> str:
     from scipy.stats import wilcoxon
 
+    tasks_path = Path(tasks_path or out / "tasks.json")
+    audit = enforce_completeness(out, tasks_path, partial=partial)
     rows = [json.loads(p.read_text(encoding="utf-8")) for p in sorted((out / "rows").glob("*.json"))]
     df = pd.DataFrame(rows)
     df.to_csv(out / "all_rows.csv", index=False)
-    ok = df[df["error"].isna()] if "error" in df else df
-    lines = [f"# Engine mass test - {len(df)} datasets, {len(ok)} completed, "
-             f"{len(df) - len(ok)} errors", ""]
+    status = df.apply(lambda r: _normalise_status(r.to_dict()), axis=1)
+    ok = df[status == "completed"]
+    lines = [f"# {'PARTIAL - ' if partial and not audit['complete'] else ''}Engine mass test - "
+             f"{audit['task_count']} planned datasets", "",
+             f"- completed: {audit['status_counts'].get('completed', 0)}",
+             f"- expected refusals: {audit['status_counts'].get('expected_refusal', 0)}",
+             f"- permanent errors: {audit['status_counts'].get('permanent_error', 0)}",
+             f"- missing or retryable: {len(audit['missing']) + len(audit['incomplete'])}", ""]
     arms = [a for a in ["baseline", "rules", "auto", "auto_noref", "oracle"] if f"{a}_eval_mean" in ok]
 
     def paired(a: str, b: str, frame: pd.DataFrame) -> dict:
@@ -336,11 +876,13 @@ def report(out: Path) -> str:
             b, a = ok.get(f"baseline_qc_{m}"), ok.get(f"auto_qc_{m}")
             lines.append(f"| {m} | {b.mean() if b is not None else np.nan:.1%} | "
                          f"{a.mean() if a is not None else np.nan:.1%} |")
-    if len(df) - len(ok):
+    lines += synthetic_models_section(ok)
+    lines += stress_breaking_points(df, out)
+    if audit["unexpected_errors"]:
         lines += ["", "## Errors", ""]
-        for _, r in df[df["error"].notna()].iterrows():
+        for _, r in df[df["task"].isin(audit["unexpected_errors"])].iterrows():
             lines.append(f"- `{r['task']}`: {r['error'][:300]}")
-    lines += ["", f"Median runtime per dataset: {df['seconds'].median():.0f} s."]
+    lines += ["", f"Median runtime per completed dataset: {ok['seconds'].median():.0f} s."]
     text = "\n".join(lines) + "\n"
     (out / "REPORT.md").write_text(text, encoding="utf-8")
     return text
@@ -355,6 +897,9 @@ def main(argv=None) -> int:
     a.add_argument("--presets-reps", type=int, default=10)
     a.add_argument("--random", type=int, default=100)
     a.add_argument("--presets", default=None, help="comma-separated subset of presets")
+    a.add_argument("--stress-grid", action="store_true",
+                   help="plan the controlled 4-regime x 37-scenario stress grid")
+    a.add_argument("--stress-seeds", type=int, default=5)
     a.add_argument("--out", required=True)
     b = sub.add_parser("run")
     b.add_argument("--tasks", required=True)
@@ -363,39 +908,72 @@ def main(argv=None) -> int:
     b.add_argument("--index", type=int, default=None, help="SLURM array index (with --chunk)")
     b.add_argument("--chunk", type=int, default=1)
     b.add_argument("--workroot", default=None)
-    b.add_argument("--keep", action="store_true")
+    b.add_argument("--keep", action="store_true", help="keep work artifacts for every task")
+    b.add_argument("--keep-artifacts", action="store_true",
+                   help="keep the 12 pre-declared stress sentinels (clean, extreme depth and "
+                        "extreme mixed at seed 0 in each network regime)")
+    b.add_argument("--models", default=None,
+                   help="comma-separated models evaluated on baseline/rules/auto; "
+                        "use 'default' for pearson, CLR, GRNBoost2 and RegDiffusion")
+    b.add_argument("--max-attempts", type=int, default=2,
+                   help="row failures become permanent after this many invocations")
+    b.add_argument("--retry-permanent", action="store_true")
     c = sub.add_parser("report")
     c.add_argument("--out", required=True)
+    c.add_argument("--tasks", default=None)
+    c.add_argument("--partial", action="store_true",
+                   help="write a visibly watermarked report even when tasks are missing/retryable")
     args = p.parse_args(argv)
 
     if args.cmd == "plan":
-        tasks = make_tasks(args.presets_reps, args.random,
-                           args.presets.split(",") if args.presets else None)
+        tasks = (make_stress_tasks(args.stress_seeds) if args.stress_grid else
+                 make_tasks(args.presets_reps, args.random,
+                            args.presets.split(",") if args.presets else None))
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.out).write_text(json.dumps(tasks, indent=0), encoding="utf-8")
-        print(f"{len(tasks)} tasks -> {args.out}")
+        manifest = write_task_manifest(args.out, tasks,
+                                       task_type="synthetic-stress" if args.stress_grid else "synthetic")
+        print(f"{len(tasks)} tasks -> {args.out} sha256={manifest['tasks_sha256']}")
         return 0
     if args.cmd == "report":
-        print(report(Path(args.out)))
+        print(report(Path(args.out), args.tasks, partial=args.partial))
         return 0
 
-    tasks = json.loads(Path(args.tasks).read_text(encoding="utf-8"))
+    tasks, manifest_meta = load_task_manifest(args.tasks)
     if args.index is not None:
         tasks = tasks[args.index * args.chunk:(args.index + 1) * args.chunk]
     keep_awake()
     workroot = Path(args.workroot or tempfile.mkdtemp(prefix="gb_engine_"))
-    jobs = [(t, args.out, workroot, args.keep) for t in tasks]
+    if args.max_attempts < 1:
+        p.error("--max-attempts must be >= 1")
+    models = (DEFAULT_BENCH_MODELS if args.models == "default" else
+              [m.strip() for m in args.models.split(",") if m.strip()] if args.models else [])
+    ensure_run_config(args.out, manifest_meta, runner="engine_bench",
+                      scientific_config={"models": models, "proxy_methods": EVAL_METHODS,
+                                         "method_params": {m: BENCH_METHOD_PARAMS.get(m, {})
+                                                           for m in models},
+                                         "max_score_cells": MAX_SCORE_CELLS,
+                                         "context_truth_scoring": "macro_by_context",
+                                         "artifact_policy": ("all" if args.keep else
+                                                             "sentinels" if args.keep_artifacts
+                                                             else "none")})
+    jobs = [(t, args.out, workroot,
+             args.keep or (args.keep_artifacts and is_sentinel_task(t)),
+             models, args.max_attempts, args.retry_permanent)
+            for t in tasks]
     os.environ.setdefault("OMP_NUM_THREADS", "1")
+    retryable = False
     if args.jobs > 1:
         from multiprocessing import get_context
         with get_context("spawn").Pool(args.jobs, maxtasksperchild=1) as pool:
-            for tid, status in pool.imap_unordered(_run_and_save, jobs):
-                print(f"{tid}: {status}", flush=True)
+            for tid, status, detail in pool.imap_unordered(_run_and_save, jobs):
+                retryable |= status in RETRYABLE_STATUSES
+                print(f"{tid}: {status}: {detail}", flush=True)
     else:
         for j in jobs:
-            tid, status = _run_and_save(j)
-            print(f"{tid}: {status}", flush=True)
-    return 0
+            tid, status, detail = _run_and_save(j)
+            retryable |= status in RETRYABLE_STATUSES
+            print(f"{tid}: {status}: {detail}", flush=True)
+    return 2 if retryable else 0
 
 
 if __name__ == "__main__":

@@ -64,7 +64,7 @@ time, `--qos=stud` must be explicit. So one job runs all tasks of an experiment:
 A='source /software/miniconda3/etc/profile.d/conda.sh && conda activate grnbench'
 EXP=EXP-YYYYMMDD-XX-n                                  # the record must already be committed
 bash hpc/hpc.sh run "$A && mkdir -p ~/gb_runs/$EXP && python benchmarks/real_bench.py plan --data-root ~/grnbench_data --out ~/gb_runs/$EXP/real_tasks.json"
-bash hpc/hpc.sh submit "--time=24:00:00 --export=ALL,OUT=\$HOME/gb_runs/$EXP,SCRIPT=benchmarks/real_bench.py,TASKS=\$HOME/gb_runs/$EXP/real_tasks.json,REFS=\$HOME/grnbench_data/references,CHUNK=100000 hpc/engine_bench.sbatch"
+bash hpc/hpc.sh submit "--time=24:00:00 --export=ALL,OUT=\$HOME/gb_runs/$EXP,SCRIPT=benchmarks/real_bench.py,TASKS=\$HOME/gb_runs/$EXP/real_tasks.json,REFS=\$HOME/grnbench_data/references,CHUNK=100000,MAX_ATTEMPTS=2 hpc/engine_bench.sbatch"
 ```
 
 `submit` prints the job id. Then open the board issue (AGENTS.md "Live board"):
@@ -112,15 +112,18 @@ bash hpc/hpc.sh fetch "~/gb_runs/$EXP" <local folder outside the repo>
 (cd <local folder>/$EXP && sha256sum -c SHA256SUMS | grep -v ': OK$' || echo all OK)
 ```
 
-Check the row count equals the task count and the report shows 0 unexpected errors. Copy the small
+The report validates the task-manifest hash and refuses missing or retryable rows; only
+`--partial` writes a watermarked incomplete report. `COMPLETE.json` must exist, the row count must
+equal the task count and the report must show 0 unexpected errors. Copy the small
 files to `benchmarks/results/$EXP/`, run `grnbench viz` and `grnbench report` on it, fill section 3
 of the record from the generated report (never type numbers by hand), close the board issue with
 label `done` or `failed` and a one-line result.
 
 ## 8. Failures and resubmits
 
-- TIMEOUT or node failure: resubmit the same command. The runners skip datasets whose
-  `rows/<task>.json` exists; delete a row file only to recompute that dataset on purpose.
+- TIMEOUT or node failure: resubmit the exact same command. The runners skip terminal rows,
+  retry `transient_error` rows and missing tasks, and turn a repeated row-level failure into
+  `permanent_error` at `MAX_ATTEMPTS` (default 2). Never delete a row merely to make a report pass.
 - A dataset erroring every time: it is a finding, record it; do not drop it silently.
 - Out of memory: raise `--mem` (per job) rather than the CPU count; 8 CPUs is the cap.
 

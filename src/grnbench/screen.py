@@ -117,7 +117,8 @@ def edge_stability(adata, tf_list, method: str = SCREEN_METHOD, k: int = STABILI
 
 
 def screen_processed(path, tf_list=None, reference_pairs=None, batch_key: str | None = None,
-                     method: str = SCREEN_METHOD, seed: int = 0, proxy_methods=None) -> dict:
+                     method: str = SCREEN_METHOD, seed: int = 0, proxy_methods=None,
+                     reference_groups: dict[str, set] | None = None) -> dict:
     """All screening measurements for one processed.h5ad."""
     import anndata as ad
     from grnbench.eval.metrics import evaluate_ranking
@@ -135,7 +136,8 @@ def screen_processed(path, tf_list=None, reference_pairs=None, batch_key: str | 
            "depth_leakage": depth_leakage(adata),
            "batch_leakage": batch_leakage(adata, batch_key, seed),
            "edge_stability": edge_stability(adata, tfs, method, seed=seed)}
-    if reference_pairs:
+    groups = reference_groups or ({"all": set(reference_pairs)} if reference_pairs else {})
+    if groups:
         genes = pd.Index(adata.var_names).astype(str)
         sources = tfs if tfs else list(genes)
         universe = pd.DataFrame([(s, g) for s in sources for g in genes if s != g],
@@ -144,15 +146,25 @@ def screen_processed(path, tf_list=None, reference_pairs=None, batch_key: str | 
         for m_name in (proxy_methods or [method]):
             try:
                 edges, _ = run_method(m_name, adata, tf_list=tfs, assume_normalized=True)
-                m = evaluate_ranking(edges, set(reference_pairs), with_curve=False, universe=universe)
-                value = float(m.get("auprc_ratio", np.nan))
+                per_context = []
+                reachable = []
+                for pairs in groups.values():
+                    m = evaluate_ranking(edges, set(pairs), with_curve=False, universe=universe)
+                    per_context.append(float(m.get("auprc_ratio", np.nan)))
+                    reachable.append(int(m.get("n_gold_in_universe", 0)))
+                finite_contexts = [v for v in per_context if np.isfinite(v)]
+                value = float(np.mean(finite_contexts)) if finite_contexts else float("nan")
             except Exception:  # noqa: BLE001 - a proxy that cannot run scores NaN
-                m, value = {}, float("nan")
+                reachable, value = [], float("nan")
             row[f"reference_auprc_ratio__{m_name}"] = value
             ratios.append(value)
-            row.setdefault("reference_edges_in_universe", int(m.get("n_gold_in_universe", 0)))
+            if reachable:
+                # This is a sum over context-specific evaluations: one shared edge can therefore
+                # contribute once per context. It is not the size of a deduplicated pooled universe.
+                row.setdefault("reference_context_edge_instances_in_universe", int(sum(reachable)))
         finite = [v for v in ratios if np.isfinite(v)]
         row["reference_auprc_ratio"] = float(np.mean(finite)) if finite else float("nan")
+        row["reference_contexts"] = int(len(groups))
     row["screen_seconds"] = round(time.time() - t0, 2)
     return row
 
@@ -217,6 +229,7 @@ def rank_candidates(rows: pd.DataFrame, method: str | None = None) -> tuple[pd.D
 
 
 def screen_candidates(diag, input_path, out_dir, *, tf_list=None, reference_pairs=None,
+                      reference_pairs_by_context: dict[str, set] | None = None,
                       selection=None, max_candidates: int = 4, seed: int = 0,
                       method: str = SCREEN_METHOD, extra: list[dict] | None = None,
                       proxy_methods: list[str] | None = None,
@@ -240,12 +253,27 @@ def screen_candidates(diag, input_path, out_dir, *, tf_list=None, reference_pair
         prof = build_profile(diag.adata, diag.qc.metrics, diag.context,
                              id_verdict=diag.id_verdict, tf_list=tf_list)
         selection = select(prof)
+    if reference_pairs_by_context:
+        context_union = set().union(*(set(v) for v in reference_pairs_by_context.values()))
+        reference_pairs = set(reference_pairs or set()) | context_union
     select_half = eval_half = None
+    select_by_context = eval_by_context = None
     if reference_pairs:
         select_half, eval_half = split_reference(reference_pairs, seed)
+        if reference_pairs_by_context:
+            select_by_context = {str(k): set(v) & select_half
+                                 for k, v in reference_pairs_by_context.items()}
+            eval_by_context = {str(k): set(v) & eval_half
+                               for k, v in reference_pairs_by_context.items()}
         (out / "reference_split.json").write_text(json.dumps(
             {"selection_half": sorted(map(list, select_half)),
              "evaluation_half": sorted(map(list, eval_half)),
+             "selection_by_context": ({k: sorted(map(list, v))
+                                        for k, v in select_by_context.items()}
+                                       if select_by_context else None),
+             "evaluation_by_context": ({k: sorted(map(list, v))
+                                         for k, v in eval_by_context.items()}
+                                        if eval_by_context else None),
              "note": "screening used only the selection half; benchmark models on the evaluation half"},
             indent=1), encoding="utf-8")
     rows, plans, records = [], {}, {}
@@ -260,13 +288,26 @@ def screen_candidates(diag, input_path, out_dir, *, tf_list=None, reference_pair
         safe = safe_folder_name(name)
         recs = execute_plan(plan, input_path, out / safe, tf_list=tf_list, seed=seed)
         records[name] = recs
-        for rec in recs:
+        for rec, context in zip(recs, plan.contexts):
+            rec["subset_key"] = context.get("subset_key")
+            rec["subset_value"] = context.get("subset_value")
             row = {"candidate": name, "context": rec["context"], "error": rec["error"],
                    "strategy": plan.value("strategy")}
             if rec["processed"]:
+                groups = None
+                if select_by_context:
+                    context_value = context.get("subset_value")
+                    if context_value is not None and str(context_value) in select_by_context:
+                        groups = {str(context_value): select_by_context[str(context_value)]}
+                    else:
+                        # A pooled prediction is judged against every context truth separately,
+                        # then macro-averaged.  Scoring it against the union would reward edges
+                        # that are correct in only one context as if they were universally true.
+                        groups = select_by_context
                 row.update(screen_processed(rec["processed"], tf_list, select_half,
                                             plan.value("batch_key"), method, seed,
-                                            proxy_methods=proxy_methods))
+                                            proxy_methods=proxy_methods,
+                                            reference_groups=groups))
             rows.append(row)
     table = pd.DataFrame(rows)
     table.to_csv(out / "screening.csv", index=False)
@@ -286,4 +327,6 @@ def screen_candidates(diag, input_path, out_dir, *, tf_list=None, reference_pair
     return {"rows": table, "pros_cons": pros_cons(table[table["error"].isna()]) if len(table) else {},
             "ranking": ranking, "rule": rule, "best": best, "best_per_method": best_per_method,
             "plans": plans, "records": records,
-            "reference": {"selection": select_half, "evaluation": eval_half}}
+            "reference": {"selection": select_half, "evaluation": eval_half,
+                          "selection_by_context": select_by_context,
+                          "evaluation_by_context": eval_by_context}}

@@ -3,6 +3,14 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- D-020 pins reference networks per registered experiment: historical reproductions keep their
+  hashes; new runs prefer versioned upstream releases or use a dated, exact snapshot manifest.
+  `data_manifest.py` argument parsing is now order-independent for reliable strict checks.
+- EXP-20261001-LD-1: completed 740/740 synthetic and 40/40 real task accounting, generated stress
+  curves, real-data visualizations and LaTeX, retained every refusal/failure, and added portable
+  task/data manifests. Real auto cleaning usually ties the baseline; the run remains exploratory.
+- `real_bench.py report --out <RUN>` falls back to `tasks.json` when `real_tasks.json`
+  is absent, so runs planned before D-019 (EXP-20260926-LM-1) regenerate unchanged.
 - EXP-20261002-LM-1: the motif prior lift (C4, C5) replicates on 20 never-used datasets (claim C6).
 - Registered Lorenzo (`@lorenzo-de-santis`, initials `LD`) in the team metadata.
 - Canonical repo is now the private GitHub repo (D-016). Rules for people and agents in
@@ -35,6 +43,14 @@
   the record, human reproduction pending).
 
 ### Added
+- Context-specific synthetic validation (D-019): the simulator writes shared, union and per-cell-type
+  truth; selection/evaluation splits happen before context expansion; pooled and split predictions
+  are macro-scored against each context. `engine_bench.py --stress-grid` fixes a 740-task design
+  across four network-sharing regimes, eight progressive corruptions and mixed worst cases, with
+  generated statistical/relative/operational breaking points. Benchmark task lists and
+  score-affecting run configurations are hashed; atomic rows have explicit retry/terminal statuses;
+  final reports require complete accounting (`--partial` is watermarked). HPC jobs can retain the
+  12 pre-declared synthetic artifact sentinels and now propagate `MAX_ATTEMPTS`.
 - `data_manifest.py --check --require-all`: optional exact-snapshot validation reports registered
   paths missing from the data root; the default subset-compatible check is unchanged. HPC and
   onboarding docs now distinguish the dynamic setup cache from registered experiment roots.
@@ -58,6 +74,10 @@
   `--max-counts-per-cell`, `--max-pct-mito`, `--cells-per-metacell`.
 
 ### Results
+- EXP-20261001-LD-1 (exploratory): 740/740 synthetic tasks completed and 40/40 real tasks reached a
+  terminal state (33 completed, seven expected BEELINE refusals). On 23 paired scored real datasets,
+  auto usually ties baseline and shows no consistent recovery gain. Two completed datasets with a
+  usable reference (`paul15`, `pbmc3k_raw`) produced no model score and remain explicit findings.
 - EXP-20260925-LM-2 (confirmatory, pre-registered): the motif prior lifts Pearson's AUPRC ratio by
   +0.182 [+0.138, +0.227] on 20 fresh CELLxGENE datasets (p_Holm 1.4e-7); EPR lift unresolved.
   Reproduced computationally (independent agent rerun from the record, identical numbers);

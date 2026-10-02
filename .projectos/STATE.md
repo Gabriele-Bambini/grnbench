@@ -2,7 +2,7 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-10-02 by LM's agent. PR #3, PR #7 and the shared-workflow PR were merged by the owner
+Updated: 2026-10-02 by LD's and LM's agents. PR #3, PR #7 and the shared-workflow PR were merged by the owner
 after independent agent reviews, not human reviews (GB was away).
 
 ## Focus
@@ -11,16 +11,22 @@ comparison, published as a tool with a paper. Headline claims from real data (D-
 pre-registered experiments (D-017).
 
 ## In progress
-- EXP-20261002-LM-1 (confirmatory, fresh-set rerun of C4/C5, HPC job 679411): the motif prior lifts
-  the AUPRC ratio on 20 never-used datasets for Pearson +0.203, RegDiffusion +0.234, GRNBoost2 +0.146
-  (n = 20 each, p_Holm <= 1.6e-6); all three supported. Claim C6 `confirmed`; reproduction pending.
-- EXP-20261002-LM-2 (exploratory, HPC job 679448, issue #28): candidate-level study, every cleaning
-  candidate on 20 real datasets x 7 controlled degradations; motivation: auto without a reference
-  loses to the baseline in all three earlier real runs.
+- EXP-20261002-LM-1 (confirmatory, fresh-set rerun of C4/C5, HPC job 679411, merged in #31): the
+  motif prior lifts the AUPRC ratio on 20 never-used datasets for Pearson +0.203, RegDiffusion
+  +0.234, GRNBoost2 +0.146 (n = 20 each, p_Holm <= 1.6e-6); all supported. Claim C6 `confirmed`.
+- EXP-20261002-LM-2 (exploratory, HPC job 679448, issue #28, branch `lm/candidate-study`): every
+  cleaning candidate on 20 real datasets x 7 controlled degradations.
+- Issue #22 / EXP-20261001-LD-1 on `ld/contextual-stress-bench`: implementation and both exploratory
+  phases are complete. Synthetic job 678174 has 740/740 completed rows; real job 679326 has 40/40
+  terminal rows (33 completed, seven expected BEELINE refusals), zero permanent/missing errors.
+  Requested-model scores exist for 24 real datasets; auto usually ties baseline on the 23 paired
+  cases, while `paul15` and `pbmc3k_raw` complete without a model score and need diagnosis. Generated
+  reports, portable figures/manifests and LaTeX are in the results folder; large artifacts remain
+  on HPC. D-020 records the approved immutable reference-snapshot policy from #21.
 - Issue #19: a read-only HPC audit found no random corruption; the setup cache is broader and more
   dynamic than the cumulative provenance registry. A small follow-up adds optional exact-snapshot
   checking and clarifies the data-root workflow; no dataset or past result is changed. Issue #21
-  holds the separate decision on pinning future CollecTRI/DoRothEA snapshots.
+  was decided by the owner and recorded as D-020 for future CollecTRI/DoRothEA snapshots.
 - EXP-20260926-LM-1 (confirmatory, HPC job 670902, results PR on `lm/exp-hpc-motif-models`):
   the motif prior lifts the AUPRC ratio for RegDiffusion by +0.184 [+0.132, +0.237] (n = 19,
   p_Holm 1.2e-6) and for GRNBoost2 by +0.130 [+0.108, +0.153] (n = 20, p_Holm 3.6e-10); both
@@ -42,9 +48,11 @@ pre-registered experiments (D-017).
 2. (done, #11) Issue #6 small-batch scrublet rule.
 3. GB: reproduce EXP-20260926-LM-1 by hand (C5 is only `reproduced-computational`). Issue #13 is
    fixed (#16). A fresh-set rerun would remove the "seen in LM-2" caveat of C5.
-4. First confirmatory synthetic + real engine experiment on HPC (auto vs baseline cleaning).
+4. Review the EXP-20261001-LD-1 results PR. Then diagnose the scoreless `paul15` and `pbmc3k_raw`
+   rows in issue #30; use the real ties plus synthetic breakpoints to register a separate
+   confirmatory auto-vs-baseline run. Scheduled monitoring stays disabled.
 5. Recalibrate `context_scope` in `selector.py` with bench evidence (add a "goal" input); regenerate the KB doc.
-6. Simulator: partially cell-type-specific networks, then rerun synthetic.
+6. After review of EXP-20261001-LD-1: register the confirmatory synthetic + real engine run under D-020.
 7. GUI: per-model best pipeline, knee cell calling, mito-gate decision, motif models, viz figures.
 
 ## Blockers / open questions

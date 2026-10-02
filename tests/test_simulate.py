@@ -1,4 +1,6 @@
 """Scenario simulator: every injected problem is really there and labelled."""
+import hashlib
+
 import numpy as np
 import pytest
 
@@ -53,3 +55,52 @@ def test_every_preset_and_random_scenario_is_valid():
     for scn in list(PRESETS.values()) + [random_scenario(i) for i in range(20)]:
         assert scn.damaged_frac + scn.empty_frac + scn.doublet_frac < 1
         assert isinstance(scn.expected(), dict)
+
+
+def test_d019_default_simulation_checksum_is_stable():
+    """Make future changes to the D-019 default random stream explicit."""
+    adata, _, gold = simulate(PRESETS["small"].with_seed(0))
+    digest = hashlib.sha256()
+    digest.update(np.asarray(adata.X.toarray(), dtype="<f4").tobytes())
+    for column in ("cell_type", "simulated_state"):
+        digest.update("\0".join(adata.obs[column].astype(str)).encode())
+    ordered = gold.sort_values(["source", "target", "sign"]).reset_index(drop=True)
+    digest.update(ordered.to_csv(index=False, lineterminator="\n").encode())
+
+    assert digest.hexdigest() == "848b924bbe9726a32270cd810023b6beba198d6794412ad436bac6e51be00870"
+
+
+def test_context_specific_truth_has_declared_shared_fraction_and_fixed_degree():
+    scn = _small(n_cell_types=3, shared_edge_fraction=0.5, type_balance_ratio=1.0)
+    adata, tfs, union, truth = simulate(scn, return_context_truth=True)
+    by_context = truth["by_context"]
+    assert set(by_context) == set(adata.obs["cell_type"].astype(str).unique())
+    assert len(truth["shared"]) == len(tfs) * 3       # round(6 * 0.5)
+    shared = set(zip(truth["shared"].source, truth["shared"].target))
+    context_pairs = []
+    for frame in by_context.values():
+        assert (frame.groupby("source").size() == scn.targets_per_tf).all()
+        pairs = set(zip(frame.source, frame.target))
+        assert shared <= pairs
+        context_pairs.append(pairs)
+    assert len(set.intersection(*context_pairs)) == len(shared)
+    assert len(union) > len(next(iter(by_context.values())))
+
+
+def test_context_truth_files_and_manifest_are_written(tmp_path):
+    import json
+    paths = write_scenario(tmp_path, _small(n_cell_types=2, shared_edge_fraction=0.5))
+    manifest = json.loads(paths["truth_manifest"].read_text())
+    assert manifest["split_policy"].startswith("split union edges first")
+    assert set(manifest["contexts"]) == set(paths["gold_by_context"])
+    assert all(path.exists() for path in paths["gold_by_context"].values())
+    assert paths["gold_shared"].exists()
+
+
+@pytest.mark.parametrize("kwargs", [
+    {"shared_edge_fraction": -0.1}, {"shared_edge_fraction": 1.1},
+    {"type_balance_ratio": 0.5}, {"n_cell_types": 0},
+])
+def test_invalid_context_truth_parameters_fail_loudly(kwargs):
+    with pytest.raises(ValueError):
+        _small(**kwargs)

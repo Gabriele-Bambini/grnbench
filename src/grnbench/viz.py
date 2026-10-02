@@ -20,6 +20,7 @@ next learned model to use directly.
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from pathlib import Path
 
 import matplotlib
@@ -207,7 +208,8 @@ def decisions_markdown(row_or_decisions) -> str:
     choices = {}
     if isinstance(d, dict) and "rules_choices" in d:
         rc = d["rules_choices"]
-        choices = json.loads(rc) if isinstance(rc, str) else (rc or {})
+        parsed = json.loads(rc) if isinstance(rc, str) else rc
+        choices = parsed if isinstance(parsed, Mapping) else {}
     for key, val in choices.items():
         lines.append(f"| {key} | {val} | rules recommendation |")
     if isinstance(d, dict) and "chosen_plans" in d:
@@ -639,11 +641,18 @@ def build_run(run_dir, out_dir=None, tasks_json=None, max_datasets=None) -> Path
     rows_df = _load_rows(run_dir)
     tasks_map = {}
     if tasks_json is not None and Path(tasks_json).exists():
-        tasks_map = json.loads(Path(tasks_json).read_text(encoding="utf-8"))
-        if isinstance(tasks_map, list):
-            tasks_map = {t["id"]: t.get("path") for t in tasks_map if "id" in t}
+        tasks_payload = json.loads(Path(tasks_json).read_text(encoding="utf-8"))
+        if isinstance(tasks_payload, dict) and isinstance(tasks_payload.get("tasks"), list):
+            tasks_payload = tasks_payload["tasks"]
+        if isinstance(tasks_payload, list):
+            tasks_map = {t["id"]: t.get("path") for t in tasks_payload if "id" in t}
+        elif isinstance(tasks_payload, dict):
+            tasks_map = tasks_payload  # legacy id -> path mapping
+        else:
+            raise ValueError(f"{tasks_json}: expected a task list, mapping, or versioned manifest")
         # paths in committed task files are written as ~/... (never a personal absolute path)
-        tasks_map = {k: str(Path(v).expanduser()) if v else v for k, v in tasks_map.items()}
+        tasks_map = {k: str(Path(v).expanduser()) if isinstance(v, str) and v else v
+                     for k, v in tasks_map.items()}
 
     if len(rows_df):
         for metric in ("auprc_ratio", "epr"):
@@ -667,10 +676,13 @@ def build_run(run_dir, out_dir=None, tasks_json=None, max_datasets=None) -> Path
         skipped.append("Scores across datasets: no rows/*.json in this run directory")
 
     tasks = sorted({r["task"] for r in rows_df.to_dict("records")}) if len(rows_df) else []
-    if max_datasets:
+    if max_datasets is not None:
         tasks = tasks[: int(max_datasets)]
     if not tasks:
-        skipped.append("Per dataset: no datasets found in rows/*.json")
+        if max_datasets == 0 and len(rows_df):
+            skipped.append("Per dataset: omitted from this summary (--max-datasets 0)")
+        else:
+            skipped.append("Per dataset: no datasets found in rows/*.json")
     for task in tasks:
         row = rows_df[rows_df["task"] == task].iloc[0].to_dict() if len(rows_df) else {}
         art = _task_artifacts(run_dir, task)

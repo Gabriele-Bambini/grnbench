@@ -1,11 +1,12 @@
 """Scenario simulator for testing the cleaning engine against a known network.
 
-Each :class:`Scenario` generates raw counts from a planted TF -> target
-network (shared by every cell type) and injects the problems real data have,
-one knob each: low depth, batches (balanced or confounded with cell type),
-damaged cells, near-empty droplets, doublets, ambient RNA, full-length read
-counts, Ensembl or mouse-style identifiers, an unfiltered droplet matrix, and a
-README that is correct, missing or misleading.
+Each :class:`Scenario` generates raw counts from planted TF -> target networks
+and injects the problems real data have, one knob each: low depth, batches
+(balanced or confounded with cell type), damaged cells, near-empty droplets,
+doublets, ambient RNA, full-length read counts, Ensembl or mouse-style
+identifiers, an unfiltered droplet matrix, and a README that is correct,
+missing or misleading.  ``shared_edge_fraction`` controls how much of the
+network is common to every cell type; the remaining edges are context-specific.
 
 ``obs['simulated_state']`` records what every barcode really is (``ok``,
 ``damaged``, ``empty``, ``doublet``, ``raw_empty``) so cleaning accuracy can be
@@ -38,6 +39,8 @@ class Scenario:
     targets_per_tf: int = 12
     n_cell_types: int = 3
     type_program_sd: float = 0.8
+    type_balance_ratio: float = 2.0
+    shared_edge_fraction: float = 1.0
     effect: float = 0.7
     n_batches: int = 1
     batch_shift_sd: float = 0.0
@@ -54,6 +57,16 @@ class Scenario:
     raw_droplets: int = 0            # extra near-empty barcodes (unfiltered matrix)
     readme: str = "correct"          # correct | none | misleading
     seed: int = 0
+
+    def __post_init__(self) -> None:
+        if self.n_cell_types < 1:
+            raise ValueError("n_cell_types must be at least 1")
+        if not 0.0 <= self.shared_edge_fraction <= 1.0:
+            raise ValueError("shared_edge_fraction must be between 0 and 1")
+        if self.type_balance_ratio < 1.0:
+            raise ValueError("type_balance_ratio must be >= 1")
+        if self.targets_per_tf < 1:
+            raise ValueError("targets_per_tf must be at least 1")
 
     def with_seed(self, seed: int) -> "Scenario":
         return replace(self, seed=seed)
@@ -95,8 +108,64 @@ def _gene_names(scn: Scenario, n_mito: int):
     return names, names[: scn.n_tfs], names[scn.n_tfs: scn.n_genes - n_mito]
 
 
-def simulate(scn: Scenario):
-    """Return ``(adata, tf_names, gold)``; gold columns: source, target, sign."""
+def _network_truth(scn: Scenario, rng, tfs: list[str], pool: list[str],
+                   types: list[str]) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, pd.DataFrame]]:
+    """Build shared and context-specific networks with a fixed degree per TF.
+
+    An edge that is shared keeps the same sign in every context.  Context-only
+    targets are drawn without replacement across cell types whenever the target
+    pool is large enough, so the requested heterogeneity is not accidentally
+    diluted by repeated "specific" edges.
+    """
+    n_shared = int(round(scn.targets_per_tf * scn.shared_edge_fraction))
+    n_shared = min(scn.targets_per_tf, max(0, n_shared))
+    n_specific = scn.targets_per_tf - n_shared
+    shared_rows: list[tuple[str, str, int]] = []
+    by_context: dict[str, list[tuple[str, str, int]]] = {t: [] for t in types}
+    for tf in tfs:
+        if len(pool) < scn.targets_per_tf:
+            raise ValueError(
+                f"not enough target genes ({len(pool)}) for {scn.targets_per_tf} targets per TF"
+            )
+        shared_targets = list(rng.choice(pool, n_shared, replace=False)) if n_shared else []
+        shared_signs = {str(t): int(rng.choice([-1, 1], p=[0.3, 0.7]))
+                        for t in shared_targets}
+        shared_rows.extend((tf, str(t), shared_signs[str(t)]) for t in shared_targets)
+        remaining = [str(t) for t in pool if str(t) not in shared_signs]
+        needed = n_specific * len(types)
+        if needed and len(remaining) >= needed:
+            draw = list(map(str, rng.choice(remaining, needed, replace=False)))
+            specific = {t: draw[i * n_specific:(i + 1) * n_specific]
+                        for i, t in enumerate(types)}
+        else:
+            specific = {t: (list(map(str, rng.choice(remaining, n_specific, replace=False)))
+                            if n_specific else []) for t in types}
+        for context in types:
+            by_context[context].extend(shared_rows[-n_shared:] if n_shared else [])
+            for target in specific[context]:
+                by_context[context].append(
+                    (tf, target, int(rng.choice([-1, 1], p=[0.3, 0.7])))
+                )
+    columns = ["source", "target", "sign"]
+    shared = pd.DataFrame(shared_rows, columns=columns).drop_duplicates(["source", "target"])
+    context_frames = {
+        context: pd.DataFrame(rows, columns=columns).drop_duplicates(["source", "target"])
+        for context, rows in by_context.items()
+    }
+    union = pd.concat(context_frames.values(), ignore_index=True).drop_duplicates(
+        ["source", "target"]
+    )
+    return union.reset_index(drop=True), shared.reset_index(drop=True), context_frames
+
+
+def simulate(scn: Scenario, *, return_context_truth: bool = False):
+    """Return ``(adata, tf_names, union_gold)``.
+
+    With ``return_context_truth=True``, append a fourth value containing
+    ``{"shared": DataFrame, "by_context": {name: DataFrame}}``.  The default
+    three-value API is kept for callers written for the original shared-network
+    simulator.
+    """
     rng = np.random.default_rng(scn.seed)
     # ~1.3% of genes are mitochondrial, as in a 1,000-gene panel with 13 MT genes; a fixed
     # 13 on a 300-gene panel pushed the median mito fraction above the 25% QC gate.
@@ -104,16 +173,12 @@ def simulate(scn: Scenario):
     names, tfs, others = _gene_names(scn, n_mito)
     n_c, n_g, n_t = scn.n_cells, len(names), scn.n_tfs
 
-    pool = others[: min(len(others), n_t * scn.targets_per_tf * 2)]
-    edges = []
-    for tf in tfs:
-        for tgt in rng.choice(pool, scn.targets_per_tf, replace=False):
-            edges.append((tf, str(tgt), int(rng.choice([-1, 1], p=[0.3, 0.7]))))
-    gold = pd.DataFrame(edges, columns=["source", "target", "sign"]).drop_duplicates(["source", "target"])
+    types = [f"type{k + 1}" for k in range(scn.n_cell_types)]
+    pool = list(others[: min(len(others), n_t * scn.targets_per_tf * 2)])
+    gold, shared_gold, gold_by_context = _network_truth(scn, rng, tfs, pool, types)
     index = {g: i for i, g in enumerate(names)}
 
-    types = [f"type{k + 1}" for k in range(scn.n_cell_types)]
-    weights = np.linspace(1.0, 0.5, scn.n_cell_types)
+    weights = np.geomspace(1.0, 1.0 / scn.type_balance_ratio, scn.n_cell_types)
     cell_type = rng.choice(types, n_c, p=weights / weights.sum())
     batches = [f"run{b + 1}" for b in range(scn.n_batches)]
     if scn.n_batches > 1 and scn.batch_confounding > 0:
@@ -125,15 +190,27 @@ def simulate(scn: Scenario):
 
     program = {t: rng.normal(0, scn.type_program_sd, n_t) for t in types}
     tf_log = np.stack([program[t] for t in cell_type]) + rng.normal(0, 0.6, (n_c, n_t))
-    z = (tf_log - tf_log.mean(0)) / tf_log.std(0)
+    # Regulatory activity is standardised inside each biological context.  If
+    # the global type means were kept, composition alone would create apparent
+    # TF-target correlations and make per-type analysis look better even when
+    # every type had the same true network.
+    z = np.zeros_like(tf_log)
+    for context in types:
+        rows = cell_type == context
+        block = tf_log[rows]
+        sd = block.std(0)
+        sd[sd == 0] = 1.0
+        z[rows] = (block - block.mean(0)) / sd
     base = rng.normal(-1.0, 1.2, n_g)
     base[:n_t] = rng.normal(0.8, 0.3, n_t)
     if n_mito:
         base[-n_mito:] = rng.normal(2.5, 0.3, n_mito)
     log_mu = np.tile(base, (n_c, 1))
     log_mu[:, :n_t] += tf_log - tf_log.mean(0)
-    for s, t, sign in gold.itertuples(index=False):
-        log_mu[:, index[t]] += sign * scn.effect * z[:, tfs.index(s)]
+    for context, context_gold in gold_by_context.items():
+        rows = cell_type == context
+        for s, t, sign in context_gold.itertuples(index=False):
+            log_mu[rows, index[t]] += sign * scn.effect * z[rows, tfs.index(s)]
     lib = np.exp(rng.normal(np.log(scn.median_library), scn.library_sd, n_c))
     for b_i, b in enumerate(batches[1:], start=1):
         rows = batch == b
@@ -174,6 +251,16 @@ def simulate(scn: Scenario):
             extra.insert(0, "batch", rng.choice(batches, k))
         obs = pd.concat([obs, extra])
     adata = ad.AnnData(X=sparse.csr_matrix(X), obs=obs, var=pd.DataFrame(index=names))
+    adata.uns["grnbench_simulation"] = {
+        "context_column": "cell_type",
+        "contexts": types,
+        "shared_edge_fraction_requested": float(scn.shared_edge_fraction),
+        "n_union_edges": int(len(gold)),
+        "n_shared_edges": int(len(shared_gold)),
+        "regulatory_activity_standardization": "within_cell_type",
+    }
+    if return_context_truth:
+        return adata, tfs, gold, {"shared": shared_gold, "by_context": gold_by_context}
     return adata, tfs, gold
 
 
@@ -195,15 +282,48 @@ def readme_text(scn: Scenario, n_cells: int) -> str | None:
     return tpl.format(tissue="bone marrow", organism=organism, n_cells=n_cells)
 
 
-def write_scenario(out_dir, scn: Scenario) -> dict[str, Path]:
+def _safe_truth_name(value: str) -> str:
+    safe = "".join(c if c.isalnum() or c in "-_." else "_" for c in str(value))
+    return safe.strip("._") or "context"
+
+
+def write_scenario(out_dir, scn: Scenario) -> dict:
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    adata, tfs, gold = simulate(scn)
+    adata, tfs, gold, truth = simulate(scn, return_context_truth=True)
     paths = {"counts": out / "counts.h5ad", "tfs": out / "tfs.txt", "gold": out / "gold.tsv",
-             "scenario": out / "scenario.json"}
+             "scenario": out / "scenario.json", "gold_shared": out / "gold_shared.tsv",
+             "truth_manifest": out / "truth_manifest.json"}
     adata.write_h5ad(paths["counts"])
     paths["tfs"].write_text("\n".join(tfs) + "\n", encoding="utf-8")
     gold.to_csv(paths["gold"], sep="\t", index=False)
+    truth["shared"].to_csv(paths["gold_shared"], sep="\t", index=False)
+    context_dir = out / "gold_by_context"
+    context_dir.mkdir(exist_ok=True)
+    context_paths = {}
+    for context, frame in truth["by_context"].items():
+        path = context_dir / f"{_safe_truth_name(context)}.tsv"
+        frame.to_csv(path, sep="\t", index=False)
+        context_paths[context] = path
+    paths["gold_by_context"] = context_paths
+    counts = {context: int(len(frame)) for context, frame in truth["by_context"].items()}
+    manifest = {
+        "schema_version": 1,
+        "context_column": "cell_type",
+        "contexts": {context: path.relative_to(out).as_posix()
+                     for context, path in context_paths.items()},
+        "union": paths["gold"].relative_to(out).as_posix(),
+        "shared": paths["gold_shared"].relative_to(out).as_posix(),
+        "n_edges_by_context": counts,
+        "n_union_edges": int(len(gold)),
+        "n_shared_edges": int(len(truth["shared"])),
+        "shared_edge_fraction_requested": float(scn.shared_edge_fraction),
+        "shared_edge_fraction_realized": (
+            float(len(truth["shared"]) / next(iter(counts.values()))) if counts else 1.0
+        ),
+        "split_policy": "split union edges first, then intersect each context; shared edges never cross halves",
+    }
+    paths["truth_manifest"].write_text(json.dumps(manifest, indent=1), encoding="utf-8")
     paths["scenario"].write_text(json.dumps(asdict(scn), indent=1), encoding="utf-8")
     text = readme_text(scn, scn.n_cells)
     if text:
@@ -245,6 +365,8 @@ def random_scenario(seed: int) -> Scenario:
         n_cells=int(r.choice([400, 800, 1500, 3000])), n_genes=int(r.choice([600, 1000, 1500])),
         n_tfs=int(r.choice([15, 30, 45])), targets_per_tf=int(r.choice([8, 12, 16])),
         n_cell_types=int(r.choice([1, 2, 3, 4])), type_program_sd=float(r.uniform(0.2, 1.6)),
+        type_balance_ratio=float(r.choice([1.0, 2.0, 5.0, 10.0])),
+        shared_edge_fraction=float(r.choice([0.25, 0.5, 0.75, 1.0])),
         effect=float(r.uniform(0.3, 1.0)), n_batches=n_b,
         batch_shift_sd=float(r.uniform(0, 0.6)) if n_b > 1 else 0.0,
         batch_depth_ratio=float(r.uniform(1, 2.5)) if n_b > 1 else 1.0,

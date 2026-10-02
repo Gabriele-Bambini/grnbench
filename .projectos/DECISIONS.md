@@ -101,3 +101,45 @@ STATUS: PROPOSED | ACTIVE | SUPERSEDED by D-xxx | REVERTED
 - why: MIT is OSI-approved and accepted by journal code policies; nothing in the repo conflicts with it. Redistributed data keep their own licences (CELLxGENE: CC BY 4.0).
 - alternatives: Apache-2.0 (patent grant), BSD-3. Needs team confirmation.
 
+### D-019 | 2026-10-01 | codex (for LD) | ACTIVE | Context-specific synthetic truth and controlled breaking-point validation
+- decision: Synthetic engine validation uses partially shared cell-type GRNs (shared-edge regimes
+  100%, 75%, 50%, 25%), standardises planted TF activity inside each cell type, splits the union
+  truth before expanding it by context, and macro-scores pooled or context-specific predictions
+  against each context's held-out truth. Stress curves change one factor at a time at four declared
+  levels (depth, cells, doublets, ambient RNA, damaged cells, batch confounding, batch depth and
+  type imbalance), plus four mixed levels and five seeds. Exploratory breaking points are: first
+  level whose 95% t interval no longer lies wholly above random, first level at or below half the
+  clean mean, and first level with any missing model score. Expensive models share the `auto`
+  pipeline selected by the fast proxy family on the selection half; exploratory runs use 100
+  GRNBoost2 estimators and 100 RegDiffusion steps and report that choice. Runners pin tasks and
+  score-affecting configuration by hash, retry transient rows, retain terminal errors, write rows
+  atomically and refuse an incomplete final report unless it is explicitly watermarked partial.
+- why: The old simulator assigned one network to all types while giving types different mean
+  expression programs, so splitting by type could look beneficial without testing biological
+  network heterogeneity. Progressive stress curves answer the owner's requested worst-case
+  question, while explicit completeness prevents the partial 17/40 real-data run from being
+  mistaken for a finished experiment. Approved by the owner on 2026-10-01 (issues #22 and #23).
+- alternatives: keep one shared truth (cannot test context specificity); score against the union
+  network (credits a context for edges true only elsewhere); run every heavy model on every
+  rejected candidate (prohibitive and lets the evaluation design dominate compute); accept partial
+  reports silently (repeats the earlier failure mode).
+- compatibility: D-019 intentionally changes the default simulator composition, regulatory-activity
+  standardisation and random streams. Synthetic runs from before D-019 (including
+  `engine-2026-09-24` and `engine-2026-09-25`) therefore do not regenerate from current `main`;
+  their committed outputs remain historical records. A checksum regression test pins the new
+  default so future drift is explicit.
+
+### D-020 | 2026-10-02 | codex (for LD) | ACTIVE | Immutable reference snapshots per registered experiment
+- decision: Reproductions of EXP-20260925-LM-2 and EXP-20260926-LM-1 use their existing registered
+  reference hashes. New registered experiments prefer an upstream versioned release when it
+  provides the exact required resource and organism; otherwise they create a new experiment-specific
+  snapshot manifest with retrieval date and SHA256 values. The data root must pass
+  `data_manifest.py --check <snapshot> --require-all` before submission, the runner records the
+  actual reference hashes in `RUN_CONFIG.json`, and an existing registered hash is never replaced.
+  Runs using different snapshots are not directly comparable unless rerun on the same snapshot.
+- why: Pinning `decoupler` does not pin the live OmniPath response. The read-only audit in #19 found
+  different bytes for all four regenerated CollecTRI/DoRothEA files. The owner approved this policy
+  in #21 on 2026-10-02.
+- alternatives: Always reuse the 2026-09-25 files (best historical comparability, but no durable
+  public fetch is established); always take the current live response (silently changes the
+  biological reference); replace rows in the cumulative registry (destroys provenance).

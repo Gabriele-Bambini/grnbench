@@ -175,6 +175,9 @@ models need `GRNBENCH_CISTARGET_DIR` pointing at the cisTarget files (`experimen
 - Only the datasets fetched by `hpc/fetch_engine_datasets.sh` are approved. Anything new: open an
   issue with source, licence and size first.
 - Provenance lives in `experiments/datasets.tsv` (`python benchmarks/data_manifest.py DATA_ROOT`).
+- Registered reference networks follow D-020: reproduce old runs with their registered hashes;
+  for a new run commit an experiment-specific snapshot manifest, verify its data root with
+  `data_manifest.py DATA_ROOT --check SNAPSHOT.tsv --require-all`, and never replace an old hash.
 - Run code from a local clone, never from a Drive folder.
 
 ## 10. HPC (full guide: `docs/HPC.md`; agent procedure: `.claude/skills/grnbench-hpc/SKILL.md`)

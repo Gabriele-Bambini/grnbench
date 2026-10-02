@@ -70,6 +70,24 @@ def test_check_require_all_reports_registered_files_missing_from_root(tmp_path):
     assert "ok=1 ok-eol=0 MISMATCH=0 UNLISTED=0 MISSING=1" in exact.stdout
 
 
+def test_check_cli_flags_are_order_independent(tmp_path):
+    data = tmp_path / "data"
+    data.mkdir()
+    (data / "present.h5ad").write_bytes(b"present")
+    manifest = tmp_path / "m.tsv"
+    _manifest(manifest, [("present.h5ad", _sha(b"present"))])
+    script = str(ROOT / "benchmarks" / "data_manifest.py")
+
+    commands = [
+        [sys.executable, script, str(data), "--check", str(manifest), "--require-all"],
+        [sys.executable, script, "--require-all", "--check", str(manifest), str(data)],
+    ]
+    for command in commands:
+        result = subprocess.run(command, capture_output=True, text=True)
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "ok=1 ok-eol=0 MISMATCH=0 UNLISTED=0 MISSING=0" in result.stdout
+
+
 def test_fetch_from_manifest_keeps_the_recorded_datasets(tmp_path):
     cols = ["folder", "dataset_id", "assay", "organism", "tissue", "suspension_type", "cell_count",
             "filesize", "title", "url"]

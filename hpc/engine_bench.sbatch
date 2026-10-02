@@ -8,8 +8,8 @@
 #SBATCH --output=logs/%x_%A_%a.out
 #SBATCH --error=logs/%x_%A_%a.out
 #
-# Mass test of the cleaning engine (benchmarks/engine_bench.py) as a SLURM array.
-# Each array element runs CHUNK datasets, JOBS at a time on its cores.
+# Mass test of the cleaning engine.  QOS stud permits one running and one queued
+# job, so registered experiments use one large resumable chunk rather than an array.
 #
 #   python benchmarks/engine_bench.py plan --presets-reps 10 --random 300 --out $OUT/tasks.json
 #   N=$(python -c "import json;print(len(json.load(open('$OUT/tasks.json'))))")
@@ -38,6 +38,7 @@ CONDA_SH="${CONDA_SH:-/software/miniconda3/etc/profile.d/conda.sh}"
 OUT="${OUT:?set OUT to the results directory holding tasks.json}"
 CHUNK="${CHUNK:-8}"
 JOBS="${JOBS:-${SLURM_CPUS_PER_TASK:-8}}"
+MAX_ATTEMPTS="${MAX_ATTEMPTS:-2}"
 WORK="${TMPDIR:-/tmp}/gb_engine_${SLURM_ARRAY_JOB_ID:-0}_${SLURM_ARRAY_TASK_ID:-0}"
 
 # shellcheck disable=SC1090
@@ -59,7 +60,8 @@ mkdir -p "$OUT"
 [ -f GIT_COMMIT ] && cp GIT_COMMIT "$OUT/CODE_COMMIT"
 echo "code $(cat GIT_COMMIT 2>/dev/null || echo unknown)  python $(python --version 2>&1)  models ${MODELS:-default}"
 python "$SCRIPT" run --tasks "$TASKS" --out "$OUT" "${EXTRA[@]}" \
-       --index "${SLURM_ARRAY_TASK_ID:-0}" --chunk "$CHUNK" --jobs "$JOBS" --workroot "$WORK"
+       --index "${SLURM_ARRAY_TASK_ID:-0}" --chunk "$CHUNK" --jobs "$JOBS" --workroot "$WORK" \
+       --max-attempts "$MAX_ATTEMPTS"
 status=$?
 rm -rf "$WORK"
 exit $status

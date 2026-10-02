@@ -110,6 +110,45 @@ def test_build_run_writes_index_and_expected_figures(tmp_path):
             assert "n = " in line, line
 
 
+def test_build_run_accepts_versioned_task_manifest(tmp_path):
+    run_dir = _build_run_dir(tmp_path)
+    raw_path = tmp_path / "raw.h5ad"
+    _small_h5ad(np.random.default_rng(1)).write_h5ad(raw_path, compression="gzip")
+    tasks_path = tmp_path / "real_tasks.json"
+    tasks_path.write_text(json.dumps({
+        "schema_version": 1,
+        "task_type": "real",
+        "task_count": 1,
+        "tasks_sha256": "test-hash",
+        "tasks": [{"id": "task_a", "path": str(raw_path)}],
+    }), encoding="utf-8")
+
+    out_dir = tmp_path / "viz_versioned"
+    from grnbench.viz import build_run
+    build_run(run_dir, out_dir=out_dir, tasks_json=tasks_path, max_datasets=1)
+
+    assert (out_dir / "qc_task_a.png").exists()
+    assert (out_dir / "embed_task_a.png").exists()
+
+
+def test_build_run_can_write_portable_global_summary_only(tmp_path):
+    run_dir = _build_run_dir(tmp_path)
+    out_dir = tmp_path / "viz_summary"
+    from grnbench.viz import build_run
+    build_run(run_dir, out_dir=out_dir, max_datasets=0)
+
+    assert (out_dir / "scores_auprc_ratio_auto.png").exists()
+    assert not list(out_dir.glob("decisions_*"))
+    assert "omitted from this summary" in (out_dir / "index.md").read_text()
+
+
+def test_decisions_markdown_handles_missing_choices_from_dataframe():
+    from grnbench.viz import decisions_markdown
+
+    text = decisions_markdown({"rules_choices": float("nan")})
+    assert "(none found)" in text
+
+
 def test_score_distributions_and_paired_lift_title_has_n(tmp_path):
     """The figure functions embed a literal "n = ..." in the suptitle; capture it
     before the figure is closed (build_run's index.md is checked separately)."""

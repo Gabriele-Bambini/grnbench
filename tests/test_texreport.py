@@ -126,6 +126,26 @@ def test_record_fields_handle_commas_code_and_fences(tmp_path):
     assert "EPR; the baseline arm" in methods and "fetch.py" not in methods
 
 
+def test_report_status_strips_record_markdown(tmp_path):
+    root = tmp_path / "repo"
+    exp = "EXP-20260105-EE-1"
+    _run(root / "benchmarks" / "results" / exp)
+    (root / "experiments").mkdir(parents=True)
+    (root / "experiments" / f"{exp}.md").write_text(
+        f"# {exp}\n\n- type: **exploratory**.\n"
+        "- status: **done**. Complete.\n"
+        "- reproduced by: **pending**.\n"
+        f"- report input: `benchmarks/results/{exp}`\n")
+
+    tex = texreport.build_report(exp, root=root, out=tmp_path / "out",
+                                 compile_pdf=False).read_text()
+
+    assert "type: exploratory." in tex
+    assert "Record status: done. Complete." in tex
+    assert "Reproduced by: pending." in tex
+    assert "**" not in tex
+
+
 def test_primary_comparison_note_with_semicolon_is_not_a_second_hypothesis(tmp_path):
     """EXP-20260925-LM-2's field continues with '(...; no content change)': only fragments that
     parse as 'A > B | metric | arm' are hypotheses."""

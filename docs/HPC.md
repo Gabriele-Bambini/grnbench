@@ -130,6 +130,20 @@ between fetches. A registered experiment uses a separate data root populated fro
 selection manifest, then runs `--check` against the registered hashes. If a manifest is intended
 to describe the whole root exactly, add `--require-all` so missing registered paths also fail.
 
+Reference networks additionally follow D-020. Reproductions use the hashes already registered for
+that experiment. Before a new registered run, prefer an upstream versioned release when it provides
+the exact resource and organism; otherwise copy the newly retrieved files into a new immutable
+experiment-specific snapshot root and commit a snapshot TSV containing retrieval date, source and
+SHA256 values. Never edit an older snapshot row in place. Verify the exact snapshot before `sbatch`:
+
+```bash
+python benchmarks/data_manifest.py SNAPSHOT_ROOT --check experiments/<EXP-ID>.references.tsv --require-all
+```
+
+The command must report zero `MISMATCH`, `UNLISTED` and `MISSING`. The real-data runner also stores
+the reference hashes it actually saw in `RUN_CONFIG.json`; both checks belong in the experiment
+record. Results from different snapshots are descriptive across runs, not a direct comparison.
+
 ## 4. Submit
 
 Measured QOS limits (`sacctmgr show qos stud`, 2026-08-22; re-check with
@@ -151,6 +165,11 @@ bash hpc/hpc.sh run "$A && OUT=~/gb_runs/<EXP-ID> && mkdir -p \$OUT && \
   python benchmarks/engine_bench.py plan --presets-reps 10 --random 300 --out \$OUT/tasks.json"
 bash hpc/hpc.sh submit "--time=24:00:00 --export=ALL,OUT=\$HOME/gb_runs/<EXP-ID>,CHUNK=100000 hpc/engine_bench.sbatch"
 
+# controlled context-specific stress grid (740 tasks; 12 pre-declared artifact sentinels)
+bash hpc/hpc.sh run "$A && O=~/gb_runs/<EXP-ID>/synthetic && mkdir -p \$O && \
+  python benchmarks/engine_bench.py plan --stress-grid --stress-seeds 5 --out \$O/tasks.json"
+bash hpc/hpc.sh submit "--time=24:00:00 --export=ALL,OUT=\$HOME/gb_runs/<EXP-ID>/synthetic,CHUNK=100000,MODELS=pearson_signed+clr+grnboost2+regdiffusion,KEEP_ARTIFACTS=1,MAX_ATTEMPTS=2 hpc/engine_bench.sbatch"
+
 # real data
 bash hpc/hpc.sh run "$A && python benchmarks/real_bench.py plan --data-root ~/grnbench_data --out ~/gb_runs/<EXP-ID>/real_tasks.json"
 bash hpc/hpc.sh submit "--time=24:00:00 --export=ALL,OUT=\$HOME/gb_runs/<EXP-ID>,SCRIPT=benchmarks/real_bench.py,TASKS=\$HOME/gb_runs/<EXP-ID>/real_tasks.json,REFS=\$HOME/grnbench_data/references,CHUNK=100000 hpc/engine_bench.sbatch"
@@ -159,6 +178,14 @@ bash hpc/hpc.sh submit "--time=24:00:00 --export=ALL,OUT=\$HOME/gb_runs/<EXP-ID>
 Cost: about 5 min per synthetic dataset and 10 min per real one per core; with 8 parallel
 workers ~490 synthetic datasets fit in one 24 h job. Use `<EXP-ID>` from your record as the run
 folder, so runs from different people never share a folder.
+
+`plan` writes a versioned task manifest with a SHA256 over the complete task list. The first
+`run` invocation also writes immutable `RUN_CONFIG.json` (models, score-affecting parameters and,
+for real data, reference-network hashes); a changed command must use a new output directory.
+Rows have explicit statuses. Resubmission skips terminal rows, retries missing and
+`transient_error` rows, and marks a repeated row failure `permanent_error` at `MAX_ATTEMPTS`.
+`report` refuses missing/retryable work unless `--partial` is explicitly requested; a valid final
+run has `COMPLETE.json` and zero unexpected errors.
 
 First time, try a 1-minute job: `bash hpc/hpc.sh submit "--partition=stud --qos=stud --time=2 --cpus-per-task=1 --mem=1G -o logs/hello_%j.out --wrap='hostname; nproc'"`,
 then `bash hpc/hpc.sh status <jobid>` and `bash hpc/hpc.sh log <jobid>`.

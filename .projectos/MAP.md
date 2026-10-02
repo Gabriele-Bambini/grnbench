@@ -1,15 +1,17 @@
 # Map - grnbench (where things are)
 
 Keep this short and current: update it in any PR that adds, moves or removes a module, script or folder.
-Updated: 2026-09-25.
+Updated: 2026-10-02.
 
 ## Run it
 - Tests: `python -m pytest -q -p no:cacheprovider` (floor in AGENTS.md section 4).
 - Board (session start): `python -m grnbench.board`.
 - GUI: `grnbench ui` (Streamlit, `.claude/launch.json` config `grnbench-ui`). Demo data: `grnbench demo --out d`.
 - One dataset end to end: `grnbench run --data d.h5ad --out runs/x --gold dorotheaABC`.
-- Benchmarks: `benchmarks/engine_bench.py` (synthetic, planted network), `benchmarks/real_bench.py`
-  (real data vs CollecTRI halves; `--models`, `--keep-artifacts`; `report` also writes figures + LaTeX).
+- Benchmarks: `benchmarks/engine_bench.py` (shared/context-specific planted networks,
+  `--stress-grid`, immutable task/run manifests, terminal-status completeness and breaking points),
+  `benchmarks/real_bench.py` (real data vs CollecTRI halves; `--models`, `--keep-artifacts`;
+  reference hashes in `RUN_CONFIG.json`; `report` also writes figures + LaTeX).
 - Figures: `grnbench viz <run_dir>`. LaTeX: `grnbench report <run_dir|EXP-ID>`, `grnbench report --paper`.
 - HPC: `hpc/hpc.sh`, VPN `hpc/vpn.ps1` (Windows), guide `docs/HPC.md`, agent procedure `.claude/skills/grnbench-hpc/SKILL.md`.
 
@@ -22,12 +24,17 @@ Updated: 2026-09-25.
 | evaluation + statistics | `eval/` (`metrics`, `gold`, `universe`, `nulls`, `stability`, `comparison` = `compare_units` paired t + Holm) |
 | reporting | `report` + `html_report` (per run), `viz` + `viz.mplstyle` (figures), `texreport` (LaTeX), `board` (team board) |
 | interface | `ui/app.py` (Streamlit), `ui/logic.py` (tested logic), CLIs `cli_*.py` dispatched by `cli_main.py` |
-| simulation | `simulate` (scenarios with a planted network), `demo` |
+| simulation | `simulate` (shared + per-cell-type planted truth and degradations), `demo` |
 
 ## Records and team memory
 - Direction and rules: `AGENTS.md`. Purpose: `.projectos/PURPOSE.md`. Decisions: `.projectos/DECISIONS.md`.
 - Where things left off: `.projectos/STATE.md`. What is running now: GitHub issues labelled `running`.
 - Runs: `experiments/` (one record per run, `datasets.tsv` provenance). Results: `benchmarks/results/<EXP or legacy folder>/`.
+- `benchmarks/results/EXP-20261001-LD-1/synthetic/`: complete synthetic accounting, portable
+  manifests, row table, generated stress-curve figures and breaking-point tables.
+- `benchmarks/results/EXP-20261001-LD-1/real/`: complete 40-task accounting, portable task/data
+  manifests, generated report, global visualization summary and LaTeX source; the full per-dataset
+  visualizations and 144 MB of artifacts remain on HPC.
 - Paper: `paper/` (claims ledger, checklist, CRediT log, `make_figures.py`, `build/` LaTeX draft).
 - Non-run attempts (debugging, libraries tried): `.projectos/ATTEMPTS.md`. History: `docs/history/`, `audit/`.
 

@@ -1,0 +1,62 @@
+\documentclass{article}
+\usepackage{fullpage,booktabs,graphicx,hyperref,float,array}
+\input{values.tex}
+\title{EXP-20261001-LD-1: Exploratory contextual stress and complete real-data validation}
+\author{grnbench report generated from EXP-20261001-LD-1}
+\date{}
+\begin{document}
+\maketitle
+\section*{Status}
+Experiment EXP-20261001-LD-1, type: exploratory. Record status: done. Both phases are completely accounted for; this remains exploratory and does not support a headline or confirmatory claim. Reproduced by: pending; exploratory results do not enter paper/.
+\section{Configuration summary}
+\input{tables/configuration.tex}
+\section{Methods}
+\begin{description}
+\item[type] exploratory. This run validates new simulator/runner machinery and estimates stress curves; it cannot support a headline or paper claim without a separately registered confirmatory rerun
+\item[question] does the context-specific simulator and status-aware benchmark complete every planned synthetic and approved real-data task without silent omissions, and at what declared severity does each model first lose recovery or operability?
+\item[seeds] scenario seeds 0-4; union-truth split seed = scenario seed; score-cell subsample seed 0; GRNBoost2 seed 42; RegDiffusion seed 0. Shared edges are split before context expansion, so the same shared edge can never enter selection for one type and evaluation for another.
+\item[models] pearson\_signed, clr, grnboost2, regdiffusion. Expensive models are evaluated only on distinct baseline/rules/auto candidates and never select a pipeline on the evaluation truth. Exploratory compute parameters: GRNBoost2 n\_estimators=100; RegDiffusion n\_steps=100, CPU. Motif models are excluded so unresolved issue \#21 does not add a second reference-like input.
+\item[code] clean commit on branch ld/contextual-stress-bench; hpc/hpc.sh sync writes its hash to GIT\_COMMIT, and each job copies that into CODE\_COMMIT. The task SHA256 and score-affecting options are pinned separately in tasks.json and RUN\_CONFIG.json.
+\item[environment] Bocconi HPC conda env grnbench, Python 3.11, requirements/lock-py311.txt plus its pinned RegDiffusion/CPU-torch header line via WITH\_TORCH=1 bash hpc/setup\_env.sh.
+\item[machine] Bocconi HPC, partition/QOS stud, one job at a time, 8 CPUs, 32 GB, 24 h. Work files use \textasciitilde{}/gb\_tmp, not compute-node /tmp; resubmission uses the identical command and output folder.
+\item[models scored] clr, grnboost2, pearson\_signed, regdiffusion
+\end{description}
+
+\section{Results}
+\subsection{Primary comparison}
+No machine-readable primary comparison in the record (field \texttt{primary comparison: A > B | metric | arm}); results are descriptive.
+
+\subsection{Performance per model, across datasets}
+\input{tables/models.tex}
+\subsection{Performance per dataset}
+\input{tables/per_dataset.tex}
+\subsection{Comparative summary: declared comparisons}
+\input{tables/comparisons_auprc_ratio_auto.tex}
+\input{tables/comparisons_auprc_ratio_baseline.tex}
+\input{tables/comparisons_epr_auto.tex}
+\input{tables/comparisons_epr_baseline.tex}
+\section{Visualizations and explainability}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/scores_auprc_ratio_auto.png}
+\caption{-   (n = 24 datasets) - built from  rows/ .json (auto/auprc\_ratio)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/scores_auprc_ratio_baseline.png}
+\caption{-   (n = 23 datasets) - built from  rows/ .json (baseline/auprc\_ratio)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/scores_epr_auto.png}
+\caption{-   (n = 24 datasets) - built from  rows/ .json (auto/epr)}
+\end{figure}
+\begin{figure}[H]\centering
+\includegraphics[width=0.85\linewidth]{../viz/scores_epr_baseline.png}
+\caption{-   (n = 23 datasets) - built from  rows/ .json (baseline/epr)}
+\end{figure}
+
+\section{Limitations}
+\begin{itemize}
+\item Exploratory experiment: results need a confirmatory rerun before a headline claim.
+\item Recorded deviation: on 2026-10-02 the completed rows exposed analysis-only report defects. The visualization reader did not understand the D-019 manifest wrapper, missing decisions became pandas NaN, and scoreless completed rows were labelled "ok, scored". Fixes and regression tests were committed, then reports were regenerated from the unchanged rows; models were not rerun. Synthetic stress figures and a generated global-only portable real overview were added from the unchanged result tables. The executed task manifest also contained an HPC home path, so it stays off git; a generated portable manifest replaces the home prefix with \textasciitilde{}/ and preserves the executed source hash. These changes affect reporting and portability only, not scores.
+\end{itemize}
+
+\end{document}

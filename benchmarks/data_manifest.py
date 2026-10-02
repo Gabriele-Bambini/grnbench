@@ -18,6 +18,7 @@ never commit the data. Experiment records cite datasets by the `path` column.
 """
 from __future__ import annotations
 
+import argparse
 import csv
 import datetime as dt
 import hashlib
@@ -103,12 +104,18 @@ def _eol_sha(path: Path) -> str:
     return hashlib.sha256(flipped).hexdigest()
 
 
+def cli(argv=None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("data_root", nargs="?", default=".")
+    parser.add_argument("--check", metavar="MANIFEST")
+    parser.add_argument("--require-all", action="store_true")
+    args = parser.parse_args(argv)
+    if args.require_all and not args.check:
+        parser.error("--require-all requires --check MANIFEST")
+    if args.check:
+        return check(args.data_root, args.check, require_all=args.require_all)
+    return main(args.data_root)
+
+
 if __name__ == "__main__":
-    if "--require-all" in sys.argv and "--check" not in sys.argv:
-        print("--require-all requires --check MANIFEST", file=sys.stderr)
-        sys.exit(2)
-    if "--check" in sys.argv:
-        i = sys.argv.index("--check")
-        sys.exit(check(sys.argv[1] if i > 1 else ".", sys.argv[i + 1],
-                       require_all="--require-all" in sys.argv))
-    sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else "."))
+    sys.exit(cli())

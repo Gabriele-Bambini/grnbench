@@ -46,6 +46,7 @@ def test_sbatch_passes_models_artifacts_and_records_the_commit(tmp_path):
     call = [line for line in (tmp_path / "calls.log").read_text().splitlines() if " run " in line][0]
     assert "--models regdiffusion,regdiffusion_motif,grnboost2" in call
     assert "--keep-artifacts" in call and "--refs /refs" in call and "--chunk 100000" in call
+    assert "--max-attempts 2" in call
     assert (out / "CODE_COMMIT").read_text().strip() == "abc1234"
     # the job imports the code of the checkout CODE_COMMIT names, not the env's editable install
     assert f"PYTHONPATH={repo.as_posix()}/src" in call
