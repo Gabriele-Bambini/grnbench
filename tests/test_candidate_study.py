@@ -227,3 +227,73 @@ def test_run_task_expands_portable_home_paths(tmp_path, monkeypatch):
     row = cs.run_study_task(task, None, tmp_path / "work")
     assert row["error"] is None, row.get("traceback")
     assert row["skipped"].startswith("reference_edges 0")
+
+
+# -- shared genes with the baseline ------------------------------------------------------- #
+
+class _Plan:
+    def value(self, key):
+        return "log_normalized"
+
+
+def _records(tmp_path, gene_counts):
+    """One processed h5ad per candidate over G0..G<n-1> (same cells), first 6 genes are the TFs."""
+    rng = np.random.default_rng(0)
+    base = rng.normal(size=(60, max(gene_counts.values())))
+    base[:, 10:20] += base[:, [0]]                         # G0 drives G10..G19
+    recs = {}
+    for name, n in gene_counts.items():
+        path = tmp_path / f"{name}.h5ad"
+        a = ad.AnnData(base[:, :n].astype(np.float32), var=pd.DataFrame(index=[f"G{i}" for i in range(n)]))
+        a.obs_names = [f"c{i}" for i in range(60)]
+        a.write_h5ad(path)
+        recs[name] = [{"processed": str(path)}]
+    return recs
+
+
+TFS = [f"G{i}" for i in range(6)]
+PAIRS = {("G0", f"G{i}") for i in range(10, 20)} | {("G1", "G3"), ("G2", "G45"), ("G3", "G12")}
+
+
+def _score(recs):
+    from engine_bench import score_candidates
+
+    genes = {n: cs.candidate_genes(r) for n, r in recs.items()}
+    cache, out = {}, {}
+    for name in sorted(recs, key=lambda n: n != "baseline"):
+        out[name] = score_candidates({name: recs[name]}, {name: _Plan()}, TFS, PAIRS, pair_ref="baseline",
+                                     pair_genes=genes, ref_cache=cache)[name]
+    return out, genes
+
+
+def test_pair_fields_baseline_equals_own_and_own_universe_is_unchanged(tmp_path):
+    from engine_bench import score_candidates
+
+    recs = _records(tmp_path, {"baseline": 40, "wide": 50, "narrow": 30})
+    out, genes = _score(recs)
+    for name, row in out.items():
+        old = score_candidates({name: recs[name]}, {name: _Plan()}, TFS, PAIRS)[name]
+        for k, v in old.items():                                           # exactly equal
+            assert row[k] == v or (np.isnan(v) and np.isnan(row[k]))
+        assert row["pair_n_genes"] == len(genes[name] & genes["baseline"])
+    b = out["baseline"]
+    assert b["pair_n_genes"] == 40
+    assert b["pair_eval_mean"] == b["eval_mean"] == b["pair_base_eval_mean"]
+    assert out["wide"]["pair_n_genes"] == 40               # superset of the baseline: G_C == baseline genes
+    assert out["narrow"]["pair_n_genes"] == 30             # subset: the candidate's own genes
+    for name in ("wide", "narrow"):
+        assert np.isfinite(out[name]["pair_eval_mean"]) and np.isfinite(out[name]["pair_base_eval_mean"])
+    # the baseline side is the baseline's own edges on its own genes, whatever the candidate
+    assert out["wide"]["pair_base_eval_mean"] == b["eval_mean"]
+
+
+def test_report_has_shared_genes_table_and_rule(tmp_path):
+    (tmp_path / "rows").mkdir()
+    row = _row("clean", 1.0, 1.2, "baseline", 1.5)
+    for c, v, b in zip(row["candidates"], (1.1, 1.0, 1.3), (1.0, 1.0, 1.0)):
+        c.update(pair_eval_mean=v, pair_base_eval_mean=b, sel_mean=v)
+    (tmp_path / "rows" / "a.json").write_text(json.dumps(row))
+    text = cs.report(tmp_path)
+    assert "## Variants vs baseline on shared genes" in text
+    assert "base+hvg=tf_plus_500 | +0.300 [1] |" in text.split("on shared genes")[1]
+    assert "judged on shared genes | +0.300 (1/0) |" in text

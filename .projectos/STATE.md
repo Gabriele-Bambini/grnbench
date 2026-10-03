@@ -11,6 +11,9 @@ comparison, published as a tool with a paper. Headline claims from real data (D-
 pre-registered experiments (D-017).
 
 ## In progress
+- EXP-20261004-LM-1 (exploratory, job 681527): scored on the genes a candidate shares with the
+  baseline, no cleaning change beats the fixed baseline by more than ~0.01 (hvg=2000: +0.037 own
+  universe -> +0.008 shared). HVG default unchanged; no confirmatory test of gene-set changers.
 - EXP-20261003-LM-1 (confirmatory, job 681213): without a reference the fixed baseline beats the
   engine's former reference-free choice by +0.089 [+0.014, +0.163] (n = 20 unused datasets, p_Holm
   0.044; also under doublets and damaged cells). Claim C7 `confirmed`; D-021 ACTIVE: the engine now

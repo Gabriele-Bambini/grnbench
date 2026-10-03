@@ -290,10 +290,31 @@ def _truth_groups(rec: dict, eval_pairs, eval_pairs_by_context: dict[str, set] |
     return eval_pairs_by_context
 
 
+def _eval_restricted(edges, genes, groups, keep: set, tfs) -> list[float]:
+    """AUPRC ratio of ``edges`` on TF x ``keep`` genes: edges and reference pairs restricted to it."""
+    from grnbench.eval.metrics import GoldIndex, evaluate_ranking
+    from grnbench.tfs import resolve_tf_names
+
+    genes = genes[genes.isin(keep)]
+    universe = pd.DataFrame([(s, g) for s in resolve_tf_names(genes, tfs) for g in genes if s != g],
+                            columns=["source", "target"])
+    edges = edges[edges["source"].astype(str).isin(keep) & edges["target"].astype(str).isin(keep)]
+    return [float(evaluate_ranking(edges, GoldIndex.coerce({p for p in pairs if p[0] in keep and p[1] in keep}),
+                                   with_curve=False, universe=universe).get("auprc_ratio", np.nan))
+            for pairs in groups.values()]
+
+
 def score_candidates(records_by_cand, plans, tfs, eval_pairs,
                      eval_pairs_by_context: dict[str, set] | None = None,
                      methods: list[str] | None = None,
-                     method_params: dict[str, dict] | None = None) -> dict[str, dict]:
+                     method_params: dict[str, dict] | None = None,
+                     pair_ref: str | None = None, pair_genes: dict | None = None,
+                     ref_cache: dict | None = None) -> dict[str, dict]:
+    """Own-universe scores (``eval_*``). With ``pair_ref`` (a candidate name), ``pair_genes``
+    (candidate -> its genes) and ``ref_cache`` (a dict the caller keeps across calls), each
+    candidate is also scored on the genes it shares with the reference candidate, from the SAME
+    edges (no second inference): ``pair_eval_*`` for the candidate, ``pair_base_eval_*`` for the
+    reference's edges on those genes. Score ``pair_ref`` first so its edges are cached."""
     import anndata as ad
     from grnbench.eval.metrics import GoldIndex, evaluate_ranking
     from grnbench.infer import run_method
@@ -306,7 +327,11 @@ def score_candidates(records_by_cand, plans, tfs, eval_pairs,
         strategy = plans[name].value("strategy")
         per_method = {m: {"auprc_ratio": [], "epr": []} for m in methods}
         per_method_errors = {m: [] for m in methods}
-        for rec in recs:
+        per_pair = {m: [] for m in methods}
+        shared = (pair_genes[name] & pair_genes[pair_ref]
+                  if pair_ref and ref_cache is not None and name in pair_genes and pair_ref in pair_genes
+                  else None)
+        for ctx, rec in enumerate(recs):
             if not rec.get("processed"):
                 continue
             adata = ad.read_h5ad(rec["processed"])
@@ -328,7 +353,12 @@ def score_candidates(records_by_cand, plans, tfs, eval_pairs,
                         r = evaluate_ranking(edges, gi, with_curve=False, universe=universe)
                         for metric in ("auprc_ratio", "epr"):
                             per_method[m][metric].append(float(r.get(metric, np.nan)))
+                    if name == pair_ref and ref_cache is not None:
+                        ref_cache[(ctx, m)] = (edges, genes, groups)
+                    if shared is not None:
+                        per_pair[m] += _eval_restricted(edges, genes, groups, shared, tfs)
                 except Exception as exc:  # noqa: BLE001 - a failing method is recorded as NaN
+                    per_pair[m].append(np.nan)
                     per_method[m]["auprc_ratio"].append(np.nan)
                     per_method[m]["epr"].append(np.nan)
                     per_method_errors[m].append(f"{type(exc).__name__}: {exc}"[:300])
@@ -342,6 +372,21 @@ def score_candidates(records_by_cand, plans, tfs, eval_pairs,
                 row[f"eval_{method}_error"] = " | ".join(sorted(set(per_method_errors[method])))[:1000]
         vals = [row[f"eval_{m}"] for m in methods if np.isfinite(row[f"eval_{m}"])]
         row["eval_mean"] = float(np.mean(vals)) if vals else np.nan
+        if shared is not None:
+            per_base = {m: [] for m in methods}
+            for (_, m), (edges, genes, groups) in ref_cache.items():
+                if m in per_base:
+                    try:
+                        per_base[m] += _eval_restricted(edges, genes, groups, shared, tfs)
+                    except Exception:  # noqa: BLE001
+                        per_base[m].append(np.nan)
+            for prefix, per in (("pair_eval", per_pair), ("pair_base_eval", per_base)):
+                for m in methods:
+                    finite = [v for v in per[m] if np.isfinite(v)]
+                    row[f"{prefix}_{m}"] = float(np.mean(finite)) if finite else np.nan
+                pv = [row[f"{prefix}_{m}"] for m in methods if np.isfinite(row[f"{prefix}_{m}"])]
+                row[f"{prefix}_mean"] = float(np.mean(pv)) if pv else np.nan
+            row["pair_n_genes"] = len(shared)
         row["n_contexts"] = sum(len(_truth_groups(r, eval_pairs, eval_pairs_by_context))
                                 for r in recs if r.get("processed"))
         scores[name] = row

@@ -3,6 +3,8 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- `candidate_study.py`: every candidate also scored against the baseline on the genes both share
+  (`pair_eval_*`), so gene-set-changing candidates are compared on one edge universe.
 - EXP-20261003-LM-1: without a reference the fixed baseline beats the engine's former choice (claim C7);
   D-021 makes the baseline the engine's choice when no reference is given.
 - `engine_bench.py` / `real_bench.py`: a worker killed by the OOM killer now ends the run (retryable,

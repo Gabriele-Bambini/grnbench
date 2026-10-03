@@ -206,6 +206,17 @@ def candidate_row(name, recs, table: pd.DataFrame) -> dict:
     return out
 
 
+def candidate_genes(recs) -> set:
+    """Union over a candidate's processed contexts of the genes it kept."""
+    import anndata as ad
+
+    out = set()
+    for rec in recs:
+        if rec.get("processed"):
+            out |= set(map(str, ad.read_h5ad(rec["processed"], backed="r").var_names))
+    return out
+
+
 # -- one task ---------------------------------------------------------------------------- #
 
 def run_study_task(task: dict, refs: Path | None, workroot: Path) -> dict:
@@ -264,11 +275,16 @@ def run_study_task(task: dict, refs: Path | None, workroot: Path) -> dict:
                                 extra=[{"name": s["name"], "choices": s["choices"]} for s in run_specs],
                                 proxy_methods=EVAL_METHODS)
         evaluation = res["reference"]["evaluation"]
+        genes = {n: candidate_genes(r) for n, r in res["records"].items()}
+        genes = {n: g for n, g in genes.items() if g}
+        ref_cache = {}
         done = {}
-        for name in res["records"]:
+        for name in sorted(res["records"], key=lambda n: n != "baseline"):     # baseline first
             t1 = time.time()
-            sc = score_candidates({name: res["records"][name]}, {name: res["plans"][name]}, tfs, evaluation)[name]
-            done[name] = {**candidate_row(name, res["records"][name], res["rows"]), **sc}
+            sc = score_candidates({name: res["records"][name]}, {name: res["plans"][name]}, tfs, evaluation,
+                                  pair_ref="baseline", pair_genes=genes, ref_cache=ref_cache)[name]
+            done[name] = {**candidate_row(name, res["records"][name], res["rows"]), **sc,
+                          "n_genes": len(genes[name]) if name in genes else None}
             done[name]["eval_seconds"] = round(time.time() - t1, 1)
             done[name]["seconds"] = round(done[name]["eval_seconds"] + (done[name]["screen_seconds"] or 0), 1)
         cands = []
@@ -318,9 +334,9 @@ def _lookup(row: dict, name):
     return next((c for c in row.get("candidates", []) if c["name"] == name), None) if name else None
 
 
-def _val(row: dict, name) -> float:
+def _val(row: dict, name, field: str = "eval_mean") -> float:
     c = _lookup(row, name)
-    v = c.get("eval_mean") if c else None
+    v = c.get(field) if c else None
     return float(v) if v is not None and np.isfinite(v) else float("nan")
 
 
@@ -343,9 +359,12 @@ def _noref_shipped(c):
     return c["edge_stability"] - c["depth_leakage"] - max(np.nan_to_num(c["batch_leakage"]), 0.0)
 
 
+# 4th item: "pair" = judged as pair_eval_mean - pair_base_eval_mean (genes shared with the baseline).
 RULES = [
     ("with reference: selection half, engine pool", "engine", lambda c: c["sel_mean"]),
     ("with reference: selection half, all candidates", "all", lambda c: c["sel_mean"]),
+    ("with reference: selection half, all candidates, judged on shared genes", "all",
+     lambda c: c["sel_mean"], "pair"),
     ("no reference: shipped (stability - depth - batch), engine pool", "engine", _noref_shipped),
     ("no reference: stability - depth leakage, engine pool", "engine",
      lambda c: c["edge_stability"] - c["depth_leakage"]),
@@ -355,11 +374,12 @@ RULES = [
 ]
 
 
-def rule_choice(row: dict, pool: str, score) -> str | None:
+def rule_choice(row: dict, pool: str, score, field: str = "eval_mean") -> str | None:
     """Name of the candidate a rule picks: highest finite score among candidates that ran."""
+    field = "pair_eval_mean" if field == "pair" else field
     best, best_s = None, -np.inf
     for c in row.get("candidates", []):
-        if c.get("alias_of") or not np.isfinite(_val(row, c["name"])):
+        if c.get("alias_of") or not np.isfinite(_val(row, c["name"], field)):
             continue
         if pool == "engine" and c["source"] not in ENGINE_SOURCES:
             continue
@@ -380,17 +400,19 @@ def rules_section(arms_by_cond: dict, conds: list[str]) -> list[str]:
              "mean; `+k` counts those where the rule still produced a scored network.", "",
              "Baseline failed: " + ", ".join(f"{c} {failed[c]}/{len(arms_by_cond[c][0])}" for c in conds), "",
              "| rule | " + " | ".join(conds) + " |", "|---|" + "---|" * len(conds)]
-    for label, pool, score in RULES:
+    for label, pool, score, *fld in RULES:
+        field = fld[0] if fld else "eval_mean"
         cells = []
         for cond in conds:
             d, rescued = [], 0
             for r in arms_by_cond[cond][0]:
-                pick = rule_choice(r, pool, score)
-                base = _val(r, "baseline")
+                pick = rule_choice(r, pool, score, field)
+                base = _val(r, pick, "pair_base_eval_mean") if field == "pair" else _val(r, "baseline")
                 if not np.isfinite(base):
                     rescued += int(pick is not None)
                     continue
-                d.append(_val(r, pick) - base if pick else np.nan)
+                d.append(_val(r, pick, "pair_eval_mean" if field == "pair" else field) - base
+                         if pick else np.nan)
             d = np.array([x for x in d if np.isfinite(x)])
             cell = (f"{d.mean():+.3f} ({int((d > EPS).sum())}/{int((d < -EPS).sum())})" if len(d) else "-")
             cells.append(cell + (f" +{rescued}" if rescued else ""))
@@ -433,16 +455,25 @@ def summary(rows: list[dict]) -> str:
                      f"{sum(1 for r in rs if r.get('error'))} | {f('baseline')} | {f('engine_auto')} | "
                      f"{f('engine_auto_noref')} | {f('rules')} | {f('oracle_engine_baseline')} | "
                      f"{f('oracle_all')} | {worse} |")
-    lines += ["", "## Variants: mean (eval_mean - baseline eval_mean), n tasks in brackets", ""]
     names = sorted({c["name"] for r in rows for c in r.get("candidates", []) if c["source"] == "variant"})
+    lines += ["", "## Variants: mean (eval_mean - baseline eval_mean), n tasks in brackets", ""]
     lines += ["| variant | " + " | ".join(conds) + " |", "|---|" + "---|" * len(conds)]
+    shared_lines = ["", "## Variants vs baseline on shared genes: mean (pair_eval_mean - pair_base_eval_mean), "
+                    "both on TF x the genes the variant and the baseline share, n tasks in brackets", "",
+                    "| variant | " + " | ".join(conds) + " |", "|---|" + "---|" * len(conds)]
     for name in names:
-        cells = []
+        cells, shared = [], []
         for cond in conds:
             d = [_val(r, name) - _val(r, "baseline") for r in arms_by_cond[cond][0]]
             d = [x for x in d if np.isfinite(x)]
             cells.append(f"{np.mean(d):+.3f} [{len(d)}]" if d else "-")
+            d = [_val(r, name, "pair_eval_mean") - _val(r, name, "pair_base_eval_mean")
+                 for r in arms_by_cond[cond][0]]
+            d = [x for x in d if np.isfinite(x)]
+            shared.append(f"{np.mean(d):+.3f} [{len(d)}]" if d else "-")
         lines.append(f"| {name} | " + " | ".join(cells) + " |")
+        shared_lines.append(f"| {name} | " + " | ".join(shared) + " |")
+    lines += shared_lines
     lines += rules_section(arms_by_cond, conds)
     skipped = sorted({s["variant"] for r in rows for s in r.get("skipped_variants", [])})
     if skipped:

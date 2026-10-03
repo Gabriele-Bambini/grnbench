@@ -249,7 +249,9 @@ def page_compare() -> None:
     selection = select(Profile(**plan.profile))
     auto = selection.candidates(max_candidates=4)
     st.write("Automatic alternatives (uncertain decisions): " +
-             (", ".join(c["name"] for c in auto[1:]) or "none - every decision was clear-cut"))
+             (", ".join(c["name"] for c in auto[1:]) or "none - every decision was clear-cut") +
+             ". The fixed `baseline` pipeline is always screened too; without a reference network it is "
+             "the default choice (D-021).")
 
     st.subheader("Add your own alternatives")
     extra = S.setdefault("extra_candidates", [])
