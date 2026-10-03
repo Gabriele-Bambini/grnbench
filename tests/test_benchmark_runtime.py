@@ -252,3 +252,14 @@ def test_real_task_manifest_portabilizes_home_paths(tmp_path, monkeypatch):
     assert meta["source_tasks_sha256"] == written["tasks_sha256"]
     assert loaded[0]["path"] == "~/grnbench_data/a.h5ad"
     assert real_bench._expand_task_paths(loaded)[0]["path"] == str(home / "grnbench_data" / "a.h5ad")
+
+
+def test_pool_results_raises_when_a_worker_is_killed_instead_of_hanging():
+    """multiprocessing.Pool waits forever for a killed worker (job 679448 idled ~20 h)."""
+    import os
+    from concurrent.futures.process import BrokenProcessPool
+
+    bench = _engine_bench()
+    assert sorted(bench.pool_results(abs, [-1, -2], 2)) == [1, 2]
+    with pytest.raises(BrokenProcessPool):
+        list(bench.pool_results(os._exit, [9], 1))      # the worker process dies, as under OOM

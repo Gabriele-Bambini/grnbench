@@ -522,6 +522,22 @@ def _run_and_save(args):
     return task["id"], row["status"], row.get("error") or f"{row['seconds']}s"
 
 
+def pool_results(fn, jobs, n_workers: int):
+    """Yield ``fn(job)`` for every job from spawned workers, one task per worker process.
+
+    ProcessPoolExecutor, not multiprocessing.Pool: when the OOM killer takes a worker, Pool waits
+    for it forever (EXP-20261002-LM-2 job 679448 sat ~20 h until its time limit), while the
+    executor raises ``BrokenProcessPool`` at once. Rows already written are kept, so the caller
+    reports the run as retryable and a resubmission resumes it.
+    """
+    from concurrent.futures import ProcessPoolExecutor, as_completed
+    from multiprocessing import get_context
+
+    with ProcessPoolExecutor(n_workers, mp_context=get_context("spawn"), max_tasks_per_child=1) as pool:
+        for fut in as_completed([pool.submit(fn, j) for j in jobs]):
+            yield fut.result()
+
+
 def keep_awake() -> None:
     """Ask Windows not to idle-sleep while this process runs (released when it exits).
 
@@ -963,11 +979,14 @@ def main(argv=None) -> int:
     os.environ.setdefault("OMP_NUM_THREADS", "1")
     retryable = False
     if args.jobs > 1:
-        from multiprocessing import get_context
-        with get_context("spawn").Pool(args.jobs, maxtasksperchild=1) as pool:
-            for tid, status, detail in pool.imap_unordered(_run_and_save, jobs):
+        from concurrent.futures.process import BrokenProcessPool
+        try:
+            for tid, status, detail in pool_results(_run_and_save, jobs, args.jobs):
                 retryable |= status in RETRYABLE_STATUSES
                 print(f"{tid}: {status}: {detail}", flush=True)
+        except BrokenProcessPool as exc:
+            retryable = True
+            print(f"worker died ({exc}); finished rows are saved, resubmit to resume", flush=True)
     else:
         for j in jobs:
             tid, status, detail = _run_and_save(j)

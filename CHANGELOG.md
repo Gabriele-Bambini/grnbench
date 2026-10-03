@@ -3,6 +3,8 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- `engine_bench.py` / `real_bench.py`: a worker killed by the OOM killer now ends the run (retryable,
+  resubmission resumes) instead of hanging until the Slurm time limit (`pool_results`).
 - Engine robustness (found by EXP-20261002-LM-2): screening fails one candidate, never all, when a
   context cannot be screened; strategies may not emit NaN/inf (`PrepError`); Pearson residuals give a
   zero-count gene 0 instead of NaN; ComBat drops one-cell batches with a warning.

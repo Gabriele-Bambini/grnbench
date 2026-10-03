@@ -40,7 +40,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from engine_bench import (BASELINE, EVAL_METHODS, RETRYABLE_STATUSES, TERMINAL_STATUSES,
                           _atomic_json, _normalise_status, enforce_completeness, keep_awake,
-                          ensure_run_config, load_task_manifest, score_candidates,
+                          pool_results, ensure_run_config, load_task_manifest, score_candidates,
                           write_task_manifest)  # noqa: E402
 
 MIN_REFERENCE_EDGES = 50
@@ -691,11 +691,14 @@ def main(argv=None) -> int:
              args.max_attempts, args.retry_permanent) for t in tasks]
     retryable = False
     if args.jobs > 1:
-        from multiprocessing import get_context
-        with get_context("spawn").Pool(args.jobs, maxtasksperchild=1) as pool:
-            for tid, status, detail in pool.imap_unordered(_run_and_save, jobs):
+        from concurrent.futures.process import BrokenProcessPool
+        try:
+            for tid, status, detail in pool_results(_run_and_save, jobs, args.jobs):
                 retryable |= status in RETRYABLE_STATUSES
                 print(f"{tid}: {status}: {detail}", flush=True)
+        except BrokenProcessPool as exc:
+            retryable = True
+            print(f"worker died ({exc}); finished rows are saved, resubmit to resume", flush=True)
     else:
         for j in jobs:
             tid, status, detail = _run_and_save(j)
