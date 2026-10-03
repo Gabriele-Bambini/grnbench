@@ -15,6 +15,8 @@
 - `real_bench.py report --out <RUN>` falls back to `tasks.json` when `real_tasks.json`
   is absent, so runs planned before D-019 (EXP-20260926-LM-1) regenerate unchanged.
 - EXP-20261002-LM-1: the motif prior lift (C4, C5) replicates on 20 never-used datasets (claim C6).
+- `benchmarks/candidate_study.py`: every engine candidate, the baseline and one-change variants scored
+  on real datasets under controlled degradations (EXP-20261002-LM-2).
 - Registered Lorenzo (`@lorenzo-de-santis`, initials `LD`) in the team metadata.
 - Canonical repo is now the private GitHub repo (D-016). Rules for people and agents in
   `AGENTS.md`; onboarding prompt in `docs/START_HERE_AGENT_PROMPT.md`.

@@ -1,0 +1,212 @@
+{
+ "clean": [
+  {
+   "a": "baseline",
+   "b": "noref_shipped",
+   "n": 20,
+   "excluded": 0,
+   "diff": 0.12384426062891615,
+   "ci": [
+    0.035194154419859014,
+    0.2124943668379733
+   ],
+   "p_a_gt_b": 0.017415168966488915,
+   "p_b_gt_a": 1.0,
+   "supported": "baseline"
+  },
+  {
+   "a": "ref_geneset_preserving",
+   "b": "baseline",
+   "n": 20,
+   "excluded": 0,
+   "diff": 0.019138596713817797,
+   "ci": [
+    0.0019456144467230804,
+    0.036331578980912514
+   ],
+   "p_a_gt_b": 0.04648670720731364,
+   "p_b_gt_a": 1.0,
+   "supported": "ref_geneset_preserving"
+  }
+ ],
+ "depth_30": [
+  {
+   "a": "baseline",
+   "b": "noref_shipped",
+   "n": 19,
+   "excluded": 1,
+   "diff": 0.15870428816650378,
+   "ci": [
+    0.04572142086232363,
+    0.27168715547068395
+   ],
+   "p_a_gt_b": 0.017091973349044803,
+   "p_b_gt_a": 1.0,
+   "supported": "baseline"
+  },
+  {
+   "a": "ref_geneset_preserving",
+   "b": "baseline",
+   "n": 19,
+   "excluded": 1,
+   "diff": 0.05368554218369693,
+   "ci": [
+    0.0005482517261905934,
+    0.10682283264120326
+   ],
+   "p_a_gt_b": 0.07187537380665582,
+   "p_b_gt_a": 1.0,
+   "supported": "unresolved"
+  }
+ ],
+ "depth_10": [
+  {
+   "a": "baseline",
+   "b": "noref_shipped",
+   "n": 13,
+   "excluded": 7,
+   "diff": 0.08509220999265098,
+   "ci": [
+    -0.05083421085653862,
+    0.2210186308418406
+   ],
+   "p_a_gt_b": 0.29641977767464267,
+   "p_b_gt_a": 1.0,
+   "supported": "unresolved"
+  },
+  {
+   "a": "ref_geneset_preserving",
+   "b": "baseline",
+   "n": 13,
+   "excluded": 7,
+   "diff": 0.015977514209301626,
+   "ci": [
+    -0.003035886104946081,
+    0.034990914523549334
+   ],
+   "p_a_gt_b": 0.18408502772755056,
+   "p_b_gt_a": 1.0,
+   "supported": "unresolved"
+  }
+ ],
+ "ambient_20": [
+  {
+   "a": "baseline",
+   "b": "noref_shipped",
+   "n": 20,
+   "excluded": 0,
+   "diff": 0.15593426601521218,
+   "ci": [
+    0.08015712338707896,
+    0.23171140864334538
+   ],
+   "p_a_gt_b": 0.0007604843155161801,
+   "p_b_gt_a": 1.0,
+   "supported": "baseline"
+  },
+  {
+   "a": "ref_geneset_preserving",
+   "b": "baseline",
+   "n": 20,
+   "excluded": 0,
+   "diff": 0.010477150047290551,
+   "ci": [
+    -0.007049265497225583,
+    0.028003565591806685
+   ],
+   "p_a_gt_b": 0.33907722955754216,
+   "p_b_gt_a": 1.0,
+   "supported": "unresolved"
+  }
+ ],
+ "doublets_20": [
+  {
+   "a": "baseline",
+   "b": "noref_shipped",
+   "n": 20,
+   "excluded": 0,
+   "diff": 0.15549629709903595,
+   "ci": [
+    0.06543596448215354,
+    0.24555662971591835
+   ],
+   "p_a_gt_b": 0.003699134207777135,
+   "p_b_gt_a": 1.0,
+   "supported": "baseline"
+  },
+  {
+   "a": "ref_geneset_preserving",
+   "b": "baseline",
+   "n": 20,
+   "excluded": 0,
+   "diff": 0.024564741601810814,
+   "ci": [
+    0.0044684189518015005,
+    0.04466106425182013
+   ],
+   "p_a_gt_b": 0.028819675823631007,
+   "p_b_gt_a": 1.0,
+   "supported": "ref_geneset_preserving"
+  }
+ ],
+ "damaged_15": [
+  {
+   "a": "baseline",
+   "b": "noref_shipped",
+   "n": 20,
+   "excluded": 0,
+   "diff": 0.1866281109020928,
+   "ci": [
+    0.09171051474482497,
+    0.28154570705936066
+   ],
+   "p_a_gt_b": 0.0011775496147145039,
+   "p_b_gt_a": 1.0,
+   "supported": "baseline"
+  },
+  {
+   "a": "ref_geneset_preserving",
+   "b": "baseline",
+   "n": 20,
+   "excluded": 0,
+   "diff": 0.018080070097383372,
+   "ci": [
+    0.0035775406674283753,
+    0.03258259952733837
+   ],
+   "p_a_gt_b": 0.025857090466830147,
+   "p_b_gt_a": 1.0,
+   "supported": "ref_geneset_preserving"
+  }
+ ],
+ "mixed": [
+  {
+   "a": "baseline",
+   "b": "noref_shipped",
+   "n": 18,
+   "excluded": 1,
+   "diff": 0.22001167210142364,
+   "ci": [
+    0.12313229708067437,
+    0.3168910471221729
+   ],
+   "p_a_gt_b": 0.00033986766372654057,
+   "p_b_gt_a": 1.0,
+   "supported": "baseline"
+  },
+  {
+   "a": "ref_geneset_preserving",
+   "b": "baseline",
+   "n": 18,
+   "excluded": 1,
+   "diff": 0.028691511001401444,
+   "ci": [
+    0.0005067046526559538,
+    0.056876317350146935
+   ],
+   "p_a_gt_b": 0.06966620139689311,
+   "p_b_gt_a": 1.0,
+   "supported": "unresolved"
+  }
+ ]
+}
