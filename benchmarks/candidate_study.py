@@ -432,6 +432,13 @@ def candidates_table(rows: list[dict]) -> pd.DataFrame:
     return pd.DataFrame(recs)
 
 
+def variant_deltas(ok_rows: list[dict], name: str) -> tuple[list[float], list[float]]:
+    """Per-task (variant - baseline) eval_mean on each arm's own universe, and on the genes shared."""
+    own = [_val(r, name) - _val(r, "baseline") for r in ok_rows]
+    shared = [_val(r, name, "pair_eval_mean") - _val(r, name, "pair_base_eval_mean") for r in ok_rows]
+    return [x for x in own if np.isfinite(x)], [x for x in shared if np.isfinite(x)]
+
+
 def summary(rows: list[dict]) -> str:
     conds = [c for c in CONDITIONS if any(r["condition"] == c for r in rows)]
     lines = ["# Candidate study - SUMMARY", "",
@@ -464,13 +471,9 @@ def summary(rows: list[dict]) -> str:
     for name in names:
         cells, shared = [], []
         for cond in conds:
-            d = [_val(r, name) - _val(r, "baseline") for r in arms_by_cond[cond][0]]
-            d = [x for x in d if np.isfinite(x)]
-            cells.append(f"{np.mean(d):+.3f} [{len(d)}]" if d else "-")
-            d = [_val(r, name, "pair_eval_mean") - _val(r, name, "pair_base_eval_mean")
-                 for r in arms_by_cond[cond][0]]
-            d = [x for x in d if np.isfinite(x)]
-            shared.append(f"{np.mean(d):+.3f} [{len(d)}]" if d else "-")
+            own, pair = variant_deltas(arms_by_cond[cond][0], name)
+            cells.append(f"{np.mean(own):+.3f} [{len(own)}]" if own else "-")
+            shared.append(f"{np.mean(pair):+.3f} [{len(pair)}]" if pair else "-")
         lines.append(f"| {name} | " + " | ".join(cells) + " |")
         shared_lines.append(f"| {name} | " + " | ".join(shared) + " |")
     lines += shared_lines

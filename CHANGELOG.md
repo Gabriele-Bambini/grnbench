@@ -3,6 +3,8 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- `paper/make_figures.py` generates the motif-lift tables (C4-C6, AUPRC and EPR), the reference-free
+  selection table (C7) and the cleaning-variant table (EXP-20261004-LM-1) from committed results.
 - `candidate_study.py`: every candidate also scored against the baseline on the genes both share
   (`pair_eval_*`), so gene-set-changing candidates are compared on one edge universe.
 - EXP-20261003-LM-1: without a reference the fixed baseline beats the engine's former choice (claim C7);
