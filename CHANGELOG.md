@@ -3,6 +3,8 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- EXP-20261003-LM-1: without a reference the fixed baseline beats the engine's former choice (claim C7);
+  D-021 makes the baseline the engine's choice when no reference is given.
 - `engine_bench.py` / `real_bench.py`: a worker killed by the OOM killer now ends the run (retryable,
   resubmission resumes) instead of hanging until the Slurm time limit (`pool_results`).
 - Engine robustness (found by EXP-20261002-LM-2): screening fails one candidate, never all, when a

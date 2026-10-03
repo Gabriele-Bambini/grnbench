@@ -213,12 +213,59 @@ def test_screening_ranks_candidates_on_the_selection_half_only(demo, tmp_path):
     res = screen_candidates(diag, paths["counts"], tmp_path / "scr", tf_list=tfs,
                             reference_pairs=set(zip(gold.source, gold.target)), max_candidates=1,
                             extra=[{"name": "pooled", "choices": {"context_scope": "pooled"}}])
-    assert set(res["rows"]["candidate"]) == {"recommended", "pooled"}
-    assert res["best"] in {"recommended", "pooled"} and "AUPRC ratio" in res["rule"]
+    assert set(res["rows"]["candidate"]) == {"recommended", "pooled", "baseline"}
+    assert res["best"] in {"recommended", "pooled", "baseline"} and "AUPRC ratio" in res["rule"]
     sel, ev = res["reference"]["selection"], res["reference"]["evaluation"]
     assert sel.isdisjoint(ev)
     assert (tmp_path / "scr" / "reference_split.json").exists()
     assert (tmp_path / "scr" / "screening_summary.json").exists()
+
+
+def _rank_rows(**cands):
+    """cands: name -> (edge_stability, error or None)."""
+    return pd.DataFrame([{"candidate": n, "context": "all", "error": e, "edge_stability": st,
+                          "depth_leakage": 0.0, "batch_leakage": 0.0, "reference_auprc_ratio": r}
+                         for n, (st, e, r) in cands.items()])
+
+
+def test_rank_without_reference_puts_baseline_first_even_if_less_stable():
+    from grnbench.screen import rank_candidates
+    rows = _rank_rows(baseline=(0.2, None, np.nan), recommended=(0.9, None, np.nan))
+    ranking, rule = rank_candidates(rows)
+    assert list(ranking.index) == ["baseline", "recommended"] and "D-021" in rule
+
+
+def test_rank_without_reference_falls_back_when_baseline_failed():
+    from grnbench.screen import rank_candidates
+    rows = _rank_rows(baseline=(0.9, "refused", np.nan), a=(0.3, None, np.nan), b=(0.5, None, np.nan))
+    ranking, _ = rank_candidates(rows)
+    assert list(ranking.index) == ["b", "a"]
+
+
+def test_rank_with_reference_ignores_the_baseline_rule():
+    from grnbench.screen import rank_candidates
+    rows = _rank_rows(baseline=(0.9, None, 1.0), a=(0.1, None, 2.0))
+    ranking, rule = rank_candidates(rows)
+    assert ranking.index[0] == "a" and "AUPRC" in rule
+
+
+def test_screen_candidates_adds_one_baseline_unless_caller_passes_it(demo, tmp_path, monkeypatch):
+    import grnbench.autoprep as autoprep
+    from grnbench.screen import BASELINE_CHOICES, screen_candidates
+    paths, tfs, diag = demo
+
+    def stub(plan, input_path, out_dir, **kw):
+        return [{"context": plan.contexts[0]["name"], "processed": None, "error": "stub",
+                 "out_dir": str(out_dir), "cli": []}]
+
+    monkeypatch.setattr(autoprep, "execute_plan", stub)
+    res = screen_candidates(diag, paths["counts"], tmp_path / "a", tf_list=tfs, max_candidates=1)
+    assert [n for n in res["plans"] if n == "baseline"] == ["baseline"]
+    assert all(res["plans"]["baseline"].choices[k] == v for k, v in BASELINE_CHOICES.items())
+    res = screen_candidates(diag, paths["counts"], tmp_path / "b", tf_list=tfs, max_candidates=1,
+                            extra=[{"name": "baseline", "choices": {"hvg": "tf_plus_500"}}])
+    assert list(res["plans"]).count("baseline") == 1
+    assert res["plans"]["baseline"].choices["hvg"] == "tf_plus_500"  # the caller's own baseline wins
 
 
 def test_screening_preserves_raw_droplet_detection(demo, tmp_path, monkeypatch):

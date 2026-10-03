@@ -1,0 +1,782 @@
+[
+{
+"id": "cxg__10x-3-v2__homo-sapiens__breast__44941fdb__clean",
+"dataset": "cxg__10x-3-v2__homo-sapiens__breast__44941fdb",
+"condition": "clean",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v2/homo-sapiens/breast__44941fdb/data.h5ad",
+"truth": {
+"assay": "10x 3' v2",
+"technology": "umi",
+"organism": "human",
+"tissue": "breast"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v2__homo-sapiens__breast__44941fdb__doublets_20",
+"dataset": "cxg__10x-3-v2__homo-sapiens__breast__44941fdb",
+"condition": "doublets_20",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v2/homo-sapiens/breast__44941fdb/data.h5ad",
+"truth": {
+"assay": "10x 3' v2",
+"technology": "umi",
+"organism": "human",
+"tissue": "breast"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v2__homo-sapiens__breast__44941fdb__damaged_15",
+"dataset": "cxg__10x-3-v2__homo-sapiens__breast__44941fdb",
+"condition": "damaged_15",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v2/homo-sapiens/breast__44941fdb/data.h5ad",
+"truth": {
+"assay": "10x 3' v2",
+"technology": "umi",
+"organism": "human",
+"tissue": "breast"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v2__homo-sapiens__cortex-of-kidney__2fc9c59f__clean",
+"dataset": "cxg__10x-3-v2__homo-sapiens__cortex-of-kidney__2fc9c59f",
+"condition": "clean",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v2/homo-sapiens/cortex-of-kidney__2fc9c59f/data.h5ad",
+"truth": {
+"assay": "10x 3' v2",
+"technology": "umi",
+"organism": "human",
+"tissue": "cortex of kidney;kidney;kidney blood vessel"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v2__homo-sapiens__cortex-of-kidney__2fc9c59f__doublets_20",
+"dataset": "cxg__10x-3-v2__homo-sapiens__cortex-of-kidney__2fc9c59f",
+"condition": "doublets_20",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v2/homo-sapiens/cortex-of-kidney__2fc9c59f/data.h5ad",
+"truth": {
+"assay": "10x 3' v2",
+"technology": "umi",
+"organism": "human",
+"tissue": "cortex of kidney;kidney;kidney blood vessel"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v2__homo-sapiens__cortex-of-kidney__2fc9c59f__damaged_15",
+"dataset": "cxg__10x-3-v2__homo-sapiens__cortex-of-kidney__2fc9c59f",
+"condition": "damaged_15",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v2/homo-sapiens/cortex-of-kidney__2fc9c59f/data.h5ad",
+"truth": {
+"assay": "10x 3' v2",
+"technology": "umi",
+"organism": "human",
+"tissue": "cortex of kidney;kidney;kidney blood vessel"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v2__homo-sapiens__duodenum__ee195b7d__clean",
+"dataset": "cxg__10x-3-v2__homo-sapiens__duodenum__ee195b7d",
+"condition": "clean",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v2/homo-sapiens/duodenum__ee195b7d/data.h5ad",
+"truth": {
+"assay": "10x 3' v2",
+"technology": "umi",
+"organism": "human",
+"tissue": "duodenum"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v2__homo-sapiens__duodenum__ee195b7d__doublets_20",
+"dataset": "cxg__10x-3-v2__homo-sapiens__duodenum__ee195b7d",
+"condition": "doublets_20",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v2/homo-sapiens/duodenum__ee195b7d/data.h5ad",
+"truth": {
+"assay": "10x 3' v2",
+"technology": "umi",
+"organism": "human",
+"tissue": "duodenum"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v2__homo-sapiens__duodenum__ee195b7d__damaged_15",
+"dataset": "cxg__10x-3-v2__homo-sapiens__duodenum__ee195b7d",
+"condition": "damaged_15",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v2/homo-sapiens/duodenum__ee195b7d/data.h5ad",
+"truth": {
+"assay": "10x 3' v2",
+"technology": "umi",
+"organism": "human",
+"tissue": "duodenum"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__f9ad5649__clean",
+"dataset": "cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__f9ad5649",
+"condition": "clean",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v2/homo-sapiens/entorhinal-cortex__f9ad5649/data.h5ad",
+"truth": {
+"assay": "10x 3' v2",
+"technology": "umi",
+"organism": "human",
+"tissue": "entorhinal cortex"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__f9ad5649__doublets_20",
+"dataset": "cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__f9ad5649",
+"condition": "doublets_20",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v2/homo-sapiens/entorhinal-cortex__f9ad5649/data.h5ad",
+"truth": {
+"assay": "10x 3' v2",
+"technology": "umi",
+"organism": "human",
+"tissue": "entorhinal cortex"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__f9ad5649__damaged_15",
+"dataset": "cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__f9ad5649",
+"condition": "damaged_15",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v2/homo-sapiens/entorhinal-cortex__f9ad5649/data.h5ad",
+"truth": {
+"assay": "10x 3' v2",
+"technology": "umi",
+"organism": "human",
+"tissue": "entorhinal cortex"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v2__homo-sapiens__kidney__4c6f9f26__clean",
+"dataset": "cxg__10x-3-v2__homo-sapiens__kidney__4c6f9f26",
+"condition": "clean",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v2/homo-sapiens/kidney__4c6f9f26/data.h5ad",
+"truth": {
+"assay": "10x 3' v2",
+"technology": "umi",
+"organism": "human",
+"tissue": "kidney"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v2__homo-sapiens__kidney__4c6f9f26__doublets_20",
+"dataset": "cxg__10x-3-v2__homo-sapiens__kidney__4c6f9f26",
+"condition": "doublets_20",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v2/homo-sapiens/kidney__4c6f9f26/data.h5ad",
+"truth": {
+"assay": "10x 3' v2",
+"technology": "umi",
+"organism": "human",
+"tissue": "kidney"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v2__homo-sapiens__kidney__4c6f9f26__damaged_15",
+"dataset": "cxg__10x-3-v2__homo-sapiens__kidney__4c6f9f26",
+"condition": "damaged_15",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v2/homo-sapiens/kidney__4c6f9f26/data.h5ad",
+"truth": {
+"assay": "10x 3' v2",
+"technology": "umi",
+"organism": "human",
+"tissue": "kidney"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__ea426edb__clean",
+"dataset": "cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__ea426edb",
+"condition": "clean",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v2/homo-sapiens/peripheral-zone-of-prostate__ea426edb/data.h5ad",
+"truth": {
+"assay": "10x 3' v2",
+"technology": "umi",
+"organism": "human",
+"tissue": "peripheral zone of prostate;transition zone of prostate"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__ea426edb__doublets_20",
+"dataset": "cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__ea426edb",
+"condition": "doublets_20",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v2/homo-sapiens/peripheral-zone-of-prostate__ea426edb/data.h5ad",
+"truth": {
+"assay": "10x 3' v2",
+"technology": "umi",
+"organism": "human",
+"tissue": "peripheral zone of prostate;transition zone of prostate"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__ea426edb__damaged_15",
+"dataset": "cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__ea426edb",
+"condition": "damaged_15",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v2/homo-sapiens/peripheral-zone-of-prostate__ea426edb/data.h5ad",
+"truth": {
+"assay": "10x 3' v2",
+"technology": "umi",
+"organism": "human",
+"tissue": "peripheral zone of prostate;transition zone of prostate"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__1492eb6b__clean",
+"dataset": "cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__1492eb6b",
+"condition": "clean",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v2/homo-sapiens/superior-frontal-gyrus__1492eb6b/data.h5ad",
+"truth": {
+"assay": "10x 3' v2",
+"technology": "umi",
+"organism": "human",
+"tissue": "superior frontal gyrus"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__1492eb6b__doublets_20",
+"dataset": "cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__1492eb6b",
+"condition": "doublets_20",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v2/homo-sapiens/superior-frontal-gyrus__1492eb6b/data.h5ad",
+"truth": {
+"assay": "10x 3' v2",
+"technology": "umi",
+"organism": "human",
+"tissue": "superior frontal gyrus"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__1492eb6b__damaged_15",
+"dataset": "cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__1492eb6b",
+"condition": "damaged_15",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v2/homo-sapiens/superior-frontal-gyrus__1492eb6b/data.h5ad",
+"truth": {
+"assay": "10x 3' v2",
+"technology": "umi",
+"organism": "human",
+"tissue": "superior frontal gyrus"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__homo-sapiens__chest-wall__743473de__clean",
+"dataset": "cxg__10x-3-v3__homo-sapiens__chest-wall__743473de",
+"condition": "clean",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/homo-sapiens/chest-wall__743473de/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "human",
+"tissue": "chest wall;liver;rectum"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__homo-sapiens__chest-wall__743473de__doublets_20",
+"dataset": "cxg__10x-3-v3__homo-sapiens__chest-wall__743473de",
+"condition": "doublets_20",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/homo-sapiens/chest-wall__743473de/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "human",
+"tissue": "chest wall;liver;rectum"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__homo-sapiens__chest-wall__743473de__damaged_15",
+"dataset": "cxg__10x-3-v3__homo-sapiens__chest-wall__743473de",
+"condition": "damaged_15",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/homo-sapiens/chest-wall__743473de/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "human",
+"tissue": "chest wall;liver;rectum"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__homo-sapiens__colon__4269074c__clean",
+"dataset": "cxg__10x-3-v3__homo-sapiens__colon__4269074c",
+"condition": "clean",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/homo-sapiens/colon__4269074c/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "human",
+"tissue": "colon;hindgut;ileum"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__homo-sapiens__colon__4269074c__doublets_20",
+"dataset": "cxg__10x-3-v3__homo-sapiens__colon__4269074c",
+"condition": "doublets_20",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/homo-sapiens/colon__4269074c/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "human",
+"tissue": "colon;hindgut;ileum"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__homo-sapiens__colon__4269074c__damaged_15",
+"dataset": "cxg__10x-3-v3__homo-sapiens__colon__4269074c",
+"condition": "damaged_15",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/homo-sapiens/colon__4269074c/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "human",
+"tissue": "colon;hindgut;ileum"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__homo-sapiens__liver__ef0d813e__clean",
+"dataset": "cxg__10x-3-v3__homo-sapiens__liver__ef0d813e",
+"condition": "clean",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/homo-sapiens/liver__ef0d813e/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "human",
+"tissue": "liver;sigmoid colon"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__homo-sapiens__liver__ef0d813e__doublets_20",
+"dataset": "cxg__10x-3-v3__homo-sapiens__liver__ef0d813e",
+"condition": "doublets_20",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/homo-sapiens/liver__ef0d813e/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "human",
+"tissue": "liver;sigmoid colon"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__homo-sapiens__liver__ef0d813e__damaged_15",
+"dataset": "cxg__10x-3-v3__homo-sapiens__liver__ef0d813e",
+"condition": "damaged_15",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/homo-sapiens/liver__ef0d813e/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "human",
+"tissue": "liver;sigmoid colon"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__homo-sapiens__respiratory-airway__b25f3834__clean",
+"dataset": "cxg__10x-3-v3__homo-sapiens__respiratory-airway__b25f3834",
+"condition": "clean",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/homo-sapiens/respiratory-airway__b25f3834/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "human",
+"tissue": "respiratory airway"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__homo-sapiens__respiratory-airway__b25f3834__doublets_20",
+"dataset": "cxg__10x-3-v3__homo-sapiens__respiratory-airway__b25f3834",
+"condition": "doublets_20",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/homo-sapiens/respiratory-airway__b25f3834/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "human",
+"tissue": "respiratory airway"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__homo-sapiens__respiratory-airway__b25f3834__damaged_15",
+"dataset": "cxg__10x-3-v3__homo-sapiens__respiratory-airway__b25f3834",
+"condition": "damaged_15",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/homo-sapiens/respiratory-airway__b25f3834/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "human",
+"tissue": "respiratory airway"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__homo-sapiens__retina__d95ab381__clean",
+"dataset": "cxg__10x-3-v3__homo-sapiens__retina__d95ab381",
+"condition": "clean",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/homo-sapiens/retina__d95ab381/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "human",
+"tissue": "retina"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__homo-sapiens__retina__d95ab381__doublets_20",
+"dataset": "cxg__10x-3-v3__homo-sapiens__retina__d95ab381",
+"condition": "doublets_20",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/homo-sapiens/retina__d95ab381/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "human",
+"tissue": "retina"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__homo-sapiens__retina__d95ab381__damaged_15",
+"dataset": "cxg__10x-3-v3__homo-sapiens__retina__d95ab381",
+"condition": "damaged_15",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/homo-sapiens/retina__d95ab381/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "human",
+"tissue": "retina"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__homo-sapiens__telencephalon__6fc37633__clean",
+"dataset": "cxg__10x-3-v3__homo-sapiens__telencephalon__6fc37633",
+"condition": "clean",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/homo-sapiens/telencephalon__6fc37633/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "human",
+"tissue": "telencephalon"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__homo-sapiens__telencephalon__6fc37633__doublets_20",
+"dataset": "cxg__10x-3-v3__homo-sapiens__telencephalon__6fc37633",
+"condition": "doublets_20",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/homo-sapiens/telencephalon__6fc37633/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "human",
+"tissue": "telencephalon"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__homo-sapiens__telencephalon__6fc37633__damaged_15",
+"dataset": "cxg__10x-3-v3__homo-sapiens__telencephalon__6fc37633",
+"condition": "damaged_15",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/homo-sapiens/telencephalon__6fc37633/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "human",
+"tissue": "telencephalon"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__mus-musculus__autopod-skin__1398f3a9__clean",
+"dataset": "cxg__10x-3-v3__mus-musculus__autopod-skin__1398f3a9",
+"condition": "clean",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/mus-musculus/autopod-skin__1398f3a9/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "mouse",
+"tissue": "autopod skin"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__mus-musculus__autopod-skin__1398f3a9__doublets_20",
+"dataset": "cxg__10x-3-v3__mus-musculus__autopod-skin__1398f3a9",
+"condition": "doublets_20",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/mus-musculus/autopod-skin__1398f3a9/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "mouse",
+"tissue": "autopod skin"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__mus-musculus__autopod-skin__1398f3a9__damaged_15",
+"dataset": "cxg__10x-3-v3__mus-musculus__autopod-skin__1398f3a9",
+"condition": "damaged_15",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/mus-musculus/autopod-skin__1398f3a9/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "mouse",
+"tissue": "autopod skin"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__mus-musculus__autopod-skin__5bc26721__clean",
+"dataset": "cxg__10x-3-v3__mus-musculus__autopod-skin__5bc26721",
+"condition": "clean",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/mus-musculus/autopod-skin__5bc26721/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "mouse",
+"tissue": "autopod skin"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__mus-musculus__autopod-skin__5bc26721__doublets_20",
+"dataset": "cxg__10x-3-v3__mus-musculus__autopod-skin__5bc26721",
+"condition": "doublets_20",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/mus-musculus/autopod-skin__5bc26721/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "mouse",
+"tissue": "autopod skin"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__mus-musculus__autopod-skin__5bc26721__damaged_15",
+"dataset": "cxg__10x-3-v3__mus-musculus__autopod-skin__5bc26721",
+"condition": "damaged_15",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/mus-musculus/autopod-skin__5bc26721/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "mouse",
+"tissue": "autopod skin"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__mus-musculus__ovary__c32b7e3d__clean",
+"dataset": "cxg__10x-3-v3__mus-musculus__ovary__c32b7e3d",
+"condition": "clean",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/mus-musculus/ovary__c32b7e3d/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "mouse",
+"tissue": "ovary"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__mus-musculus__ovary__c32b7e3d__doublets_20",
+"dataset": "cxg__10x-3-v3__mus-musculus__ovary__c32b7e3d",
+"condition": "doublets_20",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/mus-musculus/ovary__c32b7e3d/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "mouse",
+"tissue": "ovary"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__mus-musculus__ovary__c32b7e3d__damaged_15",
+"dataset": "cxg__10x-3-v3__mus-musculus__ovary__c32b7e3d",
+"condition": "damaged_15",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/mus-musculus/ovary__c32b7e3d/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "mouse",
+"tissue": "ovary"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__mus-musculus__primary-motor-cortex__4ec57620__clean",
+"dataset": "cxg__10x-3-v3__mus-musculus__primary-motor-cortex__4ec57620",
+"condition": "clean",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/mus-musculus/primary-motor-cortex__4ec57620/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "mouse",
+"tissue": "primary motor cortex"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__mus-musculus__primary-motor-cortex__4ec57620__doublets_20",
+"dataset": "cxg__10x-3-v3__mus-musculus__primary-motor-cortex__4ec57620",
+"condition": "doublets_20",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/mus-musculus/primary-motor-cortex__4ec57620/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "mouse",
+"tissue": "primary motor cortex"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-3-v3__mus-musculus__primary-motor-cortex__4ec57620__damaged_15",
+"dataset": "cxg__10x-3-v3__mus-musculus__primary-motor-cortex__4ec57620",
+"condition": "damaged_15",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-3-v3/mus-musculus/primary-motor-cortex__4ec57620/data.h5ad",
+"truth": {
+"assay": "10x 3' v3",
+"technology": "umi",
+"organism": "mouse",
+"tissue": "primary motor cortex"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-multiome__homo-sapiens__brain__00f15b43__clean",
+"dataset": "cxg__10x-multiome__homo-sapiens__brain__00f15b43",
+"condition": "clean",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-multiome/homo-sapiens/brain__00f15b43/data.h5ad",
+"truth": {
+"assay": "10x multiome",
+"technology": "umi",
+"organism": "human",
+"tissue": "brain;cerebellum;diencephalon"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-multiome__homo-sapiens__brain__00f15b43__doublets_20",
+"dataset": "cxg__10x-multiome__homo-sapiens__brain__00f15b43",
+"condition": "doublets_20",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-multiome/homo-sapiens/brain__00f15b43/data.h5ad",
+"truth": {
+"assay": "10x multiome",
+"technology": "umi",
+"organism": "human",
+"tissue": "brain;cerebellum;diencephalon"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-multiome__homo-sapiens__brain__00f15b43__damaged_15",
+"dataset": "cxg__10x-multiome__homo-sapiens__brain__00f15b43",
+"condition": "damaged_15",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-multiome/homo-sapiens/brain__00f15b43/data.h5ad",
+"truth": {
+"assay": "10x multiome",
+"technology": "umi",
+"organism": "human",
+"tissue": "brain;cerebellum;diencephalon"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-multiome__homo-sapiens__brain__5662e542__clean",
+"dataset": "cxg__10x-multiome__homo-sapiens__brain__5662e542",
+"condition": "clean",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-multiome/homo-sapiens/brain__5662e542/data.h5ad",
+"truth": {
+"assay": "10x multiome",
+"technology": "umi",
+"organism": "human",
+"tissue": "brain;cerebellum;diencephalon"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-multiome__homo-sapiens__brain__5662e542__doublets_20",
+"dataset": "cxg__10x-multiome__homo-sapiens__brain__5662e542",
+"condition": "doublets_20",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-multiome/homo-sapiens/brain__5662e542/data.h5ad",
+"truth": {
+"assay": "10x multiome",
+"technology": "umi",
+"organism": "human",
+"tissue": "brain;cerebellum;diencephalon"
+},
+"seed": 0
+},
+{
+"id": "cxg__10x-multiome__homo-sapiens__brain__5662e542__damaged_15",
+"dataset": "cxg__10x-multiome__homo-sapiens__brain__5662e542",
+"condition": "damaged_15",
+"path": "~/grnbench_data_fresh1/cellxgene/10x-multiome/homo-sapiens/brain__5662e542/data.h5ad",
+"truth": {
+"assay": "10x multiome",
+"technology": "umi",
+"organism": "human",
+"tissue": "brain;cerebellum;diencephalon"
+},
+"seed": 0
+},
+{
+"id": "cxg__smart-seq2__mus-musculus__brown-adipose-tissue__8f1bc86b__clean",
+"dataset": "cxg__smart-seq2__mus-musculus__brown-adipose-tissue__8f1bc86b",
+"condition": "clean",
+"path": "~/grnbench_data_fresh1/cellxgene/smart-seq2/mus-musculus/brown-adipose-tissue__8f1bc86b/data.h5ad",
+"truth": {
+"assay": "Smart-seq2",
+"technology": "full_length",
+"organism": "mouse",
+"tissue": "brown adipose tissue"
+},
+"seed": 0
+},
+{
+"id": "cxg__smart-seq2__mus-musculus__brown-adipose-tissue__8f1bc86b__doublets_20",
+"dataset": "cxg__smart-seq2__mus-musculus__brown-adipose-tissue__8f1bc86b",
+"condition": "doublets_20",
+"path": "~/grnbench_data_fresh1/cellxgene/smart-seq2/mus-musculus/brown-adipose-tissue__8f1bc86b/data.h5ad",
+"truth": {
+"assay": "Smart-seq2",
+"technology": "full_length",
+"organism": "mouse",
+"tissue": "brown adipose tissue"
+},
+"seed": 0
+},
+{
+"id": "cxg__smart-seq2__mus-musculus__brown-adipose-tissue__8f1bc86b__damaged_15",
+"dataset": "cxg__smart-seq2__mus-musculus__brown-adipose-tissue__8f1bc86b",
+"condition": "damaged_15",
+"path": "~/grnbench_data_fresh1/cellxgene/smart-seq2/mus-musculus/brown-adipose-tissue__8f1bc86b/data.h5ad",
+"truth": {
+"assay": "Smart-seq2",
+"technology": "full_length",
+"organism": "mouse",
+"tissue": "brown adipose tissue"
+},
+"seed": 0
+}
+]

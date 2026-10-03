@@ -143,3 +143,20 @@ STATUS: PROPOSED | ACTIVE | SUPERSEDED by D-xxx | REVERTED
 - alternatives: Always reuse the 2026-09-25 files (best historical comparability, but no durable
   public fetch is established); always take the current live response (silently changes the
   biological reference); replace rows in the cumulative registry (destroys provenance).
+
+### D-021 | 2026-10-03 | claude (for LM) | ACTIVE | Without a reference, the engine's choice is the fixed baseline pipeline
+- decision: `screen_candidates` always screens a candidate named `baseline` (`screen.BASELINE_CHOICES`,
+  the pipeline the benchmarks already use). `rank_candidates` without reference columns ranks
+  `baseline` first when it has no failed context; if it is refused or fails, the previous rule
+  (edge stability - depth leakage - batch leakage) picks among the remaining candidates. With a
+  reference, ranking is unchanged. ACTIVE since the confirmatory EXP-20261003-LM-1 supported H1
+  (baseline +0.089 [+0.014, +0.163] over the former rule, n = 20 unused datasets, p_Holm 0.044;
+  claim C7). Its H2 (gene-set-preserving screening with a reference) was inconclusive, so the
+  reference-based rule is unchanged.
+- why: EXP-20261002-LM-2 (section 3, `benchmarks/results/EXP-20261002-LM-2/SUMMARY.md`): on real data
+  the unreferenced screened choice lost to the fixed baseline in every condition. The baseline is
+  sometimes refused by QC gates at very low depth (7/20 datasets at 10% depth) where adaptive
+  candidates still run, hence the fallback.
+- alternatives: keep the screening-only rule (loses to the baseline in the evidence); drop the
+  fallback (no output when the baseline is refused); change the screening metric (a larger redesign,
+  not supported by the evidence yet).

@@ -173,6 +173,12 @@ def screen_processed(path, tf_list=None, reference_pairs=None, batch_key: str | 
     return row
 
 
+# The fixed pipeline every benchmark compares against; screened as "baseline" (D-021).
+BASELINE_CHOICES = {"cell_qc_thresholds": "fixed", "doublets": "none", "context_scope": "pooled",
+                    "normalization": "cpm_log1p", "batch": "none", "sparsity": "single_cells",
+                    "hvg": "tf_plus_1000", "gene_filter": "min_cells", "subsample": "none",
+                    "confounders": "none"}
+
 # (metric, higher_is_better, relative change that counts as a difference)
 _COMPARE = [("n_cells", True, 0.05), ("n_tfs", True, 0.05), ("depth_leakage", False, 0.10),
             ("batch_leakage", False, 0.10), ("edge_stability", True, 0.05),
@@ -206,7 +212,8 @@ def rank_candidates(rows: pd.DataFrame, method: str | None = None) -> tuple[pd.D
     With a reference: AUPRC ratio on the selection half - of ``method`` when
     given (the best cleaning depends on the model: per-cell-type contexts help
     correlation methods and starve mutual-information ones), else the mean over
-    the proxy methods; edge stability breaks ties. Without a reference: edge
+    the proxy methods; edge stability breaks ties. Without a reference (D-021):
+    the fixed ``"baseline"`` pipeline when it has no failed context, else edge
     stability (on equal-size cell halves) minus depth and batch leakage. Failed
     contexts rank a candidate last - a pipeline that cannot run is not better.
     """
@@ -227,7 +234,12 @@ def rank_candidates(rows: pd.DataFrame, method: str | None = None) -> tuple[pd.D
     else:
         agg["score"] = (agg["edge_stability"].fillna(0) - agg["depth_leakage"].fillna(0)
                         - agg.get("batch_leakage", pd.Series(0, index=agg.index)).fillna(0).clip(lower=0))
-        rule = "edge stability - depth leakage - batch leakage (no reference given)"
+        rule = ("no reference: the fixed baseline pipeline (D-021); fallback when it fails: "
+                "edge stability - depth leakage - batch leakage")
+        if "baseline" in agg.index and "baseline" not in failed:
+            agg.loc[agg.index.isin(failed), "score"] = -np.inf
+            rest = agg.drop(index="baseline").sort_values("score", ascending=False)
+            return pd.concat([agg.loc[["baseline"]], rest]), rule
     agg.loc[agg.index.isin(failed), "score"] = -np.inf
     return agg.sort_values("score", ascending=False), rule
 
@@ -241,7 +253,8 @@ def screen_candidates(diag, input_path, out_dir, *, tf_list=None, reference_pair
     """Execute and screen the recommended plan and its one-change alternatives.
 
     ``extra`` adds user-proposed candidates: ``[{"name": ..., "choices": {decision: option}}]``
-    (choices not given keep the recommended option).
+    (choices not given keep the recommended option). The fixed ``"baseline"`` pipeline is always
+    screened too (D-021) unless the caller passes a candidate of that name.
 
     Returns ``{"rows": DataFrame, "pros_cons": {...}, "plans": {name: PrepPlan},
     "records": {name: [context records]}, "reference": {...}}`` and writes
@@ -285,6 +298,10 @@ def screen_candidates(diag, input_path, out_dir, *, tf_list=None, reference_pair
     candidates = selection.candidates(max_candidates=max_candidates, always=always_vary)
     for e in extra or []:
         candidates.append({"name": e["name"], "choices": {**selection.chosen(), **e["choices"]}})
+    # By name even when another candidate has the same choices: the no-reference rule looks it
+    # up by name, so a duplicate run is the price of never silently falling back.
+    if not any(c["name"] == "baseline" for c in candidates):
+        candidates.append({"name": "baseline", "choices": {**selection.chosen(), **BASELINE_CHOICES}})
     for cand in candidates:
         name = cand["name"]
         plan = plan_preprocessing(diag, tf_list=tf_list, selection=selection, choices=cand["choices"])

@@ -1,0 +1,92 @@
+{
+ "clean": [
+  {
+   "a": "baseline",
+   "b": "noref_shipped",
+   "n": 20,
+   "excluded": 0,
+   "diff": 0.08898038017836948,
+   "ci": [
+    0.014488393355423276,
+    0.16347236700131568
+   ],
+   "p_a_gt_b": 0.04347084550116562,
+   "p_b_gt_a": 1.0,
+   "supported": "baseline"
+  },
+  {
+   "a": "ref_geneset_preserving",
+   "b": "baseline",
+   "n": 20,
+   "excluded": 0,
+   "diff": 0.022833219810472326,
+   "ci": [
+    -0.0077129752373574535,
+    0.05337941485830211
+   ],
+   "p_a_gt_b": 0.20129414684098812,
+   "p_b_gt_a": 1.0,
+   "supported": "unresolved"
+  }
+ ],
+ "doublets_20": [
+  {
+   "a": "baseline",
+   "b": "noref_shipped",
+   "n": 20,
+   "excluded": 0,
+   "diff": 0.11193767767982385,
+   "ci": [
+    0.04390977233012504,
+    0.17996558302952265
+   ],
+   "p_a_gt_b": 0.005439260616561051,
+   "p_b_gt_a": 1.0,
+   "supported": "baseline"
+  },
+  {
+   "a": "ref_geneset_preserving",
+   "b": "baseline",
+   "n": 20,
+   "excluded": 0,
+   "diff": 0.023631800849927463,
+   "ci": [
+    0.008477257556499349,
+    0.03878634414335558
+   ],
+   "p_a_gt_b": 0.006127013590847023,
+   "p_b_gt_a": 1.0,
+   "supported": "ref_geneset_preserving"
+  }
+ ],
+ "damaged_15": [
+  {
+   "a": "baseline",
+   "b": "noref_shipped",
+   "n": 20,
+   "excluded": 0,
+   "diff": 0.1258638516834944,
+   "ci": [
+    0.04568265646023259,
+    0.2060450469067562
+   ],
+   "p_a_gt_b": 0.007780497925622047,
+   "p_b_gt_a": 1.0,
+   "supported": "baseline"
+  },
+  {
+   "a": "ref_geneset_preserving",
+   "b": "baseline",
+   "n": 20,
+   "excluded": 0,
+   "diff": 0.018067089708727745,
+   "ci": [
+    -0.010046058494044292,
+    0.04618023791149978
+   ],
+   "p_a_gt_b": 0.2916464725941421,
+   "p_b_gt_a": 1.0,
+   "supported": "unresolved"
+  }
+ ]
+}

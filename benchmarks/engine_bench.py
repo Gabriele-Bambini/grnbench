@@ -36,14 +36,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from grnbench.screen import BASELINE_CHOICES
+
 EVAL_METHODS = ["pearson_signed", "spearman_signed", "clr"]
 DEFAULT_BENCH_MODELS = ["pearson_signed", "clr", "grnboost2", "regdiffusion"]
 BENCH_METHOD_PARAMS = {"grnboost2": {"n_estimators": 100},
                        "regdiffusion": {"n_steps": 100}}
-BASELINE = {"cell_qc_thresholds": "fixed", "doublets": "none", "context_scope": "pooled",
-            "normalization": "cpm_log1p", "batch": "none", "sparsity": "single_cells",
-            "hvg": "tf_plus_1000", "gene_filter": "min_cells", "subsample": "none",
-            "confounders": "none"}
+BASELINE = BASELINE_CHOICES
 BAD_STATES = ("damaged", "empty", "doublet", "raw_empty")
 MAX_SCORE_CELLS = 3000
 TASK_SCHEMA_VERSION = 1

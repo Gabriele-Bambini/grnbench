@@ -285,11 +285,12 @@ def run_study_task(task: dict, refs: Path | None, workroot: Path) -> dict:
 
         subset = {c["alias_of"] or c["name"] for c in cands if c["source"] in ENGINE_SOURCES}
         sub = res["rows"][res["rows"]["candidate"].isin(subset)]
-        noref = sub.drop(columns=[c for c in sub if c.startswith("reference_")])
-        for key, table in (("engine_auto", sub), ("engine_auto_noref", noref)):
-            ranking, _ = rank_candidates(table)
-            row[key] = (str(ranking.index[0]) if len(ranking) and np.isfinite(ranking["score"].iloc[0])
-                        else None)
+        ranking, _ = rank_candidates(sub)
+        ok = len(ranking) and np.isfinite(ranking["score"].iloc[0])
+        row["engine_auto"] = str(ranking.index[0]) if ok else None
+        # The pre-D-021 reference-free rule, pinned so rows stay comparable across code versions:
+        # rank_candidates now returns the baseline without a reference (D-021).
+        row["engine_auto_noref"] = rule_choice(row, "engine", _noref_shipped)
     except Exception as exc:  # noqa: BLE001 - robustness is part of what is measured
         row["error"] = f"{type(exc).__name__}: {exc}"
         row["traceback"] = traceback.format_exc()[-4000:]
@@ -523,7 +524,7 @@ def confirm_report(out: Path) -> str:
     conds = [c for c in CONDITIONS if any(r["condition"] == c for r in rows)]
     text = ["# Confirmatory comparisons (CONFIRM_FAMILY)", "",
             f"Primary condition: `{CONFIRM_PRIMARY_CONDITION}`; other conditions are secondary. "
-            "Paired t over datasets, two-sided per direction, Holm over the directed hypotheses of "
+            "Paired t over datasets, one-sided per direction (each direction its own hypothesis), Holm over the directed hypotheses of "
             "each condition. Arms: " + ", ".join(CONFIRM_ARMS) + ".", ""]
     allrecs = {}
     for cond in [CONFIRM_PRIMARY_CONDITION] + [c for c in conds if c != CONFIRM_PRIMARY_CONDITION]:
