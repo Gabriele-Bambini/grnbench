@@ -187,6 +187,43 @@ def test_real_report_outcome_does_not_call_scoreless_rows_scored():
         "contexts_ok": np.nan,
         "reference_edges": 3778,
     })) == "completed, no model score"
+    assert real_bench._outcome_label(pd.Series({
+        "m_pearson_signed_auto_auprc_ratio": np.nan,
+        "n_failed_contexts": 4,
+    })) == "completed, screening failures (4 candidate-contexts)"
+
+
+def test_real_rows_record_screening_failures_without_personal_paths(tmp_path, monkeypatch):
+    import sys
+
+    root = Path(__file__).parents[1]
+    sys.path.insert(0, str(root / "benchmarks"))
+    spec = importlib.util.spec_from_file_location("real_bench_failure_tests",
+                                                  root / "benchmarks" / "real_bench.py")
+    real_bench = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(real_bench)
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("USERPROFILE", str(home))   # Path.home() on Windows
+    row = {}
+    records = {
+        "recommended": [
+            {"context": "type_a", "error": f"PrepError: failed at {home}/run/a"},
+            {"context": "type_b", "error": None},
+        ],
+        "baseline": [{"context": "all_cells", "error": "PrepError: QC gate failure(s)"}],
+    }
+
+    real_bench.record_screening_failures(row, records)
+
+    assert row["n_failed_contexts"] == 2
+    assert row["n_gate_refusals"] == 1
+    assert str(home) not in row["first_context_error"]
+    failures = json.loads(row["context_failures"])
+    assert failures[0] == {
+        "candidate": "recommended", "context": "type_a",
+        "error": "PrepError: failed at ~/run/a",
+    }
 
 
 def test_real_task_manifest_portabilizes_home_paths(tmp_path, monkeypatch):

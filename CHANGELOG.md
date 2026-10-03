@@ -114,6 +114,15 @@
   Windows ssh-agent: `StartupType Automatic` once, no per-reboot step.
 
 ### Fixed
+- Candidate screening now carries the diagnosis' raw-droplet flag into its rebuilt profile. Raw
+  10x inputs therefore keep knee cell calling instead of reclassifying called cells as already
+  filtered and then applying QC to hundreds of thousands of empty barcodes (issue #30).
+- Ingest aggregates gene identifiers that collide under grnbench's case-insensitive matching
+  contract, retaining the first spelling and recording case-fold merges separately. This prevents
+  one duplicate symbol from blocking every TF-resolved pipeline while preserving strict rejection
+  for ambiguous matrices passed directly to inference (issue #30).
+- Real-benchmark rows retain a portable structured summary of candidate/context failures and report
+  scoreless rows with screening failures explicitly instead of hiding the cause behind `completed`.
 - `grnbench report`: record keys containing commas or backticks were read as continuation text and
   fenced code was appended to the key above, garbling the Methods section; a note after the
   primary comparison containing `;` was read as a second hypothesis. LaTeX of EXP-20260925-LM-2

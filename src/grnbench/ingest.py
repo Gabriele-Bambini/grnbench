@@ -45,6 +45,7 @@ class IngestReport:
     transposed: bool = False
     counts_source: str = "X"  # "X" or "layers['counts']"
     notes: list[str] = field(default_factory=list)
+    n_case_duplicates_merged: int = 0
 
     def to_dict(self) -> dict:
         return self.__dict__.copy()
@@ -301,11 +302,14 @@ def _ensure_counts_backed(adata: ad.AnnData, rep: IngestReport) -> None:
 
 
 def _clean_gene_names(adata: ad.AnnData, rep: IngestReport) -> ad.AnnData:
-    """Strip Ensembl version suffixes and aggregate duplicate genes by sum.
+    """Strip Ensembl versions and aggregate duplicate genes by sum.
 
     Returns the (possibly rebuilt) AnnData: duplicates change the matrix
-    shape, so the object is reconstructed rather than partially mutated.
-    Every layer is aggregated with the same mapping.
+    shape, so the object is reconstructed rather than partially mutated. Gene
+    matching elsewhere in grnbench is case-insensitive, therefore identifiers
+    that differ only by case are duplicates under the same contract and are
+    aggregated here too. The first loaded spelling is retained and the
+    case-fold merge is reported separately. Every layer uses the same mapping.
     """
     names = pd.Index(adata.var_names.astype(str))
     if names.str.match(ENSEMBL_ANY_RE).mean() > 0.9:
@@ -330,8 +334,10 @@ def _clean_gene_names(adata: ad.AnnData, rep: IngestReport) -> ad.AnnData:
         ])
         rep.version_suffixes_stripped = int(stripped.sum())
 
-    dup_mask = names.duplicated(keep="first")
-    if not dup_mask.any():
+    exact_duplicates = int(names.duplicated(keep="first").sum())
+    folded = pd.Index([name.casefold() for name in names])
+    folded_dup_mask = folded.duplicated(keep="first")
+    if not folded_dup_mask.any():
         adata.var.index = names
         if rep.version_suffixes_stripped:
             rep.notes.append(
@@ -340,22 +346,23 @@ def _clean_gene_names(adata: ad.AnnData, rep: IngestReport) -> ad.AnnData:
         adata.uns["grnbench_ingest"] = rep.to_dict()
         return adata
 
-    uniq = pd.Index(pd.unique(names))
-    codes = pd.Categorical(names, categories=uniq).codes
+    unique_folded = pd.Index(pd.unique(folded))
+    codes = pd.Categorical(folded, categories=unique_folded).codes
     ind = sp.csr_matrix(
         (
             np.ones(len(names), dtype=np.float32),
             (codes, np.arange(len(names))),
         ),
-        shape=(len(uniq), len(names)),
+        shape=(len(unique_folded), len(names)),
     )
 
     def _agg(m):
         return ((ind @ sp.csr_matrix(m).T).T).tocsr()
 
-    first = ~dup_mask
+    first = ~folded_dup_mask
     new_var = adata.var.loc[first].copy()
-    new_var.index = pd.Index([str(u) for u in uniq], name=new_var.index.name)
+    representative_names = names[first]
+    new_var.index = pd.Index(representative_names, name=new_var.index.name)
 
     rebuilt = ad.AnnData(
         X=_agg(adata.X),
@@ -365,8 +372,15 @@ def _clean_gene_names(adata: ad.AnnData, rep: IngestReport) -> ad.AnnData:
         layers={k: _agg(v) for k, v in adata.layers.items() if k is not None},
     )
     rebuilt.uns = dict(adata.uns)
-    rep.n_duplicates_merged = int(dup_mask.sum())
-    rep.notes.append(f"{rep.n_duplicates_merged} duplicate gene names aggregated by sum.")
+    rep.n_duplicates_merged = int(folded_dup_mask.sum())
+    rep.n_case_duplicates_merged = rep.n_duplicates_merged - exact_duplicates
+    if exact_duplicates:
+        rep.notes.append(f"{exact_duplicates} duplicate gene names aggregated by sum.")
+    if rep.n_case_duplicates_merged:
+        rep.notes.append(
+            f"{rep.n_case_duplicates_merged} case-insensitive duplicate gene names "
+            "aggregated by sum; first loaded spelling retained."
+        )
     if rep.version_suffixes_stripped:
         rep.notes.append(
             f"{rep.version_suffixes_stripped} Ensembl version suffixes stripped."

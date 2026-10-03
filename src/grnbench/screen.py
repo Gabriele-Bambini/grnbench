@@ -255,7 +255,8 @@ def screen_candidates(diag, input_path, out_dir, *, tf_list=None, reference_pair
     out.mkdir(parents=True, exist_ok=True)
     if selection is None:
         prof = build_profile(diag.adata, diag.qc.metrics, diag.context,
-                             id_verdict=diag.id_verdict, tf_list=tf_list)
+                             id_verdict=diag.id_verdict, tf_list=tf_list,
+                             raw_droplets=diag.raw_droplets)
         selection = select(prof)
     if reference_pairs_by_context:
         context_union = set().union(*(set(v) for v in reference_pairs_by_context.values()))

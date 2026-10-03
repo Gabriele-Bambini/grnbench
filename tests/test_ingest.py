@@ -75,6 +75,23 @@ def test_duplicate_genes_aggregated_by_sum():
     assert rep.n_duplicates_merged == 1
 
 
+def test_case_insensitive_duplicate_genes_are_aggregated_and_reported():
+    """Regression for #30: case-fold collisions must be resolved before TF matching."""
+    a = ad.AnnData(
+        X=np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]),
+        var=pd.DataFrame(index=["LPCAT4", "Lpcat4", "Gata1"]),
+    )
+    rep = IngestReport(path="test", fmt="synthetic")
+
+    a = _clean_gene_names(a, rep)
+
+    assert list(a.var_names) == ["LPCAT4", "Gata1"]
+    dense = a.X.toarray() if hasattr(a.X, "toarray") else np.asarray(a.X)
+    assert np.allclose(dense, [[3.0, 3.0], [9.0, 6.0]])
+    assert rep.n_case_duplicates_merged == 1
+    assert any("case-insensitive" in note for note in rep.notes)
+
+
 def _write_10x_h5(path, symbols, ids, dense_genes_x_cells):
     """Minimal CellRanger v3 .h5 (CSC, features x barcodes) for loader tests."""
     h5py = pytest.importorskip("h5py")

@@ -221,6 +221,28 @@ def test_screening_ranks_candidates_on_the_selection_half_only(demo, tmp_path):
     assert (tmp_path / "scr" / "screening_summary.json").exists()
 
 
+def test_screening_preserves_raw_droplet_detection(demo, tmp_path, monkeypatch):
+    """Regression for #30: screening must not re-profile called cells as filtered input."""
+    from copy import deepcopy
+    from grnbench import autoprep
+    from grnbench.screen import screen_candidates
+
+    paths, tfs, diag = demo
+    raw = deepcopy(diag)
+    raw.raw_droplets = True
+    raw.cell_calling = {"threshold": 100.0, "n_called": 1200, "n_barcodes": 30_000}
+
+    def stop_after_planning(plan, input_path, out_dir, **kwargs):
+        return [{"context": plan.contexts[0]["name"], "processed": None,
+                 "error": "test stop", "out_dir": str(out_dir), "cli": []}]
+
+    monkeypatch.setattr(autoprep, "execute_plan", stop_after_planning)
+    result = screen_candidates(raw, paths["counts"], tmp_path / "scr", tf_list=tfs,
+                               max_candidates=1)
+
+    assert result["plans"]["recommended"].value("cell_calling") == "knee"
+
+
 def test_screening_fails_one_candidate_not_all_when_a_context_has_nan(demo, tmp_path, monkeypatch):
     import grnbench.autoprep as autoprep
     from grnbench.screen import screen_candidates

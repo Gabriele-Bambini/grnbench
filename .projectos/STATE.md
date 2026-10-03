@@ -16,13 +16,12 @@ pre-registered experiments (D-017).
   +0.234, GRNBoost2 +0.146 (n = 20 each, p_Holm <= 1.6e-6); all supported. Claim C6 `confirmed`.
 - EXP-20261002-LM-2 (exploratory, HPC job 679448, issue #28, branch `lm/candidate-study`): every
   cleaning candidate on 20 real datasets x 7 controlled degradations.
-- Issue #22 / EXP-20261001-LD-1 on `ld/contextual-stress-bench`: implementation and both exploratory
-  phases are complete. Synthetic job 678174 has 740/740 completed rows; real job 679326 has 40/40
-  terminal rows (33 completed, seven expected BEELINE refusals), zero permanent/missing errors.
-  Requested-model scores exist for 24 real datasets; auto usually ties baseline on the 23 paired
-  cases, while `paul15` and `pbmc3k_raw` complete without a model score and need diagnosis. Generated
-  reports, portable figures/manifests and LaTeX are in the results folder; large artifacts remain
-  on HPC. D-020 records the approved immutable reference-snapshot policy from #21.
+- Issue #30: the two scoreless EXP-20261001-LD-1 rows were reproduced without changing that
+  experiment. `pbmc3k_raw` lost the raw-droplet flag when screening rebuilt its profile, so all
+  candidates treated empty barcodes as cells; `paul15` has a case-fold gene collision
+  (`LPCAT4`/`Lpcat4`) that made TF matching refuse affected contexts. Focused regressions and fixes
+  are on `ld/scoreless-real-rows`; isolated HPC validation at commit `57e737a` produced zero failed
+  contexts and finite Pearson/CLR scores for both datasets. Post-merge full suite: 427 passed.
 - Issue #19: a read-only HPC audit found no random corruption; the setup cache is broader and more
   dynamic than the cumulative provenance registry. A small follow-up adds optional exact-snapshot
   checking and clarifies the data-root workflow; no dataset or past result is changed. Issue #21
@@ -48,9 +47,9 @@ pre-registered experiments (D-017).
 2. (done, #11) Issue #6 small-batch scrublet rule.
 3. GB: reproduce EXP-20260926-LM-1 by hand (C5 is only `reproduced-computational`). Issue #13 is
    fixed (#16). A fresh-set rerun would remove the "seen in LM-2" caveat of C5.
-4. Review the EXP-20261001-LD-1 results PR. Then diagnose the scoreless `paul15` and `pbmc3k_raw`
-   rows in issue #30; use the real ties plus synthetic breakpoints to register a separate
-   confirmatory auto-vs-baseline run. Scheduled monitoring stays disabled.
+4. Review and merge issue #30's validated fix; then use EXP-20261001-LD-1's real ties plus synthetic
+   breakpoints to register a separate confirmatory auto-vs-baseline run. Scheduled monitoring stays
+   disabled.
 5. Recalibrate `context_scope` in `selector.py` with bench evidence (add a "goal" input); regenerate the KB doc.
 6. After review of EXP-20261001-LD-1: register the confirmatory synthetic + real engine run under D-020.
 7. GUI: per-model best pipeline, knee cell calling, mito-gate decision, motif models, viz figures.

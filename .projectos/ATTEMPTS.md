@@ -194,3 +194,11 @@ STATUS: RUNNING | SUCCESS | PARTIAL | FAILED | ABANDONED | INCONCLUSIVE
 - evidence: hygiene.SCRUBLET_MIN_CELLS comment; tests/test_doublet_small_batches.py; PR for issue #6
 - lesson: scrublet's automatic threshold needs ~100 cells per group; a toy two-program dataset over-calls small pools (20-40%), so accuracy claims come from real data, not the toy
 - tags: engine,doublets,scrublet,real-data
+
+### A-023 | 2026-10-02 | LD agent | SUCCESS | Diagnose scoreless paul15 and pbmc3k_raw rows
+- goal: Explain why two completed EXP-20261001-LD-1 real-data rows had references but no model score, without changing or rerunning the registered experiment
+- approach: Inspected committed rows and retained artifacts first, then ran isolated screening-only HPC diagnostics 679806 and 679807; the second retained candidate work directories and error records
+- result: `pbmc3k_raw` screening rebuilt a profile without the diagnosis' raw-droplet flag, chose `as_provided`, and QC rejected 578,390 zero-count barcodes. `paul15` contains `LPCAT4`/`Lpcat4`; strict case-insensitive TF matching rejected every affected context. The runner also retained only failure counts, not their causes. After the fixes, isolated validation job 679812 produced zero failed contexts and finite Pearson/CLR scores for both datasets; post-merge full-suite job 679851 passed 427 tests.
+- evidence: issue #30 comments; focused regressions in `tests/test_engine.py`, `tests/test_ingest.py` and `tests/test_benchmark_runtime.py`; HPC jobs 679812 and 679851
+- lesson: A derived profile must preserve upstream data-state facts that cannot be recomputed after filtering. Identifier cleanup and matching must use the same equivalence relation. Terminal benchmark rows need structured inner-failure evidence.
+- tags: engine,screening,ingest,identifiers,observability,real-data

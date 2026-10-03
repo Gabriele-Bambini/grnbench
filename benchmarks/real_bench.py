@@ -177,6 +177,35 @@ def doublet_methods(records: list[dict]) -> str:
     return ",".join(sorted(set(seen))) if seen else "unknown"
 
 
+def record_screening_failures(row: dict, records_by_candidate: dict) -> None:
+    """Keep candidate/context failures visible in a terminal real-data row.
+
+    A task can finish the runner while every complete candidate pipeline was
+    rejected. Counts alone hid the cause in EXP-20261001-LD-1, so retain a
+    compact structured summary and scrub the user's home path before the row
+    can become a portable result.
+    """
+    home = str(Path.home())
+    failures = []
+    for candidate, records in records_by_candidate.items():
+        for record in records:
+            if not record.get("error"):
+                continue
+            error = str(record["error"])
+            if home:
+                error = error.replace(home, "~")
+            failures.append({
+                "candidate": str(candidate),
+                "context": str(record.get("context", "unknown")),
+                "error": error[:500],
+            })
+    row["n_failed_contexts"] = len(failures)
+    row["n_gate_refusals"] = sum("QC gate failure" in item["error"] for item in failures)
+    if failures:
+        row["first_context_error"] = failures[0]["error"][:300]
+        row["context_failures"] = json.dumps(failures, ensure_ascii=True)
+
+
 ARTIFACT_TOP_EDGES = 20000     # per model/arm/context edge dump size when --keep-artifacts
 
 
@@ -319,6 +348,7 @@ def run_real_task(task: dict, refs: Path | None, workroot: Path, keep: bool = Fa
                                     reference_pairs=pairs, max_candidates=4,
                                     extra=[{"name": "baseline", "choices": BASELINE}],
                                     proxy_methods=EVAL_METHODS)
+            record_screening_failures(row, res["records"])
             scores = score_candidates(res["records"], res["plans"], tfs, res["reference"]["evaluation"])
             noref = res["rows"].drop(columns=[c for c in res["rows"] if c.startswith("reference_")])
             noref_rank, _ = rank_candidates(noref)
@@ -494,6 +524,9 @@ def _outcome_label(row) -> str:
                       or (k.startswith("permodel_") and k.endswith("_auto")))]
     if any(pd.notna(row.get(k)) for k in score_keys):
         return "ok, scored"
+    failed = row.get("n_failed_contexts")
+    if pd.notna(failed) and int(failed) > 0:
+        return f"completed, screening failures ({int(failed)} candidate-contexts)"
     contexts = row.get("contexts_ok")
     if pd.notna(contexts):
         reason = "; no reference edges" if row.get("reference_edges") == 0 else ""
