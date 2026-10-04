@@ -175,15 +175,18 @@ def organism_hint(var_names) -> str:
     return "ambiguous"
 
 
-def knee_cell_threshold(totals, min_counts: int = 10) -> dict | None:
+def knee_cell_threshold(totals, min_counts: int = 100) -> dict | None:
     """Counts threshold separating cells from empty droplets on the barcode-rank curve.
 
     Log-rank vs log-total, interpolated and smoothed: the *knee* is the point
     farthest above the chord between the first and last barcode (end of the cell
     plateau); the threshold is the *inflection* after it (steepest descent),
     halfway down the cliff to the ambient plateau - the same two landmarks as
-    DropletUtils' ``barcodeRanks``. Returns ``None`` when the curve has no clear
-    cliff (fewer than 50 or more than 90% of barcodes would be called).
+    DropletUtils' ``barcodeRanks``, including its floor: barcodes under 100 UMIs are
+    assumed empty and left out of the curve (``lower = 100``). A lower floor let the
+    ambient -> empty-droplet drop win on heart_10k_v3 (92k "cells" for 7.7k). Returns
+    ``None`` when the curve has no clear cliff (fewer than 50 or more than 90% of
+    barcodes would be called).
     """
     t = np.sort(np.asarray(totals, dtype=float))[::-1]
     t = t[t >= min_counts]

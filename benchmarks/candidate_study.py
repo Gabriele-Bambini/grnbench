@@ -156,8 +156,25 @@ def write_degraded_copy(path, condition: str, seed: int, dest: Path) -> Path:
 
 # -- tasks ------------------------------------------------------------------------------- #
 
+def raw10x_datasets(data_root: Path) -> list[dict]:
+    """10x raw and filtered matrices fetched by fetch_10x_raw.py (``raw10x/<name>/``), one dataset
+    each. ``raw_droplets`` in the truth is metadata for the report; the engine detects an
+    unfiltered matrix itself from the barcode totals (``profile.looks_unfiltered``)."""
+    out = []
+    for truth in sorted(Path(data_root).glob("raw10x/*/truth.json")):
+        meta = json.loads(truth.read_text(encoding="utf-8"))
+        base = {"technology": meta["technology"], "organism": meta["organism"]}
+        for kind in ("raw", "filtered"):
+            h5 = truth.parent / f"{kind}_feature_bc_matrix.h5"
+            if h5.exists():
+                out.append({"id": f"10x__{truth.parent.name}__{kind}", "path": str(h5), "kind": "10x_h5",
+                            "truth": {**base, "raw_droplets": kind == "raw"}})
+    return out
+
+
 def make_tasks(data_root: Path, conditions=CONDITIONS, max_datasets: int | None = None) -> list[dict]:
     datasets = [t for t in real_bench.make_tasks(Path(data_root)) if t["kind"] == "cellxgene"]
+    datasets += raw10x_datasets(Path(data_root))
     datasets = datasets[:max_datasets] if max_datasets else datasets
     return [{"id": f"{d['id']}__{c}", "dataset": d["id"], "condition": c, "path": d["path"],
              "truth": d["truth"], "seed": 0} for d in datasets for c in conditions]
@@ -245,7 +262,8 @@ def run_study_task(task: dict, refs: Path | None, workroot: Path) -> dict:
             return row
 
         prof = build_profile(diag.adata, diag.qc.metrics, diag.context,
-                             id_verdict=diag.id_verdict, tf_list=tfs)
+                             id_verdict=diag.id_verdict, tf_list=tfs,
+                             raw_droplets=diag.raw_droplets)   # as screen.py since #33
         selection = select(prof)
         engine = selection.candidates(max_candidates=4, always=("context_scope",))
         specs = [{"name": c["name"], "choices": c["choices"], "source": "engine"} for c in engine]
@@ -573,10 +591,32 @@ def confirm_report(out: Path) -> str:
     return body
 
 
+def raw_vs_filtered(rows: list[dict]) -> str:
+    """Per 10x dataset: engine choice from the raw droplet matrix against the baseline on the
+    vendor-filtered matrix (EXP-20261004-LM-2). Empty string when there are no raw/filtered pairs."""
+    by = {r["dataset"]: r for r in rows}
+    names = sorted({d[:-len("__raw")] for d in by if d.endswith("__raw") and d[:-len("__raw")] + "__filtered" in by})
+    if not names:
+        return ""
+    lines = ["", "## Raw droplet matrix vs vendor-filtered matrix (per dataset)", "",
+             "| dataset | cells called from raw | cells in filtered | engine pick (raw) | engine (raw) | "
+             "baseline (raw) | baseline (filtered) | engine (raw) - baseline (filtered) |",
+             "|---|---|---|---|---|---|---|---|"]
+    fmt = lambda v: f"{v:.3f}" if np.isfinite(v) else "refused/failed"  # noqa: E731
+    for n in names:
+        raw, filt = by[n + "__raw"], by[n + "__filtered"]
+        pick = raw.get("engine_auto")
+        auto, braw, bfilt = _val(raw, pick), _val(raw, "baseline"), _val(filt, "baseline")
+        diff = f"{auto - bfilt:+.3f}" if np.isfinite(auto) and np.isfinite(bfilt) else "-"
+        lines.append(f"| {n} | {raw.get('n_cells_in')} | {filt.get('n_cells_in')} | {pick} | {fmt(auto)} | "
+                     f"{fmt(braw)} | {fmt(bfilt)} | {diff} |")
+    return "\n".join(lines) + "\n"
+
+
 def report(out: Path) -> str:
     rows = [json.loads(p.read_text(encoding="utf-8")) for p in sorted((Path(out) / "rows").glob("*.json"))]
     candidates_table(rows).to_csv(Path(out) / "candidates.csv", index=False)
-    text = summary(rows)
+    text = summary(rows) + raw_vs_filtered(rows)
     (Path(out) / "SUMMARY.md").write_text(text, encoding="utf-8")
     return text
 

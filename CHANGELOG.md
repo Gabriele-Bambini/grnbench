@@ -3,6 +3,10 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- Knee cell calling ignores barcodes under 100 UMIs (DropletUtils' `lower`), as its docstring always
+  said it followed: with 10 the ambient-to-empty drop won on heart_10k_v3 (92k cells for 7.7k).
+- `benchmarks/fetch_10x_raw.py` and raw10x discovery in `candidate_study.py`: 8 public 10x raw and filtered
+  matrices (#50) for EXP-20261004-LM-2.
 - `paper/make_figures.py` generates the motif-lift tables (C4-C6, AUPRC and EPR), the reference-free
   selection table (C7) and the cleaning-variant table (EXP-20261004-LM-1) from committed results.
 - `candidate_study.py`: every candidate also scored against the baseline on the genes both share

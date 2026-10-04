@@ -11,6 +11,10 @@ comparison, published as a tool with a paper. Headline claims from real data (D-
 pre-registered experiments (D-017).
 
 ## In progress
+- EXP-20261004-LM-2 (exploratory, 8 public 10x raw matrices, #51): from raw droplets the engine's
+  knee calling matches Cell Ranger's cell count and the vendor-filtered recovery on 7/8 datasets;
+  heart_10k_v3 exposed a knee-floor bug (10 -> 100 UMIs, DropletUtils default), fixed; then 8/8 cell
+  counts within 0.93-1.03x of Cell Ranger (recovery rerun for heart_10k only).
 - EXP-20261004-LM-1 (exploratory, job 681527): scored on the genes a candidate shares with the
   baseline, no cleaning change beats the fixed baseline by more than ~0.01 (hvg=2000: +0.037 own
   universe -> +0.008 shared). HVG default unchanged; no confirmatory test of gene-set changers.

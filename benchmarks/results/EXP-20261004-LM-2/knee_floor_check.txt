@@ -1,0 +1,10 @@
+# knee_cell_threshold floor check, code 98ab16d8f976a165da5463304d7897906a4c2cc4, 10x raw vs Cell Ranger filtered cell counts
+# columns: dataset, vendor cells, then (min_counts, threshold, n_called, n_called/vendor) for 10 and 100
+5k_pbmc_protein_v3 5247 [(10, 637, 5215, 0.994), (100, 637, 5215, 0.994)]
+heart_10k_v3 7713 [(10, 24, 92106, 11.942), (100, 974, 7166, 0.929)]
+heart_1k_v3 1011 [(10, 762, 983, 0.972), (100, 732, 988, 0.977)]
+neuron_10k_v3 11843 [(10, 953, 11732, 0.991), (100, 928, 11779, 0.995)]
+neuron_1k_v3 1301 [(10, 1319, 1232, 0.947), (100, 1295, 1233, 0.948)]
+pbmc_10k_v3 11769 [(10, 760, 11811, 1.004), (100, 959, 11624, 0.988)]
+pbmc_1k_v2 996 [(10, 495, 998, 1.002), (100, 492, 998, 1.002)]
+pbmc_1k_v3 1222 [(10, 608, 1224, 1.002), (100, 426, 1258, 1.029)]

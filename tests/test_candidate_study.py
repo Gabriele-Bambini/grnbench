@@ -297,3 +297,16 @@ def test_report_has_shared_genes_table_and_rule(tmp_path):
     assert "## Variants vs baseline on shared genes" in text
     assert "base+hvg=tf_plus_500 | +0.300 [1] |" in text.split("on shared genes")[1]
     assert "judged on shared genes | +0.300 (1/0) |" in text
+
+
+def test_raw10x_datasets_flag_raw_and_filtered(tmp_path):
+    folder = tmp_path / "raw10x" / "pbmc_x"
+    folder.mkdir(parents=True)
+    (folder / "truth.json").write_text(json.dumps({"technology": "umi", "organism": "human"}))
+    (folder / "raw_feature_bc_matrix.h5").write_bytes(b"")
+    (folder / "filtered_feature_bc_matrix.h5").write_bytes(b"")
+    found = {d["id"]: d["truth"] for d in cs.raw10x_datasets(tmp_path)}
+    assert found == {"10x__pbmc_x__raw": {"technology": "umi", "organism": "human", "raw_droplets": True},
+                     "10x__pbmc_x__filtered": {"technology": "umi", "organism": "human", "raw_droplets": False}}
+    tasks = cs.make_tasks(tmp_path, ("clean",))
+    assert [t["id"] for t in tasks] == ["10x__pbmc_x__raw__clean", "10x__pbmc_x__filtered__clean"]

@@ -1,0 +1,194 @@
+[
+{
+"id": "10x__5k_pbmc_protein_v3__raw__clean",
+"dataset": "10x__5k_pbmc_protein_v3__raw",
+"condition": "clean",
+"path": "~/grnbench_data_raw10x/raw10x/5k_pbmc_protein_v3/raw_feature_bc_matrix.h5",
+"truth": {
+"technology": "umi",
+"organism": "human",
+"raw_droplets": true
+},
+"seed": 0
+},
+{
+"id": "10x__5k_pbmc_protein_v3__filtered__clean",
+"dataset": "10x__5k_pbmc_protein_v3__filtered",
+"condition": "clean",
+"path": "~/grnbench_data_raw10x/raw10x/5k_pbmc_protein_v3/filtered_feature_bc_matrix.h5",
+"truth": {
+"technology": "umi",
+"organism": "human",
+"raw_droplets": false
+},
+"seed": 0
+},
+{
+"id": "10x__heart_10k_v3__raw__clean",
+"dataset": "10x__heart_10k_v3__raw",
+"condition": "clean",
+"path": "~/grnbench_data_raw10x/raw10x/heart_10k_v3/raw_feature_bc_matrix.h5",
+"truth": {
+"technology": "umi",
+"organism": "mouse",
+"raw_droplets": true
+},
+"seed": 0
+},
+{
+"id": "10x__heart_10k_v3__filtered__clean",
+"dataset": "10x__heart_10k_v3__filtered",
+"condition": "clean",
+"path": "~/grnbench_data_raw10x/raw10x/heart_10k_v3/filtered_feature_bc_matrix.h5",
+"truth": {
+"technology": "umi",
+"organism": "mouse",
+"raw_droplets": false
+},
+"seed": 0
+},
+{
+"id": "10x__heart_1k_v3__raw__clean",
+"dataset": "10x__heart_1k_v3__raw",
+"condition": "clean",
+"path": "~/grnbench_data_raw10x/raw10x/heart_1k_v3/raw_feature_bc_matrix.h5",
+"truth": {
+"technology": "umi",
+"organism": "mouse",
+"raw_droplets": true
+},
+"seed": 0
+},
+{
+"id": "10x__heart_1k_v3__filtered__clean",
+"dataset": "10x__heart_1k_v3__filtered",
+"condition": "clean",
+"path": "~/grnbench_data_raw10x/raw10x/heart_1k_v3/filtered_feature_bc_matrix.h5",
+"truth": {
+"technology": "umi",
+"organism": "mouse",
+"raw_droplets": false
+},
+"seed": 0
+},
+{
+"id": "10x__neuron_10k_v3__raw__clean",
+"dataset": "10x__neuron_10k_v3__raw",
+"condition": "clean",
+"path": "~/grnbench_data_raw10x/raw10x/neuron_10k_v3/raw_feature_bc_matrix.h5",
+"truth": {
+"technology": "umi",
+"organism": "mouse",
+"raw_droplets": true
+},
+"seed": 0
+},
+{
+"id": "10x__neuron_10k_v3__filtered__clean",
+"dataset": "10x__neuron_10k_v3__filtered",
+"condition": "clean",
+"path": "~/grnbench_data_raw10x/raw10x/neuron_10k_v3/filtered_feature_bc_matrix.h5",
+"truth": {
+"technology": "umi",
+"organism": "mouse",
+"raw_droplets": false
+},
+"seed": 0
+},
+{
+"id": "10x__neuron_1k_v3__raw__clean",
+"dataset": "10x__neuron_1k_v3__raw",
+"condition": "clean",
+"path": "~/grnbench_data_raw10x/raw10x/neuron_1k_v3/raw_feature_bc_matrix.h5",
+"truth": {
+"technology": "umi",
+"organism": "mouse",
+"raw_droplets": true
+},
+"seed": 0
+},
+{
+"id": "10x__neuron_1k_v3__filtered__clean",
+"dataset": "10x__neuron_1k_v3__filtered",
+"condition": "clean",
+"path": "~/grnbench_data_raw10x/raw10x/neuron_1k_v3/filtered_feature_bc_matrix.h5",
+"truth": {
+"technology": "umi",
+"organism": "mouse",
+"raw_droplets": false
+},
+"seed": 0
+},
+{
+"id": "10x__pbmc_10k_v3__raw__clean",
+"dataset": "10x__pbmc_10k_v3__raw",
+"condition": "clean",
+"path": "~/grnbench_data_raw10x/raw10x/pbmc_10k_v3/raw_feature_bc_matrix.h5",
+"truth": {
+"technology": "umi",
+"organism": "human",
+"raw_droplets": true
+},
+"seed": 0
+},
+{
+"id": "10x__pbmc_10k_v3__filtered__clean",
+"dataset": "10x__pbmc_10k_v3__filtered",
+"condition": "clean",
+"path": "~/grnbench_data_raw10x/raw10x/pbmc_10k_v3/filtered_feature_bc_matrix.h5",
+"truth": {
+"technology": "umi",
+"organism": "human",
+"raw_droplets": false
+},
+"seed": 0
+},
+{
+"id": "10x__pbmc_1k_v2__raw__clean",
+"dataset": "10x__pbmc_1k_v2__raw",
+"condition": "clean",
+"path": "~/grnbench_data_raw10x/raw10x/pbmc_1k_v2/raw_feature_bc_matrix.h5",
+"truth": {
+"technology": "umi",
+"organism": "human",
+"raw_droplets": true
+},
+"seed": 0
+},
+{
+"id": "10x__pbmc_1k_v2__filtered__clean",
+"dataset": "10x__pbmc_1k_v2__filtered",
+"condition": "clean",
+"path": "~/grnbench_data_raw10x/raw10x/pbmc_1k_v2/filtered_feature_bc_matrix.h5",
+"truth": {
+"technology": "umi",
+"organism": "human",
+"raw_droplets": false
+},
+"seed": 0
+},
+{
+"id": "10x__pbmc_1k_v3__raw__clean",
+"dataset": "10x__pbmc_1k_v3__raw",
+"condition": "clean",
+"path": "~/grnbench_data_raw10x/raw10x/pbmc_1k_v3/raw_feature_bc_matrix.h5",
+"truth": {
+"technology": "umi",
+"organism": "human",
+"raw_droplets": true
+},
+"seed": 0
+},
+{
+"id": "10x__pbmc_1k_v3__filtered__clean",
+"dataset": "10x__pbmc_1k_v3__filtered",
+"condition": "clean",
+"path": "~/grnbench_data_raw10x/raw10x/pbmc_1k_v3/filtered_feature_bc_matrix.h5",
+"truth": {
+"technology": "umi",
+"organism": "human",
+"raw_droplets": false
+},
+"seed": 0
+}
+]

@@ -335,6 +335,26 @@ def test_knee_calls_cells_and_rejects_curves_without_a_cliff():
     assert knee_cell_threshold(rng.lognormal(np.log(3000), 0.4, 2000)) is None
 
 
+# Barcode-rank curve of 10x's public heart_10k_v3 raw matrix (rank, total UMIs), sampled at
+# log-spaced ranks; Cell Ranger called 7,713 cells. EXP-20261004-LM-2 / #51.
+HEART_10K_CURVE = [(1, 139767), (11, 79956), (55, 54654), (228, 40284), (939, 25184), (1907, 15958),
+                   (3057, 9462), (4901, 3607), (6206, 1989), (7858, 610), (9950, 257), (12599, 181),
+                   (20199, 124), (32386, 95), (51924, 76), (65747, 67), (83250, 46), (105413, 8),
+                   (133476, 4), (214002, 2), (343110, 1), (1116796, 1)]
+
+
+def test_knee_ignores_the_ambient_to_empty_cliff_on_heart_10k():
+    """With a 10-UMI floor the steepest drop on this curve is ambient -> empty droplets (~75 -> 8
+    UMIs) and 92k barcodes were called; DropletUtils' default floor of 100 UMIs finds the cells."""
+    import numpy as np
+    from grnbench.hygiene import knee_cell_threshold
+    ranks, totals = np.array(HEART_10K_CURVE, dtype=float).T
+    t = 10 ** np.interp(np.log10(np.arange(1, ranks[-1] + 1)), np.log10(ranks), np.log10(totals))
+    assert knee_cell_threshold(t, min_counts=10)["n_called"] > 50_000       # the old floor
+    call = knee_cell_threshold(t)
+    assert call is not None and 6_000 <= call["n_called"] <= 9_500
+
+
 def test_high_mito_tissue_relaxes_the_dataset_gate_only(demo):
     from copy import deepcopy
     from grnbench.qc import Gate
