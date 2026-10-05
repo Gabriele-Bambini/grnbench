@@ -144,6 +144,16 @@ def render_report(manifest: dict) -> str:
         add(f"- Ensembl version suffixes stripped: {ing['version_suffixes_stripped']}")
     for note in ing.get("notes", []):
         add(f"- Note: {note}")
+    cp = ing.get("count_plausibility") or {}
+    if "cv_cell_totals" in cp or "share_ones" in cp:
+        parts = []
+        if "cv_cell_totals" in cp:
+            parts.append(f"CV of cell totals {cp['cv_cell_totals']:.3g}")
+        if "share_ones" in cp:
+            parts.append(f"1s are {cp['share_ones']:.1%} of non-zero values, "
+                         f"max {cp['max_value']:g}")
+        add(f"- Count plausibility: {'; '.join(parts)} - flags: "
+            f"{', '.join(cp.get('flags') or []) or 'none'}")
     add("")
     add("## QC metrics")
     add("")

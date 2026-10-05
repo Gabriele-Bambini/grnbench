@@ -2,7 +2,7 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-10-02 by LD's and LM's agents. PR #3, PR #7 and the shared-workflow PR were merged by the owner
+Updated: 2026-10-03 (issue #42, GB's agent); 2026-10-02 by LD's and LM's agents. PR #3, PR #7 and the shared-workflow PR were merged by the owner
 after independent agent reviews, not human reviews (GB was away).
 
 ## Focus
@@ -11,6 +11,11 @@ comparison, published as a tool with a paper. Headline claims from real data (D-
 pre-registered experiments (D-017).
 
 ## In progress
+- Issue #42 (GB, `gb/raw-count-check`): ingest warns, never refuses, on integer input that looks
+  non-raw (rounded normalized, 0/1) and gives specific advice when it refuses. Calibration (LM, HPC
+  job 681752, review of PR #53): 56 real files (CELLxGENE + 10x raw/filtered), would warn 0; the
+  tight-CV signal is safe there only with its "no 1s" condition (lowest CV 0.164 vs 0.15). A
+  refusal still needs its own record and PR. Item 3 (count recovery) comes later, own D-xxx.
 - EXP-20261004-LM-2 (exploratory, 8 public 10x raw matrices, #51): from raw droplets the engine's
   knee calling matches Cell Ranger's cell count and the vendor-filtered recovery on 7/8 datasets;
   heart_10k_v3 exposed a knee-floor bug (10 -> 100 UMIs, DropletUtils default), fixed; then 8/8 cell

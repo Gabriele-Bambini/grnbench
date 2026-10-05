@@ -3,12 +3,16 @@
 Contract: after :func:`load_any`, ``adata.X`` holds **raw counts** (original
 counts are preserved in ``adata.layers["counts"]``). Anything that does not
 look like counts is rejected loudly — silent normalization guessing is how
-benchmarks rot. Gene-name hygiene (version suffixes, duplicates aggregated by
-sum) is applied and logged in ``adata.uns["grnbench_ingest"]``.
+benchmarks rot — with advice on what the data look like and where counts may be.
+Integer input that still looks non-raw (near-identical cell totals, 0/1 only) is
+warned about and recorded in the report (:func:`count_plausibility`, issue #42).
+Gene-name hygiene (version suffixes, duplicates aggregated by sum) is applied and
+logged in ``adata.uns["grnbench_ingest"]``.
 """
 from __future__ import annotations
 
 import re
+import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -31,6 +35,22 @@ BARCODE_RE = re.compile(r"^(?:[A-Za-z0-9]+[:_])?[ACGTNacgtn]{8,}(?:[-_]\d+)?$")
 MITO_PREFIXES = ("MT-", "MT.", "Mt-", "mt-")
 RIBO_PREFIXES = ("RPS", "RPL", "rps", "rpl")
 
+# Count plausibility (issue #42). An integer, non-negative matrix is not always raw
+# counts: rounded normalize_total/CPM output and binarized 0/1 matrices pass
+# looks_like_counts. PROVISIONAL thresholds, not yet calibrated on the approved real
+# datasets (issue #42: benchmarks/count_plausibility.py over the data root must show
+# zero false alarms first). Until then the check only warns and records; it never refuses.
+PLAUSIBILITY_MIN_CELLS = 20        # fewer cells with counts: totals signal not evaluated
+PLAUSIBILITY_MIN_NONZERO = 1000    # fewer non-zero values: value signals not evaluated
+TOTALS_CV_NEAR_IDENTICAL = 0.05    # CV of per-cell totals below this: near-identical depth (warns alone)
+TOTALS_CV_TIGHT = 0.15             # CV below this: tight totals (warns only together with "no 1s")
+NO_ONES_MAX_SHARE = 0.001          # share of 1s among non-zero values at or below this: "no 1s"
+# Refusal advice only (they describe, never decide): non-integer values whose per-cell
+# totals agree this closely are normalize_total/CPM output; non-integer values never above
+# LOG_RANGE_MAX are in the log range (log1p of 1e4-normalized data peaks near 9, log2 CPM near 20).
+NORMALIZED_TOTALS_CV = 0.01
+LOG_RANGE_MAX = 20.0
+
 
 class IngestError(ValueError):
     """Raised when input data cannot be safely interpreted as raw counts."""
@@ -46,6 +66,10 @@ class IngestReport:
     counts_source: str = "X"  # "X" or "layers['counts']"
     notes: list[str] = field(default_factory=list)
     n_case_duplicates_merged: int = 0
+    # signals from count_plausibility() on the counts actually used (issue #42)
+    count_plausibility: dict = field(default_factory=dict)
+    # loud-but-not-fatal findings; run_prep copies them into manifest["warnings"]
+    warnings: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return self.__dict__.copy()
@@ -91,6 +115,7 @@ def load_any(path: str | Path,
             )
     _ensure_counts_backed(adata, rep)
     _assert_finite(adata.X)
+    _check_count_plausibility(adata.X, rep)
     adata = _clean_gene_names(adata, rep)
     return adata, rep
 
@@ -104,7 +129,7 @@ def _load_h5ad(p: Path) -> tuple[ad.AnnData, IngestReport]:
     rep = IngestReport(path=str(p), fmt="h5ad")
     if "counts" in adata.layers and adata.layers["counts"] is not None:
         layer = adata.layers["counts"]
-        _validate_counts_layer(adata.X, layer)
+        _validate_counts_layer(adata.X, layer, adata=adata)
         rep.counts_source = "layers['counts']"
         rep.notes.append(
             "X was replaced by validated layers['counts']; the previous X is "
@@ -125,8 +150,12 @@ def _load_h5ad(p: Path) -> tuple[ad.AnnData, IngestReport]:
     return adata, rep
 
 
-def _validate_counts_layer(x_as_loaded, layer) -> None:
-    """Fail loudly when the trusted counts layer is itself broken."""
+def _validate_counts_layer(x_as_loaded, layer, adata: ad.AnnData | None = None) -> None:
+    """Fail loudly when the trusted counts layer is itself broken.
+
+    ``adata`` (optional) lets the refusal list the file's other count-like
+    matrices as suggestions; without it only ``x_as_loaded`` is considered.
+    """
     if layer.shape != x_as_loaded.shape:
         if layer.shape == x_as_loaded.shape[::-1]:
             raise IngestError(
@@ -139,7 +168,17 @@ def _validate_counts_layer(x_as_loaded, layer) -> None:
         )
     ok, why = looks_like_counts(layer)
     if not ok:
-        raise IngestError(f"layers['counts'] does not look like raw counts: {why}")
+        if adata is not None:
+            others = _count_like_sources(x=adata.X, layers=adata.layers, raw=adata.raw,
+                                         skip_layer="counts")
+        else:
+            others = _count_like_sources(x=x_as_loaded)
+        raise IngestError(
+            f"layers['counts'] does not look like raw counts: {why}. "
+            + _refusal_advice(layer, *others,
+                              fix="Fix or drop layers['counts'] and re-export the dataset "
+                                  "with raw counts")
+        )
     _assert_finite(layer)
 
 
@@ -292,13 +331,177 @@ def _ensure_counts_backed(adata: ad.AnnData, rep: IngestReport) -> None:
     if ok:
         adata.layers["counts"] = adata.X.copy()
         return
-    msg = (
-        "Input does not look like raw counts: " + why + ". GRN preprocessing "
-        "must start from counts; re-export the dataset with raw counts (e.g. "
-        "layers['counts'] in the h5ad) or pass assume_counts=True if you are "
-        "certain (not recommended)."
+    others = _count_like_sources(layers=adata.layers, raw=adata.raw)
+    raise IngestError(
+        "Input does not look like raw counts: " + why + ". "
+        + _refusal_advice(adata.X, *others,
+                          fix="GRN preprocessing must start from counts: re-export the "
+                              "dataset with raw counts (e.g. layers['counts'] in the h5ad)")
     )
-    raise IngestError(msg)
+
+
+def _row_totals(X) -> np.ndarray:
+    """Per-cell totals in float64 (float32 sums drift on deep cells); one pass, no copy."""
+    if sp.issparse(X):
+        return np.asarray(X.sum(axis=1, dtype=np.float64)).ravel()
+    return np.asarray(X).sum(axis=1, dtype=np.float64)
+
+
+def _cv(values: np.ndarray) -> float:
+    return float(values.std() / values.mean())
+
+
+def describe_non_counts(X) -> str:
+    """Best guess, for a refusal message, of what a matrix that is not counts holds."""
+    data = X.data if sp.issparse(X) else np.asarray(X).ravel()
+    if data.size == 0:
+        return "an empty matrix"
+    if np.any(data < 0):
+        return ("scaled or centered values (negative entries, as sc.pp.scale, regress_out or "
+                "residuals produce); counts cannot be recovered from them")
+    totals = _row_totals(X)
+    totals = totals[totals > 0]
+    vmax = float(data.max())
+    if totals.size >= 2 and _cv(totals) < NORMALIZED_TOTALS_CV:
+        return (f"per-cell normalized values without log: every cell totals about "
+                f"{float(np.median(totals)):.4g} (CV {_cv(totals):.2g}), as normalize_total or "
+                "CPM produce")
+    if vmax <= LOG_RANGE_MAX:
+        return (f"log-normalized values (non-integer, max {vmax:.3g}), such as "
+                "log1p(normalize_total)")
+    return (f"non-integer values up to {vmax:.4g}: normalized (TPM/FPKM), expected counts "
+            "(RSEM, salmon) or imputed values")
+
+
+def _count_like_sources(x=None, layers=None, raw=None,
+                        skip_layer: str | None = None) -> tuple[list[str], str | None]:
+    """Other matrices in the file that pass :func:`looks_like_counts`, plus a note on ``.raw``.
+
+    Suggestions for the refusal message only: never used automatically, because an
+    integer layer need not hold total counts (velocyto's 'spliced' does not).
+    """
+    found: list[str] = []
+    if x is not None and looks_like_counts(x)[0]:
+        found.append("X")
+    for key in (layers.keys() if layers is not None else ()):
+        if key is None or key == skip_layer:  # anndata>=0.13 aliases X as layers[None]
+            continue
+        if looks_like_counts(layers[key])[0]:
+            found.append(f"layers['{key}']")
+    raw_note = None
+    if raw is not None:
+        ok, why = looks_like_counts(raw.X)
+        if ok:
+            found.append(".raw.X")
+        else:
+            raw_note = f".raw is present but is not counts either ({why})."
+    return found, raw_note
+
+
+def _refusal_advice(X, found: list[str], raw_note: str | None, *, fix: str) -> str:
+    """The readable part of a not-counts refusal: what X looks like, candidates, where to look."""
+    parts = [f"It looks like {describe_non_counts(X)}."]
+    if found:
+        parts.append(
+            "Integer, non-negative matrices in this file: " + ", ".join(found) + ". None is "
+            "used automatically: check that one holds total raw counts (velocyto "
+            "'spliced'/'unspliced' do not), store it as layers['counts'] and load again.")
+    if raw_note:
+        parts.append(raw_note)
+    parts.append(
+        fix + ". Raw counts are usually in layers['counts'], .raw.X, the 10x "
+        "filtered_feature_bc_matrix (.h5 or MTX folder) or a counts file in the GEO "
+        "supplementary data.")
+    return " ".join(parts)
+
+
+def count_plausibility(X) -> dict:
+    """Signals that an integer, non-negative matrix is still not raw counts (issue #42).
+
+    :func:`looks_like_counts` proves integrality only, and rounded normalize_total/CPM
+    output or a binarized 0/1 matrix passes it. Three signals:
+
+    - near-identical per-cell totals, the strongest: sequencing depth always varies
+      between real cells, and per-cell normalization removes exactly that variation;
+    - only 0/1 values: a detected/not-detected matrix;
+    - no 1s among the non-zero values: rounding scaled counts skips 1. Weak on its own
+      (full-length protocols such as Smart-seq have few 1s), so it only warns together
+      with tight totals (normalized, a gene subset taken, then rounded).
+
+    Cost: one row sum and one pass over the stored values; sparse input is never
+    densified or copied. Returns the signals, the ``flags`` that fired, whether they
+    ``warn`` and the provisional thresholds used (recorded in the manifest, D-005).
+    """
+    data = X.data if sp.issparse(X) else np.asarray(X).ravel()
+    totals = _row_totals(X)
+    totals = totals[totals > 0]
+    n_nonzero = int(np.count_nonzero(data))
+    sig: dict = {"n_cells_with_counts": int(totals.size), "n_nonzero": n_nonzero}
+    if totals.size >= 2:
+        sig["cv_cell_totals"] = round(_cv(totals), 6)
+    if n_nonzero:
+        sig["share_ones"] = round(int(np.count_nonzero(data == 1)) / n_nonzero, 6)
+        sig["max_value"] = float(data.max())
+    sig["checked_totals"] = bool(totals.size >= PLAUSIBILITY_MIN_CELLS)
+    sig["checked_values"] = bool(n_nonzero >= PLAUSIBILITY_MIN_NONZERO)
+    flags: list[str] = []
+    if sig["checked_totals"]:
+        if sig["cv_cell_totals"] < TOTALS_CV_NEAR_IDENTICAL:
+            flags.append("near_identical_totals")
+        elif sig["cv_cell_totals"] < TOTALS_CV_TIGHT:
+            flags.append("tight_totals")
+    if sig["checked_values"]:
+        if sig["max_value"] <= 1:
+            flags.append("binary")
+        elif sig["share_ones"] <= NO_ONES_MAX_SHARE:
+            flags.append("no_ones")
+    sig["flags"] = flags
+    sig["warn"] = bool({"near_identical_totals", "binary"} & set(flags)
+                       or {"no_ones", "tight_totals"} <= set(flags))
+    sig["thresholds"] = {
+        "status": "provisional, not calibrated on real data (issue #42)",
+        "min_cells": PLAUSIBILITY_MIN_CELLS, "min_nonzero": PLAUSIBILITY_MIN_NONZERO,
+        "totals_cv_near_identical": TOTALS_CV_NEAR_IDENTICAL,
+        "totals_cv_tight": TOTALS_CV_TIGHT, "no_ones_max_share": NO_ONES_MAX_SHARE,
+    }
+    return sig
+
+
+def plausibility_warning(sig: dict) -> str | None:
+    """The loud warning text for :func:`count_plausibility` signals, or None."""
+    if not sig.get("warn"):
+        return None
+    flags = set(sig["flags"])
+    cv, n_cells, nnz = sig.get("cv_cell_totals"), sig["n_cells_with_counts"], sig["n_nonzero"]
+    findings = []
+    if "near_identical_totals" in flags:
+        findings.append(
+            f"per-cell totals are near-identical (CV {cv:.2g} over {n_cells} cells)"
+            + (" and no non-zero value is 1" if "no_ones" in flags else "")
+            + "; real sequencing depth always varies between cells, so this looks like rounded "
+              "normalize_total/CPM output or counts downsampled to one fixed depth per cell")
+    elif {"no_ones", "tight_totals"} <= flags:
+        findings.append(
+            f"no non-zero value is 1 and per-cell totals are unusually tight (CV {cv:.2g} over "
+            f"{n_cells} cells); this looks like normalized values rounded after some genes "
+            "were removed")
+    if "binary" in flags:
+        findings.append(f"every non-zero value is 1 ({nnz} values): a binarized "
+                        "detected/not-detected matrix, not counts")
+    return ("COUNTS LOOK NON-RAW: " + "; ".join(findings) + ". The matrix passed the integer "
+            "check, so QC, doublet calling and every model will treat it as raw counts. If it "
+            "is not raw, re-export the raw counts (layers['counts'], .raw.X or the 10x matrix). "
+            "Warning only: the thresholds are provisional until calibrated on real data "
+            "(issue #42).")
+
+
+def _check_count_plausibility(X, rep: IngestReport) -> None:
+    """Record the plausibility signals in ``rep``; warn loudly, never refuse (issue #42)."""
+    rep.count_plausibility = count_plausibility(X)
+    msg = plausibility_warning(rep.count_plausibility)
+    if msg:
+        rep.warnings.append(msg)
+        warnings.warn(msg, RuntimeWarning, stacklevel=3)
 
 
 def _clean_gene_names(adata: ad.AnnData, rep: IngestReport) -> ad.AnnData:

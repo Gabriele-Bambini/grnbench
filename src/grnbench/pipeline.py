@@ -157,6 +157,7 @@ def run_prep(
     adata, ingest_rep = load_any(input_path, orientation=orientation)
     steps.append({"step": "ingest",
                   "detail": f"format={ingest_rep.fmt}, counts_source={ingest_rep.counts_source}"})
+    warnings_list.extend(ingest_rep.warnings)  # e.g. counts that look non-raw (issue #42)
     if subset_key is not None and subset_key not in adata.obs.columns:
         raise PrepError(f"subset key '{subset_key}' not in obs")
     if cell_calling is not None:

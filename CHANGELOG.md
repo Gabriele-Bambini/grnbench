@@ -3,6 +3,9 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- Ingest (#42): integer input that does not look raw (near-identical cell totals, 0/1 only) gets a loud
+  warning recorded in the manifest, not a refusal until calibrated (`benchmarks/count_plausibility.py`);
+  refusals say what the data look like and list count-like layers as suggestions.
 - Knee cell calling ignores barcodes under 100 UMIs (DropletUtils' `lower`), as its docstring always
   said it followed: with 10 the ambient-to-empty drop won on heart_10k_v3 (92k cells for 7.7k).
 - `benchmarks/fetch_10x_raw.py` and raw10x discovery in `candidate_study.py`: 8 public 10x raw and filtered

@@ -483,6 +483,7 @@ def plan_preprocessing(diag: Diagnosis, *, methods: list[dict] | None = None,
     if ctx.get("value_type") == "normalized":
         plan.warnings.append("A text source describes the values as normalized (TPM/log...). The matrix "
                              "passed the raw-count check; verify you loaded the count matrix.")
+    plan.warnings += diag.ingest.get("warnings", [])  # integer but non-raw-looking counts (#42)
     for g in failing:
         plan.warnings.append(f"QC gate '{g.name}' fails: {g.detail}")
     plan.warnings += profile.notes
