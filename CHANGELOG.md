@@ -18,6 +18,8 @@
   D-021 makes the baseline the engine's choice when no reference is given.
 - `engine_bench.py` / `real_bench.py`: a worker killed by the OOM killer now ends the run (retryable,
   resubmission resumes) instead of hanging until the Slurm time limit (`pool_results`).
+- Reproduction rule aligned in paper/README.md, experiments/README.md and AGENTS.md: a second person
+  who directs and checks the rerun earns `reproduced`, even if an agent types the commands (#24).
 - Engine robustness (found by EXP-20261002-LM-2): screening fails one candidate, never all, when a
   context cannot be screened; strategies may not emit NaN/inf (`PrepError`); Pearson residuals give a
   zero-count gene 0 instead of NaN; ComBat drops one-cell batches with a warning.

@@ -43,6 +43,9 @@
 ## 4. Reproduction (required before anything reaches paper/)
 
 - reproduced by: <initials>, YYYY-MM-DD, commit <hash>, machine <...>
+- directed and checked by: <initials> (signs this section); commands typed by: <the same person | an
+  agent session run for <initials>>
+- data: fetched or copied by <initials>, `data_manifest.py --check` output (D-020)
 - match: <same numbers | differences and why>
 
 ## 5. Next

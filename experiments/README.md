@@ -27,12 +27,13 @@ One file per run, local or HPC. This is the only place runs are recorded (not
 7. **Look inside.** Each record links its figures (`viz/index.md`: QC, embeddings, decisions,
    PR curves, networks, TF-level errors, motif lift, calibration, stability, attributions) and its
    generated report (`latex/`). Scores alone are not a result.
-8. **Reproduction.** Before a result enters `paper/`, a second person (or an agent run by another
-   person) reruns it from the record alone and fills section 4.
+8. **Reproduction.** Before a result enters `paper/`, a second person reruns it from the record
+   alone and fills section 4. They direct and check every step on their own account, with data they fetched or copied themselves and checked against the registered sha256 (D-020); an agent may
+   type the commands. Reruns directed by the owner's side are `reproduced-computational`.
 
 ## Index
 
-Add a row in the same PR that adds a record. Status: registered / running / done / reproduced-computational (agent rerun from the record, human pending) / reproduced / abandoned.
+Add a row in the same PR that adds a record. Status: registered / running / done / reproduced-computational (rerun directed by the owner's side, second-person reproduction pending) / reproduced / abandoned.
 
 | ID | question | type | status | verdict | results |
 |---|---|---|---|---|---|

@@ -58,11 +58,12 @@ pre-registered experiments (D-017).
 - The scrublet fix (#3) is merged. Rebuild your venv from the lock (`scikit-image` is new).
 
 ## Next steps
-1. GB: reproduce EXP-20260925-LM-2 by hand from the record (on another OS or machine if possible),
+1. GB: reproduce EXP-20260925-LM-2 from the record (#24: GB directs and checks on his own account; an
+   agent may type the commands; on another OS or machine if possible),
    then fill section 4 and set C4 to `reproduced`. Review, or challenge, the agent-reviewed merges
    #3, #7 and the workflow PR (AGENTS.md section 5: open an issue citing the PR).
 2. (done, #11) Issue #6 small-batch scrublet rule.
-3. GB: reproduce EXP-20260926-LM-1 by hand (C5 is only `reproduced-computational`). Issue #13 is
+3. GB: reproduce EXP-20260926-LM-1 under the same rule (C5 is only `reproduced-computational`). Issue #13 is
    fixed (#16). A fresh-set rerun would remove the "seen in LM-2" caveat of C5.
 4. Review and merge issue #30's validated fix; then use EXP-20261001-LD-1's real ties plus synthetic
    breakpoints to register a separate confirmatory auto-vs-baseline run. Scheduled monitoring stays

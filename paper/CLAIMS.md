@@ -3,10 +3,12 @@
 One row per sentence-level claim. Status, in order:
 - `draft`: exploratory evidence.
 - `confirmed`: a confirmatory (pre-registered) experiment supports it.
-- `reproduced-computational`: a different agent reran the experiment from its record alone and got
-  the same numbers (record section 4). The computation is reproducible, but a human reproduction is
-  still pending. This is **not** a second-person reproduction.
-- `reproduced`: a second person reran it from the record.
+- `reproduced-computational`: a rerun from the record alone, directed by the owner's side (for
+  example a fresh agent session), got the same numbers (record section 4). The computation is
+  reproducible; a second-person reproduction is still pending.
+- `reproduced`: a second person reran it from the record alone, directing and checking every step
+  on their own account, with data they fetched or copied themselves and checked against the registered sha256 (D-020), and signed section 4; an agent may
+  type the commands (paper/README.md rule 3).
 
 Only `reproduced` rows go into a submission.
 
