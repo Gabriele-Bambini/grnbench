@@ -213,6 +213,9 @@ def _write_manifest(out: Path, args, started: str, stages: list[dict],
         "stages": stages,
         "environment": environment_block(),
     })
+    from grnbench.diagnostics import run_document, try_write_diagnostics
+    try_write_diagnostics(out / "diagnostics.json", run_document,
+                          out, outcome=status, stages=stages)
 
 
 def _summary(out: Path, prep_dir: Path, infer_dir: Path,

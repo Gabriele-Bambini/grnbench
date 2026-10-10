@@ -57,10 +57,29 @@ def sequence_identity(values) -> dict:
 
 
 def require_empty_output(path: str | Path) -> Path:
-    """Refuse output reuse rather than mix artifacts from different runs."""
+    """Refuse output reuse rather than mix artifacts from different runs.
+
+    A lone schema-v1 failure diagnostic is the one safe exception: it contains
+    no run artifact and exists specifically to explain an attempt that stopped
+    before producing one.  A retry may replace it, while every other existing
+    file still makes reuse fail loudly.
+    """
     out = Path(path)
-    if out.exists() and any(out.iterdir()):
-        raise ValueError(f"Output directory must be empty; choose a new path: {out}")
+    if out.exists():
+        entries = list(out.iterdir())
+        retryable = False
+        if len(entries) == 1 and entries[0].name == "diagnostics.json":
+            try:
+                diagnostic = json.loads(entries[0].read_text(encoding="utf-8"))
+                retryable = (
+                    diagnostic.get("schema") == "grnbench.diagnostics"
+                    and diagnostic.get("schema_version") == 1
+                    and diagnostic.get("outcome") == "failed"
+                )
+            except (OSError, ValueError, AttributeError):
+                retryable = False
+        if entries and not retryable:
+            raise ValueError(f"Output directory must be empty; choose a new path: {out}")
     out.mkdir(parents=True, exist_ok=True)
     return out
 

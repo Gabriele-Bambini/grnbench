@@ -3,6 +3,15 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- Portable per-dataset `diagnostics.json` (#56): preprocessing, candidate screening, standalone
+  inference and `grnbench run` emit one schema-versioned structure with bounded failures, applied
+  choices and before/after dimensions; recursive validation excludes paths, identities, barcodes
+  and expression values so reports and the UI can safely share it. Runtime diagnostic writes are
+  non-fatal, strict JSON is cross-platform, and a lone failed diagnostic no longer blocks the
+  CLI-recommended retry while every real pre-existing artifact remains protected. Effective and
+  requested preprocessing strategies are distinct, subset runs and failures use their real context
+  label, paths containing spaces remain private, and raw-droplet dimensions retain the pre-calling
+  barcode count.
 - Ingest (#42): integer input that does not look raw (near-identical cell totals, 0/1 only) gets a loud
   warning recorded in the manifest, not a refusal until calibrated (`benchmarks/count_plausibility.py`);
   refusals say what the data look like and list count-like layers as suggestions.

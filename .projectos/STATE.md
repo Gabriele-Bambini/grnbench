@@ -11,6 +11,11 @@ comparison, published as a tool with a paper. Headline claims from real data (D-
 pre-registered experiments (D-017).
 
 ## In progress
+- Issue #56 (LD, `ld/portable-diagnostics`): schema-v1 `diagnostics.json` gives prep, screening and
+  model outcomes one portable structure for reports/UI, with bounded messages, before/after
+  dimensions, effective-vs-requested strategy, real subset context labels and recursive privacy
+  validation. Identifier mapping/collision policy and goal-aware selection remain separate
+  follow-ups to #34.
 - Issue #42 (GB, `gb/raw-count-check`): ingest warns, never refuses, on integer input that looks
   non-raw (rounded normalized, 0/1) and gives specific advice when it refuses. Calibration (LM, HPC
   job 681752, review of PR #53): 56 real files (CELLxGENE + 10x raw/filtered), would warn 0; the

@@ -15,6 +15,7 @@ from pathlib import Path
 from grnbench.hygiene import load_label_mapping
 from grnbench.pipeline import PrepError, run_prep
 from grnbench.qc import Thresholds
+from grnbench.report import require_empty_output
 from grnbench.strategies import list_strategies
 from grnbench.tfs import load_tf_list
 
@@ -121,7 +122,30 @@ def main(argv: list[str] | None = None) -> int:
     }.items() if v is not None}
     thresholds = Thresholds(**overrides) if overrides else None
 
+    output_claimed = False
+
+    def write_failure(exc, category=None):
+        """Write only into the empty directory created for this failed attempt."""
+        if not output_claimed:
+            return
+        from grnbench.diagnostics import context_label, failed_prep_document, try_write_diagnostics
+        try_write_diagnostics(
+            Path(args.out) / "diagnostics.json",
+            failed_prep_document,
+            exc,
+            choices=vars(args),
+            context=context_label(subset_key=args.subset_key, subset_value=args.subset_value),
+            category=category,
+            sensitive_values=(args.data, args.out, args.tf_list, args.label_mapping,
+                              args.per_batch_bounds),
+        )
+
     try:
+        # Claim the output before any work.  This makes it explicit whether a
+        # later failure belongs to this attempt; a pre-existing run must never
+        # gain a diagnostic from a command that was refused at the boundary.
+        require_empty_output(args.out)
+        output_claimed = True
         res = run_prep(
             args.data, args.out,
             strategy=args.strategy,
@@ -151,11 +175,13 @@ def main(argv: list[str] | None = None) -> int:
         )
     except PrepError as e:
         gate = str(e).startswith("QC gate failure")
+        write_failure(e, "qc_gate" if gate else "prep_refused")
         print(f"[{'QC GATE FAILURE' if gate else 'PREP REFUSED'}] {e}", file=sys.stderr)
         if gate:
             print("(re-run with --force to proceed anyway)", file=sys.stderr)
         return 2
     except Exception as e:  # noqa: BLE001 - CLI boundary
+        write_failure(f"{type(e).__name__}: {e}", "prep_error")
         print(f"[ERROR] {type(e).__name__}: {e}", file=sys.stderr)
         return 1
 
@@ -167,7 +193,8 @@ def main(argv: list[str] | None = None) -> int:
     for r in res.manifest["recommendations"]:
         marker = "*" if r["strategy"] == res.strategy else " "
         print(f" {marker} {r['rank']}. {r['strategy']:18s} {r['reason']}")
-    print(f"\nOutputs:\n  {res.processed_path}\n  {res.manifest_path}\n  {res.report_path}")
+    print(f"\nOutputs:\n  {res.processed_path}\n  {res.manifest_path}\n"
+          f"  {res.diagnostics_path}\n  {res.report_path}")
     return 0
 
 

@@ -349,6 +349,9 @@ def screen_candidates(diag, input_path, out_dir, *, tf_list=None, reference_pair
         {"best": best, "best_per_method": best_per_method, "rule": rule,
          "ranking": ranking.reset_index().to_dict("records"),
          "choices": {k: p.choices for k, p in plans.items()}}, indent=1, default=str), encoding="utf-8")
+    from grnbench.diagnostics import screen_document, try_write_diagnostics
+    try_write_diagnostics(out / "diagnostics.json", screen_document,
+                          plans, records, table, selected=best)
     return {"rows": table, "pros_cons": pros_cons(table[table["error"].isna()]) if len(table) else {},
             "ranking": ranking, "rule": rule, "best": best, "best_per_method": best_per_method,
             "plans": plans, "records": records,

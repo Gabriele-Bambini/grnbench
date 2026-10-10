@@ -38,6 +38,7 @@ class PrepResult:
     manifest_path: Path
     report_path: Path
     qc_metrics_path: Path
+    diagnostics_path: Path
     strategy: str
     manifest: dict
 
@@ -493,13 +494,15 @@ def run_prep(
     qc_path = out / "qc_metrics.json"
     manifest_path = out / "manifest.json"
     report_path = out / "report.md"
+    diagnostics_path = out / "diagnostics.json"
 
     processed.write_h5ad(processed_path, compression="gzip")
     write_json(qc_path, {"qc": qc_report.to_dict(), "ingest": ingest_rep.to_dict(),
                          "thresholds": dataclasses.asdict(t)})
 
     outputs = {"processed_h5ad": str(processed_path), "qc_metrics": str(qc_path),
-               "manifest": str(manifest_path), "report": str(report_path)}
+               "manifest": str(manifest_path), "diagnostics": str(diagnostics_path),
+               "report": str(report_path)}
     manifest = build_manifest(
         input_fp=input_identity,
         ingest=ingest_rep.to_dict(),
@@ -524,8 +527,13 @@ def run_prep(
         },
     )
     write_json(manifest_path, manifest)
+    from grnbench.diagnostics import context_label, prep_document, try_write_diagnostics
+    diagnostic_context = context_label(subset_key=subset_key, subset_value=subset_value)
+    try_write_diagnostics(diagnostics_path, prep_document, manifest,
+                          context=diagnostic_context)
     report_path.write_text(render_report(manifest), encoding="utf-8")
 
     return PrepResult(out_dir=out, processed_path=processed_path,
                       manifest_path=manifest_path, report_path=report_path,
-                      qc_metrics_path=qc_path, strategy=chosen, manifest=manifest)
+                      qc_metrics_path=qc_path, diagnostics_path=diagnostics_path,
+                      strategy=chosen, manifest=manifest)

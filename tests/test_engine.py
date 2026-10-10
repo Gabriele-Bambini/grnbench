@@ -219,6 +219,12 @@ def test_screening_ranks_candidates_on_the_selection_half_only(demo, tmp_path):
     assert sel.isdisjoint(ev)
     assert (tmp_path / "scr" / "reference_split.json").exists()
     assert (tmp_path / "scr" / "screening_summary.json").exists()
+    diagnostics = json.loads((tmp_path / "scr" / "diagnostics.json").read_text())
+    assert diagnostics["selected_candidate"] == res["best"]
+    assert set(diagnostics["screen"]) == {"recommended", "pooled", "baseline"}
+    for candidate, contexts in diagnostics["prep"].items():
+        for entry in contexts.values():
+            assert entry["choices"]["strategy"] == res["plans"][candidate].value("strategy")
 
 
 def _rank_rows(**cands):

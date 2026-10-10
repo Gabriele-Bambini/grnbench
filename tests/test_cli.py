@@ -94,6 +94,9 @@ def test_run_without_gold_stops_after_inference(tmp_path, dataset, capsys):
 
     manifest = json.loads((out / "run_manifest.json").read_text(encoding="utf-8"))
     assert manifest["status"] == "ok (eval skipped)"
+    diagnostics = json.loads((out / "diagnostics.json").read_text(encoding="utf-8"))
+    assert diagnostics["prep"]["default"]["all_cells"]["outcome"] == "ok"
+    assert diagnostics["models"]["spearman_signed"]["all_cells"]["outcome"] == "ok"
     eval_stage = next(s for s in manifest["stages"] if s["stage"] == "eval")
     assert "no --gold given" in eval_stage["skipped"]
     assert "no --gold" in capsys.readouterr().out
@@ -148,6 +151,10 @@ def test_run_aborts_when_qc_gates_fail(tmp_path, extreme_mito_adata, capsys):
     assert not (out / "infer").exists(), "nothing downstream may run after an abort"
     manifest = json.loads((out / "run_manifest.json").read_text(encoding="utf-8"))
     assert manifest["status"] == "prep failed"
+    diagnostics = json.loads((out / "diagnostics.json").read_text(encoding="utf-8"))
+    assert diagnostics["outcome"] == "failed"
+    assert diagnostics["status"] == "prep failed"
+    assert diagnostics["prep"]["default"]["all_cells"]["failure"]["category"] == "qc_gate"
     assert "ABORT" in capsys.readouterr().err
 
 
@@ -298,3 +305,22 @@ def test_eval_reports_a_bad_plugin_instead_of_crashing(tmp_path, capsys):
                     "--plugin", "./no_such_plugin.json"])
     assert rc == 1
     assert "[PLUGIN ERROR]" in capsys.readouterr().err
+
+
+def test_prep_on_relative_mtx_folder_writes_diagnostics_without_warnings(tmp_path, monkeypatch):
+    import warnings
+    from grnbench.cli import main as prep_main
+    monkeypatch.chdir(tmp_path)
+    rel_mtx = Path("rel_mtx_dir")
+    rel_mtx.mkdir()
+    (rel_mtx / "barcodes.tsv").touch()
+    out = tmp_path / "prep_out"
+
+    with warnings.catch_warnings(record=True) as recorded_warnings:
+        warnings.simplefilter("always")
+        rc = prep_main([str(rel_mtx), "--out", str(out)])
+    assert rc != 0
+    assert (out / "diagnostics.json").exists()
+    diag = json.loads((out / "diagnostics.json").read_text(encoding="utf-8"))
+    assert diag["outcome"] == "failed"
+    assert not [w for w in recorded_warnings if issubclass(w.category, RuntimeWarning) and "portable diagnostics" in str(w.message)]

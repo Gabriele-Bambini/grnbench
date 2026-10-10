@@ -24,6 +24,13 @@ from grnbench.report import (environment_block, file_fingerprint, write_json,
                              sequence_identity, require_empty_output)
 
 
+def _write_state(out_dir: Path, manifest: dict) -> None:
+    """Keep the detailed provenance and portable diagnostic in sync."""
+    write_json(out_dir / "inference_manifest.json", manifest)
+    from grnbench.diagnostics import model_document, try_write_diagnostics
+    try_write_diagnostics(out_dir / "diagnostics.json", model_document, manifest)
+
+
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="grnbench-infer",
                                 description="Run GRN inference methods (canonical edge lists).")
@@ -145,7 +152,7 @@ def main(argv: list[str] | None = None) -> int:
         if not chosen:
             manifest['errors']['selection'] = 'No requested method is available'
             print('error: no requested method can run in this environment', file=sys.stderr)
-        write_json(out_dir / 'inference_manifest.json', manifest)
+        _write_state(out_dir, manifest)
         for name in chosen:
             print(f"running {name} ...")
             try:
@@ -160,15 +167,15 @@ def main(argv: list[str] | None = None) -> int:
             except Exception as e:
                 manifest['errors'][name] = f'{type(e).__name__}: {e}'
                 print(f'[METHOD ERROR] {name}: {e}', file=sys.stderr)
-            write_json(out_dir / 'inference_manifest.json', manifest)
+            _write_state(out_dir, manifest)
         manifest['status'] = 'partial_failure' if manifest['errors'] and manifest['runs'] else (
             'failed' if manifest['errors'] else 'complete')
-        write_json(out_dir / "inference_manifest.json", manifest)
+        _write_state(out_dir, manifest)
     except Exception as e:  # noqa: BLE001 - CLI boundary
         if out_dir is not None:
             manifest['status'] = 'failed'
             manifest['errors']['setup'] = f'{type(e).__name__}: {e}'
-            write_json(out_dir / 'inference_manifest.json', manifest)
+            _write_state(out_dir, manifest)
         print(f"[ERROR] {type(e).__name__}: {e}", file=sys.stderr)
         return 1
 

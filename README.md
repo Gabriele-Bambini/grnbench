@@ -43,7 +43,7 @@ grnbench run --data d.h5ad --out runs/today --tf-list tfs.txt \
 ```
 any format ──▶ counts-verified ingest ──▶ QC gates (fail loudly) ──▶ filters
             ──▶ normalization strategy (auto-recommended) ──▶ HVG ∪ TF features
-            ──▶ processed.h5ad + qc_metrics.json + manifest.json + report.md
+            ──▶ processed.h5ad + qc_metrics.json + manifest.json + diagnostics.json + report.md
 
 processed.h5ad ──▶ inference adapters ──▶ <method>.edges.tsv.gz  [source,target,weight(,direction)]
                    built-in: genie3, grnboost2, spearman_signed, aracne3*
@@ -141,7 +141,8 @@ grnbench run --data data.h5ad --out runs/mydata \
   --gold gold_pairs.tsv --stability
 ```
 
-Produces `runs/mydata/{prep,infer,eval}/` plus `run_manifest.json`; open
+Produces `runs/mydata/{prep,infer,eval}/` plus `run_manifest.json` and the portable
+`diagnostics.json` described in [`docs/DIAGNOSTICS.md`](docs/DIAGNOSTICS.md); open
 `runs/mydata/eval/eval_report.html`.
 
 ### Or stage by stage
