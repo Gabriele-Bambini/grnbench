@@ -3,6 +3,24 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- EXP-20261003-GB-1 registered (exploratory, issue #52, not launched): `benchmarks/motif_sensitivity.py`
+  splits the motif-prior lift of Pearson (C6, C4) into target identity, TF-level reweighting,
+  database membership and a TF-generic gene propensity from the kept artifacts, with calibration
+  gates against the committed rows, a keyed permutation null shared by all datasets and built-in
+  checks asserted on every context (stage 1 of the 2026-09-27 audit's proposal; GRNBoost2/RegDiffusion
+  refused until its gap is fixed). Agent-review fixes on PR #55 (2026-10-06, script and tests): a planned
+  unit without a row is reported as excluded, a fault inside `score_models` is a runtime error and a
+  context without gold is NaN (not failed code checks), `run` refuses a missing cisTarget folder or
+  reference and mixed commits, inputs or seed counts, the verdict line names rule 4, untested tests,
+  rule 2 through T2's reverse alone and secondary pairs not compared, every gate-1 failure is listed in
+  full, and tests pin the record's definitions, every code check, multi-context, mouse and degenerate
+  contexts.
+  Record section 2.1 (dated note, before launch) answers LM's review: provenance corrections, the
+  simulations as rationale only, the cross-set order of verdicts, the motif-sharing TFs (descriptive
+  `gene_tf_np` control and the shares of TFs with a motif partner, never decisive) and the Windows
+  rerun procedure; the report prints the n of L, D, L_art and L_gene. Section 2.2 (dated 2026-10-10)
+  adds LM's note 7 (C6 and C4 combine only with T1-T3 run on at least 15 analysed datasets each) and
+  records LM's answers on the Windows rerun and on keeping #86 and #88 out of the job's commit.
 - Portable per-dataset `diagnostics.json` (#56): preprocessing, candidate screening, standalone
   inference and `grnbench run` emit one schema-versioned structure with bounded failures, applied
   choices and before/after dimensions; recursive validation excludes paths, identities, barcodes

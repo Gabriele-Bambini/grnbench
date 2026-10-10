@@ -13,6 +13,8 @@ Updated: 2026-10-06.
   `benchmarks/real_bench.py` (real data vs CollecTRI halves; `--models`, `--keep-artifacts`;
   reference hashes in `RUN_CONFIG.json`; `report` also writes figures + LaTeX),
   `benchmarks/count_plausibility.py` (would ingest's non-raw-counts warning fire on a data root; #42).
+- Motif-prior lift decomposition: `benchmarks/motif_sensitivity.py` (`plan`, `run`, `report`) from a
+  `--keep-artifacts` run (EXP-20261003-GB-1); tests `tests/test_motif_sensitivity.py`.
 - Figures: `grnbench viz <run_dir>`. LaTeX: `grnbench report <run_dir|EXP-ID>`, `grnbench report --paper`.
 - HPC: `hpc/hpc.sh`, VPN `hpc/vpn.ps1` (Windows), guide `docs/HPC.md`, agent procedure `.claude/skills/grnbench-hpc/SKILL.md`.
 

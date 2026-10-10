@@ -2,7 +2,8 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-10-03 (issue #42, GB's agent); 2026-10-02 by LD's and LM's agents. PR #3, PR #7 and the shared-workflow PR were merged by the owner
+Updated: 2026-10-06 (EXP-20261003-GB-1: review fixes and record note 2.1 on PR #55, agent);
+2026-10-03 (issue #42, GB's agent); 2026-10-02 by LD's and LM's agents. PR #3, PR #7 and the shared-workflow PR were merged by the owner
 after independent agent reviews, not human reviews (GB was away).
 
 ## Focus
@@ -11,6 +12,17 @@ comparison, published as a tool with a paper. Headline claims from real data (D-
 pre-registered experiments (D-017).
 
 ## In progress
+- EXP-20261003-GB-1 (exploratory, issue #52, branch `gb/motif-sensitivity`): registered, stage 1
+  Pearson (C6 primary, C4 secondary), tests T1-T3 (T3 = beyond a TF-generic gene propensity),
+  not launched. Needs the kept artifacts copied from the login node's `/tmp` first (#41). The
+  review fixes on PR #55 (2026-10-06) changed the script and its tests only. The independent agent
+  review for LM (same day) asked for dated notes in section 2 before launch: record section 2.1 now
+  has them (provenance, simulations as rationale only, cross-set order, motif-sharing TFs with
+  descriptive diagnostics `gene_tf_np` and motif-sharing shares, Windows rerun procedure). LM answered
+  on 2026-10-10 (option c: not the second human before Monday 2026-10-12): the review of `661514b` stands as
+  the independent agent review (AGENTS.md section 5), GB merges and launches, and section 2.2 of the
+  record adds LM's note 7 (C6 and C4 combine only with T1-T3 run on at least 15 analysed datasets each).
+  #86 and #88 must not be in the commit the job runs (LM holds them until it has run).
 - Issue #56 (LD, `ld/portable-diagnostics`): schema-v1 `diagnostics.json` gives prep, screening and
   model outcomes one portable structure for reports/UI, with bounded messages, before/after
   dimensions, effective-vs-requested strategy, real subset context labels and recursive privacy
