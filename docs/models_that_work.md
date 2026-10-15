@@ -15,6 +15,13 @@ RegDiffusion 1.43 -> 1.65 (+0.22, p = 9e-4), GRNBoost2 1.10 -> 1.24 (+0.14, p = 
 GRNBoost2 alone was at random on EPR (1.02). The effect is real but still modest:
 the best model reaches 1.65 x random.
 
+**Caveat (2026-10-04, #41).** Replicated since on two further sets of 20 datasets (claims C4-C6), but
+the audit of 2026-09-27 (`audit/2026-09-27/AUDIT.md`, section 3) shows the pooled lift is not yet
+target-level sequence evidence: TF-level reweighting and cisTarget database membership move the same
+metric in the same direction (on the 12 human LM-2 datasets re-fetched for the audit, membership alone is about 21% of Pearson's lift, +0.042 of +0.202; about 14% when pooled over C4's 20 datasets with the 8 others counted as zero; upper bound 61%; not measured for C5 (RegDiffusion) or C6), while
+within-TF hits@20 also rise. Read "the motif prior lifts recovery", not "sequence evidence explains
+it", until the within-TF decomposition (#41) is in.
+
 ## 1. What the literature says (numbers, sources)
 
 Labels: **[read]** = checked in the primary source during this session;

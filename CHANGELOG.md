@@ -3,6 +3,8 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- Audit of 2026-09-27 brought onto main (`audit/2026-09-27/`); dated caveat on C4-C6 and in
+  `docs/models_that_work.md`: the motif-prior lift is partly TF-level and database-membership (#41).
 - Eleven more inference methods from the literature, native and registered as *extra*
   (`grnbench methods`, `--methods all` or by name): `bicor`, `wgcna_tom`, `propr_rho`, `aracne_dpi`,
   `mrnet`, `tigress`, `bbsr`, `pcnet`, `extra_trees`, `gradient_boosting`, `community` (mean rank of
