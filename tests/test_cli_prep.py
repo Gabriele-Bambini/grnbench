@@ -168,3 +168,56 @@ def test_max_doublet_rate_flag_reaches_thresholds(tmp_path):
     manifest = json.loads((out / "manifest.json").read_text())
     assert manifest["args"]["thresholds"]["doublet_rate_max"] == 0.5
     assert manifest["args"]["thresholds"]["min_genes_per_cell"] == 200  # untouched
+
+
+@pytest.mark.parametrize("extra, message", [
+    (["--subset-value", "alpha"], "--subset-value needs --subset-key"),
+    (["--subset-key", "cell_type"], "--subset-key needs --subset-value"),
+    (["--n-hvg", "-5"], "--n-hvg must be at least 1"),
+    (["--n-hvg", "0"], "--n-hvg must be at least 1"),
+    (["--subsample-cells", "0"], "--subsample-cells must be at least 1"),
+    (["--cells-per-metacell", "0"], "--cells-per-metacell must be at least 1"),
+    (["--min-genes-per-cell", "-3"], "cannot be negative"),
+    (["--max-doublet-rate", "2"], "fraction between 0 and 1"),
+    (["--mito-warn", "50", "--mito-fail", "10"], "above --mito-fail"),
+    (["--mito-warn", "40"], "above --mito-fail (25)"),      # inverted against the default failure level
+], ids=lambda v: v if isinstance(v, str) else " ".join(v))
+def test_options_that_would_be_ignored_or_fail_deep_inside_scanpy_are_refused_first(tmp_path, capsys, extra, message):
+    """HI-02/HI-13: `--subset-value` alone processed the whole dataset and recorded a subset it never applied."""
+    src = tmp_path / "in.h5ad"
+    _write_adata(src)
+    out = tmp_path / "run"
+    assert main([str(src), "--out", str(out)] + extra) == 1
+    assert message in capsys.readouterr().err
+    assert not out.exists(), "a refused command leaves no output folder behind"
+
+
+def test_valid_option_combinations_are_still_accepted(tmp_path):
+    src = tmp_path / "in.h5ad"
+    _write_adata(src)
+    assert main([str(src), "--out", str(tmp_path / "ok"), "--min-genes-per-cell", "0", "--mito-warn", "5",
+                 "--mito-fail", "5", "--max-doublet-rate", "0", "--n-hvg", "100"]) == 0
+
+
+def test_a_gene_filter_that_removes_every_gene_says_so_in_our_words(tmp_path, capsys):
+    """`--min-cells-per-gene 100000` used to end in sklearn's 'Found array with 0 feature(s)'."""
+    src = tmp_path / "in.h5ad"
+    _write_adata(src)
+    assert main([str(src), "--out", str(tmp_path / "run"), "--min-cells-per-gene", "100000"]) == 2
+    err = capsys.readouterr().err
+    assert "every gene was filtered out" in err and "--min-cells-per-gene" in err and "sklearn" not in err
+
+
+def test_the_terminal_summary_repeats_the_manifest_warnings(tmp_path, capsys):
+    """Low TF coverage was only in report.md/manifest.json; the person reading the terminal never saw it (HI-09)."""
+    src = tmp_path / "in.h5ad"
+    _write_adata(src)
+    tfs = tmp_path / "tfs.txt"
+    tfs.write_text("G1\n" + "".join(f"NOT_A_GENE_{i}\n" for i in range(40)), encoding="utf-8")
+    out = tmp_path / "run"
+    assert main([str(src), "--out", str(out), "--tf-list", str(tfs)]) == 0
+    text = capsys.readouterr().out
+    manifest = json.loads((out / "manifest.json").read_text())
+    coverage = [w for w in manifest["warnings"] if "TF coverage low" in w]
+    assert coverage and "\nWarnings:\n" in text and f"  ! {coverage[0]}" in text
+    assert text.index("Warnings:") < text.index("Recommendations:")

@@ -58,14 +58,46 @@ class MethodSpec:
     probe: Callable[[], tuple[bool, str]] | None = None
 
 
+def require_finite(X) -> None:
+    """Refuse a matrix with NaN or infinite entries.
+
+    Correlation methods turn one NaN into an all-zero network and tree methods into an obscure error;
+    neither says the data were the problem. ``MethodError`` names how many entries, genes and cells.
+    """
+    import scipy.sparse as sp
+    if X is None:
+        return
+    if sp.issparse(X):
+        coo = X.tocoo()
+        data, cells, genes = coo.data, coo.row, coo.col
+    else:
+        data = np.asarray(X)
+        cells = genes = None
+    if data.dtype.kind not in "fc":      # integer and boolean matrices cannot hold NaN or inf
+        return
+    bad = ~np.isfinite(data)
+    if not bad.any():
+        return
+    if cells is None:
+        n_cells, n_genes = int(bad.any(axis=1).sum()), int(bad.any(axis=0).sum())
+    else:
+        n_cells, n_genes = len(set(cells[bad].tolist())), len(set(genes[bad].tolist()))
+    raise MethodError(
+        f"the expression matrix has {int(bad.sum()):,} non-finite value(s) (NaN or infinity) in {n_genes:,} gene(s) "
+        f"and {n_cells:,} cell(s); a correlation method would return an all-zero network without saying why. "
+        "Remove or impute them first (for example drop those genes or cells) and run again.")
+
+
 def prepare_adata(adata: ad.AnnData,
                   assume_normalized: bool = False) -> tuple[ad.AnnData, str]:
     """Return (normalized AnnData, normalization provenance note).
 
     Counts-backed inputs are CPM/1e4 + log1p normalized **on a copy** (tree and
     correlation methods expect comparable scales); already-normalized matrices
-    pass through untouched.
+    pass through untouched. A matrix with NaN or infinite entries is refused
+    (:func:`require_finite`).
     """
+    require_finite(adata.X)
     if assume_normalized:
         return adata, "assume_normalized=True; used X as-is"
     ok, why = looks_like_counts(adata.X)
@@ -207,6 +239,8 @@ def run_method(name: str,
     """
     spec = get_method(name)
     prepped, norm_note = prepare_adata(adata, assume_normalized=assume_normalized)
+    if prepped is adata and spec.origin != "builtin":
+        prepped = adata.copy()      # a plugin may edit X in place; the next method must not see that
     effective_tfs = resolve_tf_names(prepped.var_names, tf_list)
     if spec.takes == "adata":
         raw = spec.runner(prepped, effective_tfs, **params)

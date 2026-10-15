@@ -183,7 +183,7 @@ def build_profile(adata, qc_metrics: dict, ctx: DatasetContext, *, id_verdict: d
 
     ctype = ctx.get("cell_type_key")
     if ctype is not None and ctype in obs.columns:
-        counts = obs[ctype].astype(str).value_counts()
+        counts = obs[ctype].dropna().astype(str).value_counts()      # a missing label is not a cell type
         p.cell_type_key, p.n_cell_types = ctype, int(len(counts))
         p.min_cells_per_type = int(counts.min())
         p.n_cell_types_with_enough_cells = int((counts >= MIN_CELLS_PER_CONTEXT).sum())

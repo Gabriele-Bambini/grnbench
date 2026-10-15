@@ -1,13 +1,14 @@
 # Map - grnbench (where things are)
 
 Keep this short and current: update it in any PR that adds, moves or removes a module, script or folder.
-Updated: 2026-10-06.
+Updated: 2026-10-09.
 
 ## Run it
 - Tests: `python -m pytest -q -p no:cacheprovider` (floor in AGENTS.md section 4).
 - Board (session start): `python -m grnbench.board`.
 - GUI: `grnbench ui` (Streamlit, `.claude/launch.json` config `grnbench-ui`). Demo data: `grnbench demo --out d`.
 - One dataset end to end: `grnbench run --data d.h5ad --out runs/x --gold dorotheaABC`.
+- Every command also runs as `python -m grnbench <command>` (`src/grnbench/__main__.py`).
 - Benchmarks: `benchmarks/engine_bench.py` (shared/context-specific planted networks,
   `--stress-grid`, immutable task/run manifests, terminal-status completeness and breaking points),
   `benchmarks/real_bench.py` (real data vs CollecTRI halves; `--models`, `--keep-artifacts`;

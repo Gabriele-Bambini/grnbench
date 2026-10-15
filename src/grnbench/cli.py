@@ -93,6 +93,33 @@ def _build_parser() -> argparse.ArgumentParser:
     return p
 
 
+def option_problems(args: argparse.Namespace) -> list[str]:
+    """Options that would be ignored, or fail deep inside scanpy/sklearn in their words, not ours."""
+    out = []
+    if (args.subset_key is None) != (args.subset_value is None):
+        given, missing = (("--subset-key", "--subset-value") if args.subset_value is None
+                          else ("--subset-value", "--subset-key"))
+        out.append(f"{given} needs {missing} as well (the obs column and the value to keep); on its own it "
+                   "would process the whole dataset or look for the value None")
+    for flag, value in (("--n-hvg", args.n_hvg), ("--subsample-cells", args.subsample_cells),
+                        ("--cells-per-metacell", args.cells_per_metacell)):
+        if value is not None and value < 1:
+            out.append(f"{flag} must be at least 1 (got {value})")
+    for flag, value in (("--min-genes-per-cell", args.min_genes_per_cell),
+                        ("--min-cells-per-gene", args.min_cells_per_gene)):
+        if value is not None and value < 0:
+            out.append(f"{flag} cannot be negative (got {value})")
+    if args.max_doublet_rate is not None and not 0 <= args.max_doublet_rate <= 1:
+        out.append(f"--max-doublet-rate is a fraction between 0 and 1 (0.2 = 20%); got {args.max_doublet_rate}")
+    default = Thresholds()
+    warn = default.mito_warn if args.mito_warn is None else args.mito_warn
+    fail = default.mito_fail if args.mito_fail is None else args.mito_fail
+    if warn > fail:
+        out.append(f"--mito-warn ({warn:g}) is above --mito-fail ({fail:g}): the warning level must not "
+                   "exceed the failure level")
+    return out
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
 
@@ -105,6 +132,12 @@ def main(argv: list[str] | None = None) -> int:
     if not args.data or not args.out:
         print("error: both DATA and --out are required (or use --list-strategies)",
               file=sys.stderr)
+        return 1
+
+    problems = option_problems(args)
+    if problems:
+        for line in problems:
+            print(f"error: {line}", file=sys.stderr)
         return 1
 
     # `x or default` would treat an explicit 0 as falsy and silently revert to
@@ -189,6 +222,11 @@ def main(argv: list[str] | None = None) -> int:
     print("\nQC gates:")
     for g in res.manifest["qc"]["gates"]:
         print(f"  [{g['status'].upper():4s}] {g['name']:24s} {g['detail']}")
+    notes = res.manifest.get("warnings") or []
+    if notes:      # low TF coverage, organism and identifier hints, merged duplicate genes ... were only in the files
+        print("\nWarnings:")
+        for w in notes:
+            print(f"  ! {w}")
     print("\nRecommendations:")
     for r in res.manifest["recommendations"]:
         marker = "*" if r["strategy"] == res.strategy else " "

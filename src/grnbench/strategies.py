@@ -175,6 +175,10 @@ def cpm_log1p_combat(adata: ad.AnnData, batch_key: str, target_sum: float = 1e4,
     """
     if batch_key not in adata.obs.columns:
         raise StrategyError(f"batch key '{batch_key}' not found in obs")
+    n_missing = int(adata.obs[batch_key].isna().sum())
+    if n_missing:
+        raise StrategyError(f"ComBat needs a batch label for every cell: {n_missing:,} cell(s) have none in "
+                            f"'{batch_key}' (fill them, drop them, or use cpm_log1p_center_batch)")
     batches = adata.obs[batch_key].astype(str)
     sizes = batches.value_counts()
     tiny = sizes[sizes < 2]
@@ -212,9 +216,20 @@ def cpm_log1p_center_batch(adata: ad.AnnData, batch_key: str, target_sum: float 
     """
     if batch_key not in adata.obs.columns:
         raise StrategyError(f"batch key '{batch_key}' not found in obs")
+    n_missing = int(adata.obs[batch_key].isna().sum())
     batches = adata.obs[batch_key].astype(str).to_numpy()
     if len(set(batches)) < 2:
         raise StrategyError(f"centering needs >= 2 batches; '{batch_key}' has 1")
+    sizes = pd.Series(batches).value_counts()
+    if (sizes < 2).all():
+        raise StrategyError(f"centering needs batches with >= 2 cells; every batch of '{batch_key}' has 1")
+    if (sizes < 2).any():
+        warnings.warn(f"{int((sizes < 2).sum())} batch(es) of '{batch_key}' have a single cell: centering replaces "
+                      "each such cell by the grand mean of every gene, which erases it; drop those cells or merge "
+                      "their batch labels", stacklevel=2)
+    if n_missing:
+        warnings.warn(f"{n_missing:,} cell(s) have no label in '{batch_key}': they are centred together as one "
+                      "batch called 'nan'", stacklevel=2)
     out = cpm_log1p(adata, target_sum=target_sum)
     X = out.X.toarray() if sp.issparse(out.X) else np.array(out.X)
     X = X.astype(np.float32)

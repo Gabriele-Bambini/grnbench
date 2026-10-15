@@ -110,3 +110,26 @@ def test_combat_still_errors_when_fewer_than_two_usable_batches(synthetic_adata)
     a = _two_batches(synthetic_adata, {"x": 60, "y": 1, "z": 1})
     with pytest.raises(StrategyError, match="2 batches with >= 2 cells"):
         apply_strategy("cpm_log1p_combat", a, batch_key="b")
+
+
+def test_combat_refuses_cells_without_a_batch_label_in_plain_words(synthetic_adata):
+    a = _two_batches(synthetic_adata, {"x": 100, "y": 100})
+    a.obs["b"] = a.obs["b"].astype(object)
+    a.obs.iloc[:7, a.obs.columns.get_loc("b")] = np.nan
+    with pytest.raises(StrategyError, match=r"every cell: 7 cell\(s\) have none in 'b'"):
+        apply_strategy("cpm_log1p_combat", a, batch_key="b")
+
+
+def test_centering_says_what_it_does_to_one_cell_batches_and_unlabelled_cells(synthetic_adata):
+    a = _two_batches(synthetic_adata, {"x": 60, "y": 60, "z": 1})
+    with pytest.warns(UserWarning, match=r"1 batch\(es\) of 'b' have a single cell.*erases it"):
+        out, _ = apply_strategy("cpm_log1p_center_batch", a, batch_key="b")
+    assert out.n_obs == a.n_obs
+    each = _two_batches(synthetic_adata, {f"s{i}": 1 for i in range(a.n_obs)})
+    with pytest.raises(StrategyError, match="every batch of 'b' has 1"):
+        apply_strategy("cpm_log1p_center_batch", each, batch_key="b")
+    b = _two_batches(synthetic_adata, {"x": 100, "y": 100})
+    b.obs["b"] = b.obs["b"].astype(object)
+    b.obs.iloc[:5, b.obs.columns.get_loc("b")] = np.nan
+    with pytest.warns(UserWarning, match=r"5 cell\(s\) have no label in 'b'"):
+        apply_strategy("cpm_log1p_center_batch", b, batch_key="b")

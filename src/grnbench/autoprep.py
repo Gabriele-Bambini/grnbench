@@ -447,7 +447,11 @@ def plan_preprocessing(diag: Diagnosis, *, methods: list[dict] | None = None,
     scope = chosen["context_scope"]
     plan.contexts = [{"name": "all_cells", "subset_key": None, "subset_value": None}]
     if scope in ("per_cell_type", "selected_type") and profile.cell_type_key:
-        sizes = obs[profile.cell_type_key].astype(str).value_counts()
+        labels = obs[profile.cell_type_key]
+        sizes = labels.dropna().astype(str).value_counts()      # a missing label is not a cell type
+        if labels.isna().any():
+            plan.warnings.append(f"{int(labels.isna().sum()):,} cells have no label in '{profile.cell_type_key}': "
+                                 "they are in no per-cell-type context (the pooled context keeps them)")
         big = [str(k) for k, n in sizes.items() if n >= MIN_CELLS_PER_CONTEXT]
         if scope == "selected_type":
             big = big[:1]
@@ -507,9 +511,44 @@ def _available_strategies() -> list[str]:
 
 
 def safe_folder_name(name: str, limit: int = 80) -> str:
-    """A folder name valid on every OS (cell-type labels contain ':', '/', '|', ...)."""
+    """A folder name valid on every OS (cell-type labels contain ':', '/', '|', ...).
+
+    It never ends in '.', not even where the length cut falls: Windows drops a trailing dot, so 'X.' and 'X'
+    would be one folder there.
+    """
     out = "".join(c if c.isalnum() or c in "-_." else ("-" if c == "=" else "_") for c in name)
-    return out.strip("._")[:limit] or "context"
+    return out.strip("._")[:limit].rstrip(".") or "context"
+
+
+def _folder_key(name: str) -> str:
+    """When two folder names are one folder on disk: Windows and macOS ignore case, macOS also Unicode
+    normalization (a precomposed and a decomposed spelling of one letter)."""
+    import unicodedata
+    return unicodedata.normalize("NFD", unicodedata.normalize("NFD", name).casefold())
+
+
+def unique_folder_names(names, limit: int = 80) -> list[str]:
+    """``safe_folder_name`` of each label, made unique.
+
+    'CD4+T', 'CD4 T' and 'CD4:T' are three cell types but one safe name; the later ones get a short hash of
+    their own label so no context overwrites, or is refused because of, another. A label can already be
+    spelled like that hashed name, so every candidate is checked: then a longer hash, then a counter.
+    Names are compared as the file systems compare them (``_folder_key``): 'T' and 't' are one folder.
+    """
+    import hashlib
+    import itertools
+    taken: set[str] = set()
+    out = []
+    for raw in names:
+        sha = hashlib.sha1(raw.encode("utf-8")).hexdigest()
+        tags = itertools.chain([sha[:6], sha[:12], sha], (f"{sha[:12]}-{i}" for i in itertools.count(2)))
+        name = safe_folder_name(raw, limit)
+        while _folder_key(name) in taken:
+            tag = next(tags)
+            name = f"{safe_folder_name(raw, limit - len(tag) - 1)}-{tag}"
+        taken.add(_folder_key(name))
+        out.append(name)
+    return out
 
 
 def execute_plan(plan: PrepPlan, input_path, out_dir, *, tf_list: list[str] | None = None,
@@ -536,8 +575,8 @@ def execute_plan(plan: PrepPlan, input_path, out_dir, *, tf_list: list[str] | No
         tf_path = out / "tf_list.txt"
         tf_path.write_text("\n".join(tf_list) + "\n", encoding="utf-8")
     records = []
-    for ctx in plan.contexts:
-        name = safe_folder_name(str(ctx["name"]))
+    folders = unique_folder_names([str(c["name"]) for c in plan.contexts])
+    for ctx, name in zip(plan.contexts, folders):
         ctx_dir = out / name
         kwargs = plan.run_prep_kwargs(tf_list)
         kwargs.update(subset_key=ctx.get("subset_key"), subset_value=ctx.get("subset_value"),

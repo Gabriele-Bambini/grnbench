@@ -90,34 +90,59 @@ def load_any(path: str | Path,
     p = Path(path)
     if not p.exists():
         raise FileNotFoundError(p)
-    if p.is_dir():
-        adata, rep = _load_10x_mtx_dir(p)
-    else:
-        sfx = p.suffix.lower()
-        if sfx == ".h5ad":
-            adata, rep = _load_h5ad(p)
-        elif sfx == ".h5":
-            # NO var_names_make_unique() here: CellRanger references do contain
-            # duplicated symbols (e.g. TBCE), and renaming them to SYMBOL-1
-            # would make _clean_gene_names' aggregation branch dead - the same
-            # data would then yield a different matrix than the MTX path.
-            adata = sc.read_10x_h5(p)
-            rep = IngestReport(path=str(p), fmt="10x_h5")
-        elif sfx == ".loom":
-            adata = sc.read_loom(p)
-            rep = IngestReport(path=str(p), fmt="loom")
-        elif sfx in {".csv", ".tsv", ".txt"}:
-            adata, rep = _load_table(p, orientation)
-        else:
-            raise IngestError(
-                f"Unsupported format '{sfx}'. Supported: .h5ad, 10x .h5, "
-                "10x MTX directory, .loom, .csv/.tsv/.txt"
-            )
+    try:
+        adata, rep = _read_any(p, orientation)
+    except IngestError:
+        raise
+    except (OSError, ValueError, KeyError, TypeError) as exc:    # the reader's own text is jargon: say what to do
+        raise _unreadable(p, exc) from exc
     _ensure_counts_backed(adata, rep)
     _assert_finite(adata.X)
     _check_count_plausibility(adata.X, rep)
     adata = _clean_gene_names(adata, rep)
     return adata, rep
+
+
+def _read_any(p: Path, orientation: str) -> tuple[ad.AnnData, IngestReport]:
+    if p.is_dir():
+        return _load_10x_mtx_dir(p)
+    sfx = p.suffix.lower()
+    if sfx == ".h5ad":
+        return _load_h5ad(p)
+    if sfx == ".h5":
+        # NO var_names_make_unique() here: CellRanger references do contain
+        # duplicated symbols (e.g. TBCE), and renaming them to SYMBOL-1
+        # would make _clean_gene_names' aggregation branch dead - the same
+        # data would then yield a different matrix than the MTX path.
+        return sc.read_10x_h5(p), IngestReport(path=str(p), fmt="10x_h5")
+    if sfx == ".loom":
+        try:
+            adata = sc.read_loom(p)       # anndata imports loompy lazily, inside read_loom
+        except ImportError as e:
+            raise IngestError("Reading .loom files needs the optional 'loompy' package: "
+                              "pip install loompy (from a clone of the repository: "
+                              "pip install -e '.[loom]')") from e
+        return adata, IngestReport(path=str(p), fmt="loom")
+    if sfx in {".csv", ".tsv", ".txt"}:
+        return _load_table(p, orientation)
+    raise IngestError(
+        f"Unsupported format '{sfx}'. Supported: .h5ad, 10x .h5, "
+        "10x MTX directory, .loom, .csv/.tsv/.txt"
+    )
+
+
+def _unreadable(p: Path, exc: Exception) -> IngestError:
+    """An IngestError that names the file and what to do, for a reader that failed with library jargon."""
+    if p.is_dir():
+        msg = (f"{p.name} is not a 10x MTX folder: it needs matrix.mtx(.gz), barcodes.tsv(.gz) and "
+               "features.tsv(.gz) (or genes.tsv)")
+    elif p.stat().st_size == 0:
+        msg = f"{p.name} is empty (0 bytes): re-download or re-export it"
+    elif isinstance(exc, UnicodeDecodeError):
+        msg = f"{p.name} looks like a binary file, not a text table"
+    else:
+        msg = f"{p.name} is not a valid {p.suffix.lower() or 'data'} file (damaged, cut short or another format)"
+    return IngestError(msg)
 
 
 # --------------------------------------------------------------------------- #
@@ -201,6 +226,11 @@ def _load_10x_mtx_dir(p: Path) -> tuple[ad.AnnData, IngestReport]:
 def _load_table(p: Path, orientation: str = "auto") -> tuple[ad.AnnData, IngestReport]:
     sep = "\t" if p.suffix.lower() in {".tsv", ".txt"} else ","
     df = pd.read_csv(p, sep=sep, index_col=0)
+    # pandas renames a repeated header field (GENE, GENE -> GENE, GENE.1); put the file's own header back so
+    # _clean_gene_names aggregates the duplicates like every other format (blank fields keep pandas' names).
+    header = pd.read_csv(p, sep=sep, header=None, nrows=1, dtype=str, keep_default_na=False)
+    if header.shape[1] == df.shape[1] + 1:
+        df.columns = [raw or kept for raw, kept in zip(header.iloc[0, 1:], df.columns)]
     try:
         df = df.apply(pd.to_numeric, errors="raise")
     except (ValueError, TypeError) as e:
@@ -529,6 +559,11 @@ def _clean_gene_names(adata: ad.AnnData, rep: IngestReport) -> ad.AnnData:
                                  f"({int(usable.sum())}/{len(names)} genes; IDs kept in "
                                  "var['gene_id_as_loaded'])")
                 break
+    padded = names.str.strip() != names
+    if padded.any():            # ' TP53' and 'TP53\xa0' match no TF list and no gene set: say so and fix them
+        rep.notes.append(f"{int(padded.sum())} gene name(s) had leading or trailing whitespace and were "
+                         f"stripped (e.g. {names[padded][0]!r})")
+        names = names.str.strip()
     stripped = names.str.match(ENSEMBL_VERSION_RE)
     if stripped.any():
         names = pd.Index([

@@ -2,7 +2,7 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-10-06 (EXP-20261003-GB-1: review fixes and record note 2.1 on PR #55, agent);
+Updated: 2026-10-09 (tool end to end, GB's agent); 2026-10-06 (EXP-20261003-GB-1: review fixes and record note 2.1 on PR #55, agent);
 2026-10-03 (issue #42, GB's agent); 2026-10-02 by LD's and LM's agents. PR #3, PR #7 and the shared-workflow PR were merged by the owner
 after independent agent reviews, not human reviews (GB was away).
 
@@ -12,6 +12,11 @@ comparison, published as a tool with a paper. Headline claims from real data (D-
 pre-registered experiments (D-017).
 
 ## In progress
+- Tool end to end (GB, `gb/tool-fixes`, issue #74): the integrated tool was driven like a newcomer on
+  2026-10-09 (CLI and interface, hard inputs). The small, local defects in `main` are fixed with a test each
+  (input guards, option validation, messages, `python -m grnbench`, ...). A screening rule that lets a
+  candidate scored on fewer cell types win is a decision for LM (#75; it touches the `auto` arm behind
+  C4-C6, no claim is said to be wrong). Everything else is the checklist in #76.
 - EXP-20261003-GB-1 (exploratory, issue #52, branch `gb/motif-sensitivity`): registered, stage 1
   Pearson (C6 primary, C4 secondary), tests T1-T3 (T3 = beyond a TF-generic gene propensity),
   not launched. Needs the kept artifacts copied from the login node's `/tmp` first (#41). The

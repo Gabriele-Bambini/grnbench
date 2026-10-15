@@ -190,3 +190,31 @@ def test_score_distributions_missing_columns_returns_reason(tmp_path):
     path, reason = viz.score_distributions(empty, "auprc_ratio", "auto", tmp_path / "none.png")
     assert path is None
     assert reason
+
+
+def test_viz_on_a_path_that_is_not_a_run_creates_nothing_and_says_so(tmp_path, capsys):
+    """`grnbench viz /wrong/path` used to create /wrong/path/viz/ and an empty index.md before saying nothing."""
+    empty = tmp_path / "not_a_run"
+    empty.mkdir()
+    assert cli_viz.main([str(empty)]) == 2
+    assert not (empty / "viz").exists()
+    assert "rows" in capsys.readouterr().err
+    missing = tmp_path / "gone" / "deeper"
+    assert cli_viz.main([str(missing)]) == 2
+    assert not missing.exists() and not missing.parent.exists()
+    assert cli_viz.main([str(empty), "--out", str(tmp_path / "chosen_out")]) == 2
+    assert not (tmp_path / "chosen_out").exists(), "an explicit --out is not created for a wrong run either"
+
+
+def test_decisions_markdown_reads_a_candidate_study_row():
+    """A candidate_study.py row keeps `candidates` as a list of dicts, not the arm -> candidate mapping."""
+    from grnbench import viz
+
+    row = {"candidates": [{"name": "recommended", "source": "engine", "n_contexts": 3},
+                          {"name": "baseline", "source": "baseline", "n_contexts": 1}]}
+    text = viz.decisions_markdown(row)
+    assert "| candidate | recommended | screened (engine, 3 context(s)) |" in text
+    assert "| candidate | baseline | screened (baseline, 1 context(s)) |" in text
+    assert "(none found)" not in text
+    assert "(none found)" in viz.decisions_markdown({"candidates": []})
+    assert "candidate (auto) | c1 |" in viz.decisions_markdown({"candidates": {"auto": "c1"}})

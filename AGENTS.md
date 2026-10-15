@@ -220,7 +220,8 @@ The old Drive `HANDOFF.md` habit is retired (`docs/history/` keeps the last one)
 - Doublet calling runs on all cells before any context subsetting (A-014).
 - High-mitochondrial tissues (liver, heart, kidney, muscle): the planner relaxes the 25% gate from
   the tissue context (A-020); elsewhere QC gates fail loudly (D-004).
-- Cell-type labels contain `:` or `|`: context folders go through `autoprep.safe_folder_name`.
+- Cell-type labels contain `:` or `|`: context folders go through `autoprep.unique_folder_names`
+  (`safe_folder_name` per label, plus a hash when two labels would share a folder on any OS).
 - Do not edit engine code while a local run imports it. Run long benches from a frozen checkout:
   `git worktree add ../grnbench-run-<EXP> <commit>`, installed editable in the run's venv. While the
   run is going, do not re-run `pip install -e` on another tree in that venv: `--jobs` workers start

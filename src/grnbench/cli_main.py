@@ -57,12 +57,24 @@ def _strategies() -> int:
 
 
 def _kb(rest: list[str]) -> int:
+    import argparse
     from grnbench import kb
-    if rest[:1] == ["--write-docs"]:
+    ap = argparse.ArgumentParser(prog="grnbench kb", description="Print the preprocessing knowledge base.")
+    ap.add_argument("--write-docs", nargs="?", const="docs/knowledge/preprocessing_kb.md", metavar="PATH",
+                    help="write it as Markdown to PATH (default docs/knowledge/preprocessing_kb.md)")
+    try:
+        args = ap.parse_args(rest)
+    except SystemExit as exc:      # argparse prints its own usage; hand back the code instead of exiting
+        return int(exc.code or 0)
+    if args.write_docs is not None:
         from pathlib import Path
-        target = Path(rest[1] if len(rest) > 1 else "docs/knowledge/preprocessing_kb.md")
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(kb.render_markdown(), encoding="utf-8")
+        target = Path(args.write_docs)
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(kb.render_markdown(), encoding="utf-8")
+        except OSError as exc:     # '--write-docs ""' or a folder: say so instead of a traceback
+            print(f"grnbench kb: cannot write {args.write_docs!r}: {exc}", file=sys.stderr)
+            return 1
         print(f"wrote {target}")
         return 0
     for row in kb.option_table():
@@ -72,10 +84,36 @@ def _kb(rest: list[str]) -> int:
     return 0
 
 
+_BUILTIN_HELP = {
+    "methods": "grnbench methods\n\nList every inference method with its origin and whether it can run here.",
+    "strategies": "grnbench strategies\n\nList the preprocessing strategies and whether each can run here.",
+    "kb": "grnbench kb [--write-docs [PATH]]\n\nPrint the preprocessing knowledge base (decision, option, evidence level,\n"
+          "availability), or write it as Markdown to PATH (default docs/knowledge/preprocessing_kb.md).",
+    "demo": "grnbench demo [--out DIR]\n\nWrite a small synthetic dataset with a known network (counts.h5ad, tfs.txt,\n"
+            "gold.tsv, README.md) into DIR (default grnbench_demo). DIR must be new or empty: nothing is overwritten.",
+    "ui": "grnbench ui [streamlit options]\n\nOpen the graphical interface in the browser. It listens on this computer only;\n"
+          "give --server.address 0.0.0.0 yourself to share it (anyone who can reach it can run code and read files).",
+    "version": "grnbench version\n\nPrint the installed version.",
+}
+
+
 def _demo(rest: list[str]) -> int:
+    import argparse
     from grnbench.demo import write_demo
-    out = rest[rest.index("--out") + 1] if "--out" in rest else "grnbench_demo"
-    for name, path in write_demo(out).items():
+    from grnbench.report import require_empty_output
+    ap = argparse.ArgumentParser(prog="grnbench demo", description="Write the synthetic demo dataset.")
+    ap.add_argument("--out", default="grnbench_demo", help="a new or empty folder (default grnbench_demo)")
+    try:
+        args = ap.parse_args(rest)
+    except SystemExit as exc:      # argparse prints its own usage; hand back the code instead of exiting
+        return int(exc.code or 0)
+    try:
+        # refuse before the 3 s build: never replace someone's files, nor keep a failed run's diagnostic
+        require_empty_output(args.out, allow_failed_diagnostic=False)
+    except (ValueError, OSError) as exc:
+        print(f"grnbench demo: {exc}", file=sys.stderr)
+        return 1
+    for name, path in write_demo(args.out).items():
         print(f"{name:7s} {path}")
     return 0
 
@@ -87,9 +125,12 @@ def _ui(rest: list[str]) -> int:
     try:
         import streamlit  # noqa: F401
     except ImportError:
-        print("the interface needs streamlit: pip install 'grnbench[ui]'", file=sys.stderr)
+        print("the interface needs streamlit and plotly: from a clone of the repository run "
+              "pip install -e '.[ui]'", file=sys.stderr)
         return 1
-    return subprocess.call([sys.executable, "-m", "streamlit", "run", str(app), *rest])
+    # The interface can run uploaded Python and read any folder of this computer: listen here only, unless asked.
+    local_only = [] if any(a.startswith("--server.address") for a in rest) else ["--server.address", "localhost"]
+    return subprocess.call([sys.executable, "-m", "streamlit", "run", str(app), *local_only, *rest])
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -99,6 +140,12 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     cmd, rest = argv[0], argv[1:]
+    if cmd in _BUILTIN_HELP and rest[:1] in (["-h"], ["--help"]):
+        print(_BUILTIN_HELP[cmd])
+        return 0
+    if cmd in {"methods", "strategies", "version"} and rest:
+        print(f"grnbench {cmd}: takes no arguments (got {' '.join(rest)}); see `grnbench {cmd} --help`", file=sys.stderr)
+        return 2
     if cmd in {"-V", "--version", "version"}:
         import grnbench
         print(f"grnbench {grnbench.__version__}")

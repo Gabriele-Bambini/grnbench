@@ -120,6 +120,13 @@ def main(argv: list[str] | None = None) -> int:
         adata = ad.read_h5ad(args.data)
         _, norm_note = prepare_expression(adata, assume_normalized=args.assume_normalized)
         effective_tfs = resolve_tf_names(adata.var_names, tf_list)
+        notes: list[str] = []
+        if tf_list is None:      # the universe is genes x genes: say so before any model runs (D-003)
+            n = len(effective_tfs)
+            notes.append(f"no --tf-list: all {n:,} genes are treated as regulators, {n * (n - 1):,} candidate edges for "
+                         "each method (time and memory grow with the square of the gene count). "
+                         "Pass --tf-list to restrict the regulators.")
+            print(f"[NO TF LIST] {notes[-1]}", file=sys.stderr)
         manifest.update({
             "input": file_fingerprint(Path(args.data)),
             "effective_genes": sequence_identity(adata.var_names),
@@ -137,6 +144,8 @@ def main(argv: list[str] | None = None) -> int:
             "environment": environment_block(),
             "runs": {},
         })
+        if notes:
+            manifest["warnings"] = notes
         # created up front: the manifest must be writable even if every method
         # is skipped, otherwise write_json below dies with a FileNotFoundError
         universe = pd.DataFrame(((s, str(t)) for s in effective_tfs for t in adata.var_names
@@ -147,8 +156,7 @@ def main(argv: list[str] | None = None) -> int:
         universe.to_csv(universe_path, sep='\t', index=False, compression='gzip')
         manifest['candidate_universe'] = file_fingerprint(universe_path)
         manifest['candidate_universe']['n_pairs'] = len(universe)
-        for name in skipped:
-            manifest['errors'][name] = manifest['methods_skipped'][name]
+        # a skipped method is not an error: its reason stays in methods_skipped and the others still run
         if not chosen:
             manifest['errors']['selection'] = 'No requested method is available'
             print('error: no requested method can run in this environment', file=sys.stderr)
@@ -168,8 +176,9 @@ def main(argv: list[str] | None = None) -> int:
                 manifest['errors'][name] = f'{type(e).__name__}: {e}'
                 print(f'[METHOD ERROR] {name}: {e}', file=sys.stderr)
             _write_state(out_dir, manifest)
-        manifest['status'] = 'partial_failure' if manifest['errors'] and manifest['runs'] else (
-            'failed' if manifest['errors'] else 'complete')
+        manifest['status'] = ('partial_failure' if manifest['errors'] and manifest['runs'] else
+                              'failed' if manifest['errors'] else
+                              'partial' if skipped else 'complete')
         _write_state(out_dir, manifest)
     except Exception as e:  # noqa: BLE001 - CLI boundary
         if out_dir is not None:

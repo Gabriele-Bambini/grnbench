@@ -285,3 +285,16 @@ def test_pseudobulk_small_group_warning_reaches_the_manifest(tmp_path, synthetic
     res = run_prep(src, tmp_path / "run_tiny", group_key="group",
                    strategy="pseudobulk", min_group_cells=10, seed=1)
     assert any("dropping" in w and "group" in w for w in res.manifest["warnings"])
+
+
+def test_tf_list_errors_say_what_was_compared_and_what_is_accepted(tmp_path):
+    from grnbench.tfs import TFListError, load_tf_list, resolve_tf_names
+
+    with pytest.raises(TFListError) as info:
+        resolve_tf_names(["GENE1", "GENE2", "GENE3", "GENE4"], ["STAT1", "IRF1"])
+    msg = str(info.value)
+    assert "2 TF names" in msg and "STAT1" in msg and "4 genes" in msg and "GENE1" in msg and "Ensembl" in msg
+    bare = tmp_path / "tfs_without_extension"
+    bare.write_text("STAT1\nIRF1\n", encoding="utf-8")
+    with pytest.raises(TFListError, match=r"\(no extension\).*\.txt.*\.csv.*\.tsv"):
+        load_tf_list(bare)

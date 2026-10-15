@@ -86,6 +86,11 @@ def _opt(flag: str, value) -> list[str]:
 
 def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
+    if args.gold and not Path(args.gold).exists() and not str(args.gold).lower().startswith("dorothea"):
+        # the evaluation is the last stage: a typo here used to surface after hours of preprocessing and inference
+        print(f"[GOLD ERROR] gold standard '{args.gold}': not a file and not a dorothea* spec "
+              "(checked before any work starts)", file=sys.stderr)
+        return 1
     from grnbench.report import require_empty_output
     try:
         require_empty_output(args.out)

@@ -193,7 +193,16 @@ def run_qc(adata: AnnData, thresholds: Thresholds | None = None, *,
     for gate_name, col in audits:
         gates.append(_imbalance_gate(gate_name, col, adata.obs[col], t))
 
+    one_level = []
     if batch_key is None:
+        from grnbench.hygiene import BATCH_COL_RE
+        one_level = [str(c) for c in adata.obs.columns
+                     if BATCH_COL_RE.search(str(c)) and adata.obs[c].nunique() == 1]
+    if batch_key is None and one_level:
+        gates.append(Gate("batch_annotation", STATUS_PASS,
+                          f"one batch only: column '{one_level[0]}' has a single level, so there is no "
+                          "batch effect to correct", one_level[0]))
+    elif batch_key is None:
         gates.append(Gate(
             "batch_annotation", STATUS_WARN,
             "no batch/donor annotation found: cross-batch GRN edges may be "

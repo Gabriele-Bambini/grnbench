@@ -325,6 +325,9 @@ def run_prep(
                   "n_cells_after": int(adata.n_obs), "n_genes_after": int(adata.n_vars),
                   "detail": f"removed {int((~mask_genes).sum())} genes "
                             f"detected in < {t.min_cells_per_gene} cells"})
+    if adata.n_vars == 0 and adata.n_obs > 0:       # with no cells left, the empty-matrix refusal below says why
+        raise PrepError(f"every gene was filtered out: none is detected in {t.min_cells_per_gene} or more of the "
+                        f"{adata.n_obs} cells that passed cell QC (--min-cells-per-gene)")
     if exclude_qc_genes:
         from grnbench.qc import MITO_PREFIXES, RIBO_PREFIXES, pd_index_upper
         upper_names = pd_index_upper(adata.var_names)
@@ -387,6 +390,9 @@ def run_prep(
                       "n_cells_after": int(adata.n_obs), "n_genes_after": int(adata.n_vars),
                       "detail": f"removed {int((~mask_ctx).sum())} genes detected in < "
                                 f"{t.min_cells_per_gene} cells of this context"})
+        if adata.n_vars == 0 and adata.n_obs > 0:
+            raise PrepError(f"every gene was filtered out of {subset_key} == {subset_value!r}: none is detected in "
+                            f"{t.min_cells_per_gene} or more of its {adata.n_obs} cells (--min-cells-per-gene)")
 
     if subsample_cells is not None and int(subsample_cells) < adata.n_obs:
         strat_col = stratify_key or group_key or label_key

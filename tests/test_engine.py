@@ -326,9 +326,89 @@ def test_screening_fails_one_candidate_not_all_when_a_context_has_nan(demo, tmp_
 
 def test_context_folder_names_are_valid_on_every_os():
     from grnbench.autoprep import safe_folder_name
-    for label in ["cell_type=EC:c1", "cell_type=CD4+ T|naive", r'a/b\c?*<>"']:
+    for label in ["cell_type=EC:c1", "cell_type=CD4+ T|naive", r'a/b\c?*<>"', "cell_type=" + "A" * 69 + ".1"]:
         name = safe_folder_name(label)
-        assert name and not set(name) & set(r':/\|?*<>"')
+        assert name and not set(name) & set(r':/\|?*<>"') and not name.endswith("."), name
+    # the 80-character cut falls just after a '.': Windows would drop it and make 'X.' the folder 'X'
+    assert safe_folder_name("cell_type=" + "A" * 69 + ".1") == "cell_type-" + "A" * 69
+
+
+def test_context_folders_stay_distinct_when_a_label_already_spells_another_labels_fallback(tmp_path):
+    """LD's review of #87: the hashed fallback was never checked, so a real label spelling it shared a folder.
+    A verifier then found 'X.' and 'X' (one folder on Windows) after the 80-character cut."""
+    import hashlib
+    import random
+    import unicodedata
+    from grnbench.autoprep import unique_folder_names
+
+    def same_folder(n):            # how Windows and macOS compare names: case, trailing dots, Unicode normalization
+        return unicodedata.normalize("NFD", n).casefold().rstrip(". ")
+    sha = hashlib.sha1("cell_type=CD4+T".encode("utf-8")).hexdigest()
+    ld = ["cell_type-CD4_T-462ea0", "cell_type=CD4 T", "cell_type=CD4+T"]
+    assert sha[:6] == "462ea0" and unique_folder_names(ld)[:2] == ["cell_type-CD4_T-462ea0", "cell_type-CD4_T"]
+    cases = [ld,
+             [f"cell_type-CD4_T-{sha[:12]}", f"cell_type-CD4_T-{sha}"] + ld,  # the longer fallbacks are labels too
+             ["x", "x", "x"],                                                  # one label twice: one hash
+             ["T", "t"],                                                       # one folder on Windows and macOS
+             ["a" * 100, "a" * 100 + "b", "a" * 100 + "c"],                    # truncated to the same 80 characters
+             ["cell_type=" + "A" * 69 + ".1", "cell_type=" + "A" * 69],        # 'X.' after the cut is 'X' on Windows
+             ["cell_type=\ud55c", unicodedata.normalize("NFD", "cell_type=\ud55c")]]  # one folder on macOS
+    rng = random.Random(0)
+    for _ in range(30):            # labels that are other labels' folder names, in any order
+        labels = rng.sample(ld, 3)
+        labels += rng.sample(unique_folder_names(labels), 2)
+        labels += unique_folder_names(labels)
+        rng.shuffle(labels)
+        cases.append(labels)
+    for i, labels in enumerate(cases):
+        names = unique_folder_names(labels)
+        assert len({same_folder(n) for n in names}) == len(labels), (labels, names)
+        assert names == unique_folder_names(labels), "deterministic"
+        assert all(n and len(n) <= 80 and not set(n) & set(r':/\|?*<>"') and not n.endswith(".") for n in names)
+        for n in names:            # and on this machine's file system: mkdir refuses a folder that already exists
+            (tmp_path / str(i) / n).mkdir(parents=True)
+        assert len(list((tmp_path / str(i)).iterdir())) == len(labels), (labels, names)
+    # folders of past runs keep their names: no collision -> plain name, first collision -> the same 6-character hash
+    assert unique_folder_names(["cell_type=CD4+T", "cell_type=CD4 T", "cell_type=CD4:T"]) == [
+        "cell_type-CD4_T", "cell_type-CD4_T-be7bf9", "cell_type-CD4_T-10a5ca"]
+
+
+def test_cell_types_whose_labels_differ_only_in_punctuation_get_their_own_folder(demo, tmp_path):
+    """'CD4+T', 'CD4 T' and 'CD4:T' were one folder name: the later contexts failed with 'choose a new path'."""
+    from grnbench.autoprep import unique_folder_names
+    labels = ["cell_type=CD4+T", "cell_type=CD4 T", "cell_type=CD4:T"]
+    names = unique_folder_names(labels)
+    assert len(set(names)) == 3 and names[0] == "cell_type-CD4_T"
+    assert names == unique_folder_names(labels), "deterministic"
+    assert all(not set(n) & set(r':/\|?*<>"') and len(n) <= 80 for n in names)
+    assert unique_folder_names(["a", "b"]) == ["a", "b"], "labels that do not collide keep their plain name"
+
+    paths, tfs, diag = demo
+    adata = ad.read_h5ad(paths["counts"])
+    rename = dict(zip(sorted(adata.obs["cell_type"].astype(str).unique()), ["CD4+T", "CD4 T", "CD4:T"]))
+    adata.obs["cell_type"] = adata.obs["cell_type"].astype(str).map(rename)
+    src = tmp_path / "collide.h5ad"
+    adata.write_h5ad(src)
+    plan = plan_preprocessing(diagnose(src), tf_list=tfs, choices={"context_scope": "per_cell_type"})
+    recs = execute_plan(plan, src, tmp_path / "run", tf_list=tfs)
+    assert len(recs) >= 2 and all(r["error"] is None for r in recs), [r["error"] for r in recs]
+    assert len({r["out_dir"] for r in recs}) == len(recs) and all(Path(r["processed"]).exists() for r in recs)
+
+
+def test_cells_without_a_cell_type_label_are_not_a_cell_type_called_nan(demo, tmp_path):
+    paths, tfs, _ = demo
+    adata = ad.read_h5ad(paths["counts"])
+    labels = adata.obs["cell_type"].astype(object)
+    labels.iloc[:300] = np.nan
+    adata.obs["cell_type"] = labels
+    src = tmp_path / "nolabel.h5ad"
+    adata.write_h5ad(src)
+    diag = diagnose(src)
+    plan = plan_preprocessing(diag, tf_list=tfs, choices={"context_scope": "per_cell_type"})
+    names = [c["name"] for c in plan.contexts]
+    assert names and not any("nan" in n.lower() for n in names), names
+    assert any("300 cells have no label in 'cell_type'" in w for w in plan.warnings), plan.warnings
+    assert plan.profile["n_cell_types"] == adata.obs["cell_type"].nunique(), "NaN is not a cell type"
 
 
 def test_knee_calls_cells_and_rejects_curves_without_a_cliff():

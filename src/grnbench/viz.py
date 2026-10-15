@@ -217,9 +217,14 @@ def decisions_markdown(row_or_decisions) -> str:
             lines.append(f"| candidate ({arm}) | {plan.get('candidate')} | chosen for the {arm} arm |")
             for w in plan.get("warnings") or []:
                 lines.append(f"| warning ({arm}) | - | {w} |")
-    elif isinstance(d, dict) and "candidates" in d:
+    elif isinstance(d, dict) and isinstance(d.get("candidates"), Mapping):
         for arm, cand in d["candidates"].items():
             lines.append(f"| candidate ({arm}) | {cand} | chosen for the {arm} arm |")
+    elif isinstance(d, dict) and isinstance(d.get("candidates"), list):      # a candidate-study row
+        for cand in d["candidates"]:
+            if isinstance(cand, Mapping):
+                lines.append(f"| candidate | {cand.get('name', '?')} | screened ({cand.get('source', '?')}, "
+                             f"{cand.get('n_contexts', '?')} context(s)) |")
     if len(lines) == 2:
         lines.append("| (none found) | - | - |")
     return "\n".join(lines) + "\n"
@@ -623,6 +628,8 @@ def build_run(run_dir, out_dir=None, tasks_json=None, max_datasets=None) -> Path
     lives). Returns the ``out_dir`` written to.
     """
     run_dir = Path(run_dir)
+    if not any((run_dir / "rows").glob("*.json")):      # before any mkdir: a wrong path must create nothing
+        raise FileNotFoundError(f"{run_dir}: not a real_bench.py run directory (no rows/*.json)")
     out_dir = Path(out_dir) if out_dir else run_dir / "viz"
     out_dir.mkdir(parents=True, exist_ok=True)
     made: list[dict] = []

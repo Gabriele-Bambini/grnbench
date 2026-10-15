@@ -228,3 +228,62 @@ def test_ensembl_ids_are_mapped_to_symbols_from_a_var_column():
     assert list(a.var_names) == ["TP53", "MYC"]
     assert np.allclose(np.asarray(a.X.todense()), [[1.0, 5.0]])
     assert any("mapped to symbols" in n for n in rep.notes)
+
+
+# --------------------------------------------------------------------------- #
+# defects found by the end-to-end test of 2026-10-09 (issue #74)
+# --------------------------------------------------------------------------- #
+
+def test_a_repeated_gene_in_a_cells_by_genes_header_is_aggregated_like_every_other_format(tmp_path):
+    """pandas renames the second 'A' to 'A.1'; the two copies must be summed, as for h5ad, MTX and genes-x-cells."""
+    p = tmp_path / "dup.csv"
+    p.write_text("cell,A,B,A,C\nc1,1,2,3,4\nc2,5,6,7,8\n")
+    adata, rep = load_any(p, orientation="cells_x_genes")
+    assert list(adata.var_names) == ["A", "B", "C"]
+    X = adata.X.toarray() if hasattr(adata.X, "toarray") else np.asarray(adata.X)
+    assert X.tolist() == [[4.0, 2.0, 4.0], [12.0, 6.0, 8.0]]
+    assert rep.n_duplicates_merged == 1 and any("duplicate gene names aggregated" in n for n in rep.notes)
+
+
+def test_loom_without_loompy_says_what_to_install(tmp_path, monkeypatch):
+    import sys
+    p = tmp_path / "x.loom"
+    p.write_bytes(b"not a real loom, the import fails first")
+    monkeypatch.setitem(sys.modules, "loompy", None)
+    with pytest.raises(IngestError, match="loompy"):
+        load_any(p)
+
+
+@pytest.mark.parametrize("name,payload,fragment", [
+    ("empty.h5ad", b"", "empty (0 bytes)"),
+    ("broken.h5ad", b"this is not an hdf5 file at all" * 20, "not a valid .h5ad file"),
+    ("binary.csv", b"\xc3\x28\xff\xfe\x00\x81" * 50, "binary file"),
+])
+def test_an_unreadable_file_gets_a_message_naming_the_file_not_library_jargon(tmp_path, name, payload, fragment):
+    p = tmp_path / name
+    p.write_bytes(payload)
+    import re
+    with pytest.raises(IngestError, match=re.escape(fragment)) as exc:
+        load_any(p)
+    assert name in str(exc.value)
+
+
+def test_a_folder_that_is_not_a_10x_matrix_says_which_files_it_needs(tmp_path):
+    (tmp_path / "somefolder").mkdir()
+    with pytest.raises(IngestError, match="matrix.mtx"):
+        load_any(tmp_path / "somefolder")
+
+
+def test_gene_names_with_stray_whitespace_are_stripped_and_reported():
+    """' TP53' matches no TF list: the TF coverage dropped without a word (HI-12)."""
+    from grnbench.ingest import IngestReport, _clean_gene_names
+    a = ad.AnnData(X=np.array([[1.0, 2.0, 3.0]], dtype=np.float32),
+                   var=pd.DataFrame(index=[" TP53", "MYC\xa0", "STAT1"]))
+    rep = IngestReport(path="test", fmt="synthetic")
+    a = _clean_gene_names(a, rep)
+    assert list(a.var_names) == ["TP53", "MYC", "STAT1"]
+    assert any("2 gene name(s) had leading or trailing whitespace" in n for n in rep.notes), rep.notes
+    clean = ad.AnnData(X=np.array([[1.0, 2.0]], dtype=np.float32), var=pd.DataFrame(index=["A", "B"]))
+    rep2 = IngestReport(path="test", fmt="synthetic")
+    _clean_gene_names(clean, rep2)
+    assert not any("whitespace" in n for n in rep2.notes)

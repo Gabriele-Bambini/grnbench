@@ -57,3 +57,18 @@ def test_custom_thresholds_change_gate_outcome():
     strict_rep = run_qc(a.copy(), Thresholds(min_genes_per_cell=2))
     assert isinstance(default_rep.has_failures, bool)
     assert strict_rep.gates[0].name == "cells_below_min_genes"
+
+
+def test_a_single_batch_column_is_not_reported_as_missing(synthetic_adata):
+    """`obs['batch'] = 'run1'` is a batch annotation: 'provide one if it exists' was wrong (HI-18)."""
+    def gate(adata):
+        return next(g for g in run_qc(adata).gates if g.name == "batch_annotation")
+    plain = synthetic_adata.copy()
+    assert gate(plain).status == "warn" and "no batch/donor annotation" in gate(plain).detail
+    one = synthetic_adata.copy()
+    one.obs["batch"] = "run1"
+    g = gate(one)
+    assert g.status == "pass" and "one batch only" in g.detail and "'batch'" in g.detail
+    many = synthetic_adata.copy()
+    many.obs["batch"] = ["a", "b"] * (many.n_obs // 2) + ["a"] * (many.n_obs % 2)
+    assert gate(many).status == "warn", "run_qc is given batch_key by the caller; an unused 2-level column is not announced"

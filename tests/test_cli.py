@@ -307,6 +307,182 @@ def test_eval_reports_a_bad_plugin_instead_of_crashing(tmp_path, capsys):
     assert "[PLUGIN ERROR]" in capsys.readouterr().err
 
 
+# --------------------------------------------------------------------------- #
+# defects found by the end-to-end test of 2026-10-09 (issue #74)
+# --------------------------------------------------------------------------- #
+
+def test_demo_never_overwrites_files_that_are_already_there(tmp_path, capsys):
+    mine = tmp_path / "tfs.txt"
+    mine.write_text("mine")
+    assert grnbench_main(["demo", "--out", str(tmp_path)]) == 1
+    assert mine.read_text() == "mine" and "must be empty" in capsys.readouterr().err
+    assert grnbench_main(["demo", "--out", str(tmp_path / "fresh")]) == 0
+    assert (tmp_path / "fresh" / "counts.h5ad").exists()
+
+
+def test_demo_refuses_a_folder_holding_only_a_failed_diagnostic(tmp_path, capsys):
+    """LD's review of #87: demo shared the retry exception of run outputs, wrote its files next to a failed
+    prep's diagnostics.json and left that stale diagnostic in the demo folder."""
+    from grnbench.cli import main as prep_main
+    from grnbench.report import require_empty_output
+    bad = tmp_path / "bad_mtx"
+    bad.mkdir()
+    (bad / "barcodes.tsv").touch()
+    out = tmp_path / "prep_out"
+    assert prep_main([str(bad), "--out", str(out)]) != 0
+    assert [p.name for p in out.iterdir()] == ["diagnostics.json"]
+    capsys.readouterr()
+    assert grnbench_main(["demo", "--out", str(out)]) == 1
+    assert "must be empty" in capsys.readouterr().err
+    assert [p.name for p in out.iterdir()] == ["diagnostics.json"], "demo wrote into a non-empty folder"
+    assert require_empty_output(out) == out, "a retry of the failed run still replaces its lone diagnostic"
+
+
+def test_kb_refuses_unknown_options_and_stray_arguments(tmp_path, capsys, monkeypatch):
+    """LD's review of #87: `kb definitely-not-an-option` and `kb --write-docs PATH extra` exited 0."""
+    from grnbench import kb
+    target = tmp_path / "kb.md"
+    for bad, word in ((["definitely-not-an-option"], "definitely-not-an-option"), (["--bogus"], "--bogus"),
+                      (["--write-docs", str(target), "extra"], "extra")):
+        assert grnbench_main(["kb", *bad]) == 2, bad
+        err = capsys.readouterr().err
+        assert "usage: grnbench kb" in err and f"unrecognized arguments: {word}" in err, err
+    assert not target.exists()
+    assert grnbench_main(["kb", "--write-docs", str(target)]) == 0
+    assert target.read_text(encoding="utf-8") == kb.render_markdown()
+    monkeypatch.chdir(tmp_path)
+    assert grnbench_main(["kb", "--write-docs"]) == 0, "PATH stays optional"
+    assert (tmp_path / "docs" / "knowledge" / "preprocessing_kb.md").read_text(encoding="utf-8") == kb.render_markdown()
+    capsys.readouterr()
+    for unwritable in (str(tmp_path / "docs"), ""):    # a folder, an empty path: an error, not a traceback
+        assert grnbench_main(["kb", "--write-docs", unwritable]) == 1, unwritable
+        assert "grnbench kb: cannot write" in capsys.readouterr().err
+    assert grnbench_main(["kb"]) == 0 and kb.option_table()[0]["option"] in capsys.readouterr().out
+
+
+def test_builtin_commands_answer_help_and_refuse_stray_arguments(capsys, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    for cmd in ("methods", "strategies", "kb", "demo", "ui", "version"):
+        assert grnbench_main([cmd, "--help"]) == 0, cmd
+        assert cmd in capsys.readouterr().out
+    assert list(tmp_path.iterdir()) == [], "--help must not create anything (it used to write a folder named --help)"
+    assert grnbench_main(["methods", "--bogus"]) == 2 and "takes no arguments" in capsys.readouterr().err
+    assert grnbench_main(["demo", "--out"]) == 2 and "expected one argument" in capsys.readouterr().err
+
+
+def test_ui_listens_on_this_computer_only_unless_asked(monkeypatch):
+    pytest.importorskip("streamlit")
+    seen = []
+    monkeypatch.setattr("subprocess.call", lambda cmd, *a, **k: seen.append(cmd) or 0)
+    assert grnbench_main(["ui"]) == 0 and grnbench_main(["ui", "--server.address", "0.0.0.0"]) == 0
+    assert seen[0][-2:] != ["--server.address", "0.0.0.0"] and seen[0][seen[0].index("--server.address") + 1] == "localhost"
+    assert seen[1].count("--server.address") == 1 and seen[1][seen[1].index("--server.address") + 1] == "0.0.0.0"
+
+
+def test_python_dash_m_grnbench_works():
+    import subprocess
+    import sys
+    out = subprocess.run([sys.executable, "-m", "grnbench", "version"], capture_output=True, text=True)
+    assert out.returncode == 0 and "grnbench" in out.stdout
+
+
+def test_an_unavailable_method_is_skipped_loudly_and_the_others_still_run_and_are_scored(tmp_path, dataset, capsys):
+    """Naming a method that cannot run here (aracne3 needs java) used to abort `run` before evaluation."""
+    src, tfs = dataset
+    stage = tmp_path / "stage"
+    assert run_main(["--data", str(src), "--out", str(stage), "--tf-list", str(tfs), "--n-hvg", "120",
+                     "--methods", "spearman_signed"]) == 0
+    gold = _gold_from_edges(stage / "infer" / "spearman_signed.edges.tsv.gz", tmp_path / "gold.tsv")
+    out = tmp_path / "run"
+    rc = run_main(["--data", str(src), "--out", str(out), "--tf-list", str(tfs), "--n-hvg", "120",
+                   "--methods", "spearman_signed,aracne3", "--gold", str(gold), "--n-nulls", "10"])
+    assert rc == 0
+    assert "[SKIP] aracne3" in capsys.readouterr().err
+    manifest = json.loads((out / "infer" / "inference_manifest.json").read_text(encoding="utf-8"))
+    assert manifest["status"] == "partial" and manifest["errors"] == {} and "aracne3" in manifest["methods_skipped"]
+    assert (out / "eval" / "eval_report.json").exists(), "the methods that ran are evaluated"
+
+
+def test_nothing_runnable_is_still_an_error(tmp_path, dataset):
+    src, tfs = dataset
+    assert infer_main([str(src), "--out", str(tmp_path / "o"), "--methods", "aracne3"]) == 2
+
+
+def test_infer_refuses_a_matrix_with_nan_and_says_why(tmp_path, dataset, capsys):
+    """A NaN in X used to produce all-zero pearson/spearman networks and exit 0."""
+    import anndata as ad
+    import numpy as np
+    src, tfs = dataset
+    adata = ad.read_h5ad(src)
+    X = np.asarray(adata.X.toarray() if hasattr(adata.X, "toarray") else adata.X, dtype=float)
+    X[0, 0] = np.nan
+    adata.X = X
+    bad = tmp_path / "with_nan.h5ad"
+    adata.write_h5ad(bad)
+    out = tmp_path / "o"
+    assert infer_main([str(bad), "--out", str(out), "--tf-list", str(tfs), "--methods", "pearson_signed"]) == 1
+    assert "non-finite" in capsys.readouterr().err
+    manifest = json.loads((out / "inference_manifest.json").read_text(encoding="utf-8"))
+    assert manifest["status"] == "failed" and "non-finite" in manifest["errors"]["setup"]
+    assert not list(out.glob("*.edges.tsv.gz")), "no edge file may be written for a matrix the methods cannot use"
+
+
+def test_infer_without_a_tf_list_says_every_gene_is_a_regulator(tmp_path, dataset, capsys):
+    """Omitting --tf-list makes the problem genes x genes; nothing used to say so (HI-17/M2)."""
+    import anndata as ad
+    src, tfs = dataset
+    n = ad.read_h5ad(src).n_vars
+    out = tmp_path / "all_genes"
+    assert infer_main([str(src), "--out", str(out), "--methods", "spearman_signed"]) == 0
+    err = capsys.readouterr().err
+    assert "[NO TF LIST]" in err and f"all {n:,} genes" in err and f"{n * (n - 1):,} candidate edges" in err
+    manifest = json.loads((out / "inference_manifest.json").read_text(encoding="utf-8"))
+    assert manifest["warnings"] and "no --tf-list" in manifest["warnings"][0]
+    quiet = tmp_path / "with_tfs"
+    assert infer_main([str(src), "--out", str(quiet), "--tf-list", str(tfs), "--methods", "spearman_signed"]) == 0
+    assert "NO TF LIST" not in capsys.readouterr().err
+    assert "warnings" not in json.loads((quiet / "inference_manifest.json").read_text(encoding="utf-8"))
+
+
+def test_a_gold_standard_that_none_of_the_candidates_can_reach_is_a_failure_not_a_vacuous_success(
+        tmp_path, dataset, capsys):
+    """Empty, foreign or swapped reference files produced an all-NaN table, 'complete' and exit 0."""
+    src, tfs = dataset
+    stage = tmp_path / "stage"
+    assert run_main(["--data", str(src), "--out", str(stage), "--tf-list", str(tfs), "--n-hvg", "120",
+                     "--methods", "spearman_signed"]) == 0
+    edges = stage / "infer" / "spearman_signed.edges.tsv.gz"
+    real = _gold_from_edges(edges, tmp_path / "gold.tsv")
+
+    foreign = tmp_path / "foreign.tsv"          # other gene names altogether
+    foreign.write_text("regulator\ttarget\nSTAT1\tIRF1\nSTAT3\tMYC\n", encoding="utf-8")
+    rc = eval_main([str(edges), "--gold", str(foreign), "--out", str(tmp_path / "e1"), "--skip-nulls"])
+    err = capsys.readouterr().err
+    assert rc == 1 and "[GOLD EMPTY]" in err and "vacuous" in err and "swapped" not in err
+    report = json.loads((tmp_path / "e1" / "eval_report.json").read_text(encoding="utf-8"))
+    assert report["status"] == "partial-failure"
+    assert [f["stage"] for f in report["failures"]] == ["gold_overlap"]
+
+    swapped = tmp_path / "swapped.tsv"          # the real pairs with the columns exchanged
+    rows = [line.split("\t") for line in real.read_text(encoding="utf-8").splitlines()[1:]]
+    swapped.write_text("regulator\ttarget\n" + "".join(f"{b}\t{a}\n" for a, b, *_ in rows), encoding="utf-8")
+    rc = eval_main([str(edges), "--gold", str(swapped), "--out", str(tmp_path / "e2"), "--skip-nulls"])
+    assert rc == 1 and "columns look swapped" in capsys.readouterr().err
+
+    assert eval_main([str(edges), "--gold", str(real), "--out", str(tmp_path / "e3"), "--skip-nulls"]) == 0
+    assert "[GOLD EMPTY]" not in capsys.readouterr().err
+
+
+def test_run_checks_the_gold_standard_before_it_does_any_work(tmp_path, dataset, capsys):
+    """A typo in --gold used to be found after the preprocessing and the inference were done (HI-15)."""
+    src, tfs = dataset
+    out = tmp_path / "run"
+    assert run_main(["--data", str(src), "--out", str(out), "--tf-list", str(tfs), "--methods", "spearman_signed",
+                     "--gold", str(tmp_path / "no_such_gold.tsv")]) == 1
+    assert "[GOLD ERROR]" in capsys.readouterr().err
+    assert not out.exists(), "nothing may have been written"
+
+
 def test_prep_on_relative_mtx_folder_writes_diagnostics_without_warnings(tmp_path, monkeypatch):
     import warnings
     from grnbench.cli import main as prep_main

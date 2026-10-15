@@ -357,6 +357,16 @@ def main(argv: list[str] | None = None) -> int:
                   f"{diag['matched_pairs_case_insensitive']:,} case-insensitively). "
                   "Scored case-insensitively; pass --case-sensitive to refuse.",
                   file=sys.stderr)
+        if coverage[name]["gold_reachable"] == 0:
+            # No positive among the candidate pairs: AUPRC, EPR and every null are undefined. A run that
+            # looks complete but scores nothing must not exit 0 (a pipeline would read it as a result).
+            fold = (lambda x: str(x)) if args.case_sensitive else (lambda x: str(x).upper())
+            seen = {(fold(s_), fold(t_)) for s_, t_ in zip(candidates["source"], candidates["target"])}
+            swapped = any((fold(t_), fold(s_)) in seen for s_, t_ in gold.pairs)
+            reason = ("no reference edge is among this method's candidate pairs, so every metric is vacuous"
+                      + ("; the reference's source and target columns look swapped" if swapped else ""))
+            failures.append({"stage": "gold_overlap", "method": name, "error": reason})
+            print(f"[GOLD EMPTY] {name}: {reason}", file=sys.stderr)
         if not args.skip_nulls:
             try:
                 methods_metrics[name]["null"] = null_metrics(

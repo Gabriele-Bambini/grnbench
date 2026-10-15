@@ -55,7 +55,10 @@ def resolve_tf_names(
     wanted = {name.casefold() for name in requested}
     resolved = [gene for gene in genes if gene.casefold() in wanted]
     if not resolved:
-        raise TFListError("none of the requested TF identifiers match expression genes")
+        raise TFListError(
+            f"none of the requested TF identifiers match expression genes: {len(requested):,} TF names "
+            f"(e.g. {', '.join(requested[:3])}) against {len(genes):,} genes (e.g. {', '.join(genes[:3])}). "
+            "Check the organism and the identifier type (gene symbols or Ensembl IDs) of the data and the list")
     return resolved
 
 
@@ -79,7 +82,8 @@ def load_tf_list(path: str | Path) -> list[str]:
                    df.columns[0])
         names = df[col].tolist()
     else:
-        raise TFListError(f"Unsupported TF list format: {sfx}")
+        raise TFListError(f"Unsupported TF list format '{sfx or '(no extension)'}' ({p.name}): use .txt "
+                          "(one symbol per line), .csv or .tsv")
     out: list[str] = []
     for n in names:
         s = str(n).strip().upper()

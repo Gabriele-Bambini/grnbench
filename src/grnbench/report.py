@@ -56,19 +56,21 @@ def sequence_identity(values) -> dict:
                                                separators=(',', ':')).encode()).hexdigest()}
 
 
-def require_empty_output(path: str | Path) -> Path:
+def require_empty_output(path: str | Path, *, allow_failed_diagnostic: bool = True) -> Path:
     """Refuse output reuse rather than mix artifacts from different runs.
 
     A lone schema-v1 failure diagnostic is the one safe exception: it contains
     no run artifact and exists specifically to explain an attempt that stopped
     before producing one.  A retry may replace it, while every other existing
-    file still makes reuse fail loudly.
+    file still makes reuse fail loudly.  ``allow_failed_diagnostic=False``
+    drops that exception for outputs that never write a diagnostic (``demo``),
+    which would otherwise leave the stale one next to their files.
     """
     out = Path(path)
     if out.exists():
         entries = list(out.iterdir())
         retryable = False
-        if len(entries) == 1 and entries[0].name == "diagnostics.json":
+        if allow_failed_diagnostic and len(entries) == 1 and entries[0].name == "diagnostics.json":
             try:
                 diagnostic = json.loads(entries[0].read_text(encoding="utf-8"))
                 retryable = (

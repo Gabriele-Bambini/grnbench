@@ -120,3 +120,43 @@ class TestTreeMethods:
         assert list(edges.columns) == EDGE_COLUMNS
         assert len(edges) > 0
         assert edges["weight"].is_monotonic_decreasing
+
+
+@pytest.mark.parametrize("sparse", [False, True])
+@pytest.mark.parametrize("bad", [np.nan, np.inf, -np.inf])
+def test_a_matrix_with_nan_or_inf_is_refused_not_turned_into_zeros(cascade_adata, sparse, bad):
+    """One NaN used to give pearson_signed/spearman_signed an all-zero network and exit code 0."""
+    import scipy.sparse as sp
+    adata = cascade_adata.copy()
+    X = np.asarray(adata.X.toarray() if hasattr(adata.X, "toarray") else adata.X, dtype=float)
+    X[3, 1] = bad
+    X[7, 1] = bad
+    X[5, 2] = bad
+    adata.X = sp.csr_matrix(X) if sparse else X
+    for method in ("spearman_signed", "pearson_signed"):
+        with pytest.raises(MethodError, match=r"3 non-finite value\(s\).*in 2 gene\(s\) and 3 cell\(s\)"):
+            run_method(method, adata)
+    with pytest.raises(MethodError, match="non-finite"):       # also when the caller vouches for the scale
+        run_method("pearson_signed", adata, assume_normalized=True)
+    clean = cascade_adata.copy()
+    edges, _ = run_method("pearson_signed", clean)               # the guard is silent on good data
+    assert len(edges) and np.isfinite(edges["weight"]).all()
+
+
+def test_a_plugin_that_edits_its_input_cannot_corrupt_the_next_method(cascade_adata):
+    """With --assume-normalized the plugin received the caller's own AnnData, so an in-place edit leaked on."""
+    from grnbench.infer.base import REGISTRY, MethodSpec, register_method
+
+    def vandal(adata, tf_list, **kw):
+        (adata.X.data if hasattr(adata.X, "data") and hasattr(adata.X, "tocsr") else adata.X)[:] = 0
+        return pd.DataFrame({"source": ["TF_A"], "target": ["G_B"], "weight": [1.0]})
+
+    register_method(MethodSpec("vandal_test", "edits X in place", vandal, takes="adata", origin="python"),
+                    replace=True)
+    try:
+        before = np.asarray(cascade_adata.X.toarray() if hasattr(cascade_adata.X, "toarray") else cascade_adata.X).copy()
+        run_method("vandal_test", cascade_adata, assume_normalized=True)
+        after = np.asarray(cascade_adata.X.toarray() if hasattr(cascade_adata.X, "toarray") else cascade_adata.X)
+        assert before.any() and np.array_equal(before, after), "the caller's matrix was edited by the plugin"
+    finally:
+        REGISTRY.pop("vandal_test", None)

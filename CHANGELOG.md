@@ -3,6 +3,18 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- Tool end to end (#74), found by driving the command line and the interface on hard inputs: a matrix with
+  NaN or infinity, a reference no candidate edge can reach, and contradictory `prep` options are refused
+  instead of giving all-zero or all-NaN results; cell types whose labels differ only in punctuation, case or
+  a '.' at the 80-character cut, or already spell another label's folder, no longer share a folder, and
+  cells with no label are not a context; missing `--tf-list` and the prep warnings are said out loud;
+  `grnbench kb --write-docs` to a folder says so instead of a traceback; unreadable files, `.loom` without
+  loompy, repeated gene headers and stray whitespace in gene names are handled; `python -m grnbench` works,
+  built-in commands answer `--help` and refuse stray arguments (`grnbench kb` too), `grnbench demo` writes
+  only into a new or empty folder (not even next to a failed run's diagnostic), `grnbench ui` listens on
+  localhost, `grnbench run` checks `--gold` first and skips a
+  method that cannot run here; `grnbench viz` creates nothing on a wrong path and reads candidate-study
+  rows. What is left is the checklist in #76; the screening ranking rule is #75.
 - EXP-20261003-GB-1 registered (exploratory, issue #52, not launched): `benchmarks/motif_sensitivity.py`
   splits the motif-prior lift of Pearson (C6, C4) into target identity, TF-level reweighting,
   database membership and a TF-generic gene propensity from the kept artifacts, with calibration
