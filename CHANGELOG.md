@@ -3,6 +3,15 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- Eleven more inference methods from the literature, native and registered as *extra*
+  (`grnbench methods`, `--methods all` or by name): `bicor`, `wgcna_tom`, `propr_rho`, `aracne_dpi`,
+  `mrnet`, `tigress`, `bbsr`, `pcnet`, `extra_trees`, `gradient_boosting`, `community` (mean rank of
+  fixed members). `MethodSpec.default` and `list_methods()["default"]` mark the set that
+  `--methods available` (and `grnbench run`) runs; it is exactly the 17 methods registered before, so no
+  past experiment changes meaning. They are reimplementations from the published descriptions, not the
+  original packages: `docs/models_catalog.md` says where each differs and lists what is not built in and
+  why (PIDC, time-series methods, multiome methods, deep models). Exploratory until an experiment record
+  declares them; `clr` now shares `_clr_scores` with `bbsr`, same output.
 - Interface (`grnbench ui`): **0 · Quick run** (data, models, Run: baseline cleaning, models, scores with a
   reference), a model picker with presets, family, speed and tier (default / extra / yours, the engine's own
   vocabulary) shared by the quick run and step 6, **8 · Explore data** (PCA or UMAP of the cells coloured by any annotation, before

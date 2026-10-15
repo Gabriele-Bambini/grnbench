@@ -264,6 +264,11 @@ the built-ins — and cannot silently shadow a built-in name.
 | `aracne3` | Java jar | parser unit-tested vs published format; runner probes java+ARACNE3_JAR |
 | *yours* | Python or container | see **Bring your own model** |
 
+`grnbench methods` lists every built-in method (classical, motif prior, RegDiffusion and the literature
+methods added later: bicor, WGCNA, propr, ARACNe-style, MRNET, TIGRESS, BBSR, pcNet, extra-trees,
+gradient boosting, community) with what can run here. What each one is, how it differs from the
+original, and what is left out and why: `docs/models_catalog.md`.
+
 Implementation note: this arboreto release crashes with modern dask when its
 wrappers run with default settings (empty meta delayed-list); we drive
 `arboreto.core.create_graph(include_meta=True)` directly and discard the meta.

@@ -139,15 +139,12 @@ def mutual_info(expr: pd.DataFrame, tf_names: list[str] | None = None,
     return _long(regulators, expr.columns, _mi_matrix(X, rows, int(n_bins)))
 
 
-def clr(expr: pd.DataFrame, tf_names: list[str] | None = None,
-        n_bins: int = 8, **_) -> pd.DataFrame:
-    """Context Likelihood of Relatedness (Faith et al. 2007).
+def _clr_scores(X: np.ndarray, n_bins: int) -> np.ndarray:
+    """Full gene x gene CLR score matrix (Faith et al. 2007) from plug-in MI.
 
     Needs the *full* gene x gene MI matrix, not just the regulator rows: the
     score of edge (i, j) is defined against the MI background of both i and j.
     """
-    regulators = _regulators(expr, tf_names)
-    X = expr.to_numpy(dtype=np.float64)
     n_genes = X.shape[1]
     mi = _mi_matrix(X, np.arange(n_genes), int(n_bins))
     np.fill_diagonal(mi, 0.0)
@@ -157,10 +154,16 @@ def clr(expr: pd.DataFrame, tf_names: list[str] | None = None,
     sd = np.where(sd > 0, sd, 1.0)
     z = np.maximum((mi - mean) / sd, 0.0)                # one-sided z per gene
     score = np.sqrt(z ** 2 + (z.T) ** 2)                 # symmetric combination
-    score = np.nan_to_num(score, nan=0.0, posinf=0.0, neginf=0.0)
+    return np.nan_to_num(score, nan=0.0, posinf=0.0, neginf=0.0)
 
+
+def clr(expr: pd.DataFrame, tf_names: list[str] | None = None,
+        n_bins: int = 8, **_) -> pd.DataFrame:
+    """Context Likelihood of Relatedness (Faith et al. 2007)."""
+    regulators = _regulators(expr, tf_names)
+    score = _clr_scores(expr.to_numpy(dtype=np.float64), n_bins)
     idx = [expr.columns.get_loc(g) for g in regulators]
-    return _long(regulators, expr.columns, score[np.ix_(idx, range(n_genes))])
+    return _long(regulators, expr.columns, score[np.ix_(idx, range(expr.shape[1]))])
 
 
 def ppcor(expr: pd.DataFrame, tf_names: list[str] | None = None,

@@ -3,8 +3,10 @@
     grnbench-infer DATA --out DIR [--methods m1,m2] [--tf-list FILE]
                         [--assume-normalized] [--seed 42]
 
-Default method set = every *available* registered method. Methods with missing
-external dependencies are skipped with an explicit notice, never silently.
+Default method set (``--methods available``) = every *available* registered method that
+is in the default set; ``--methods all`` adds the methods registered later (marked
+``[extra]`` by ``--methods list``). Methods with missing external dependencies are
+skipped with an explicit notice, never silently.
 Writes ``<method>.edges.tsv.gz`` per method plus ``inference_manifest.json``.
 """
 from __future__ import annotations
@@ -24,6 +26,12 @@ from grnbench.report import (environment_block, file_fingerprint, write_json,
                              sequence_identity, require_empty_output)
 
 
+def default_method_names(methods_table: list[dict], *, everything: bool = False) -> list[str]:
+    """Names ``--methods available`` (default set) or ``--methods all`` runs, sorted."""
+    return sorted(m["name"] for m in methods_table
+                  if m["available"] and (everything or m.get("default", True)))
+
+
 def _write_state(out_dir: Path, manifest: dict) -> None:
     """Keep the detailed provenance and portable diagnostic in sync."""
     write_json(out_dir / "inference_manifest.json", manifest)
@@ -37,7 +45,8 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("data", nargs="?", help="input dataset (.h5ad; counts or preprocessed)")
     p.add_argument("--out", help="output directory")
     p.add_argument("--methods", default="available",
-                   help="comma-separated names, 'available' (default), or 'list'")
+                   help="comma-separated names, 'available' (default set), 'all' (every available "
+                        "method), or 'list'")
     p.add_argument("--tf-list", default=None, help="regulator whitelist (.txt/.csv/.tsv)")
     p.add_argument("--assume-normalized", action="store_true",
                    help="skip internal cpm_log1p even if X looks like counts")
@@ -68,7 +77,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.methods == "list":
         for m in methods_table:
             status = "available" if m["available"] else f"UNAVAILABLE ({m['unavailable_reason']})"
-            print(f"{m['name']:16s} {m['origin']:12s} {status:50s} {m['description']}")
+            extra = "" if m.get("default", True) else " [extra]"
+            print(f"{m['name']:16s} {m['origin']:12s} {status:50s} {m['description']}{extra}")
         return 0
     if not args.data or not args.out:
         print("error: both DATA and --out are required (or use --methods list)",
@@ -77,8 +87,8 @@ def main(argv: list[str] | None = None) -> int:
 
     known = {m["name"] for m in methods_table}
     available = {m["name"] for m in methods_table if m["available"]}
-    if args.methods == "available":
-        chosen = sorted(available)
+    if args.methods in ("available", "all"):
+        chosen = default_method_names(methods_table, everything=args.methods == "all")
     else:
         chosen = [m.strip() for m in args.methods.split(",") if m.strip()]
 

@@ -41,6 +41,8 @@ def _methods() -> int:
     width = max((len(m["name"]) for m in rows), default=8)
     for m in rows:
         status = "available" if m["available"] else f"UNAVAILABLE ({m['unavailable_reason']})"
+        if not m["default"]:
+            status += "  [extra: runs with --methods all or by name]"
         print(f"{m['name']:{width}s}  {m['origin']:12s}  {status}")
         print(f"{'':{width}s}  {'':12s}  {m['description']}")
     return 0

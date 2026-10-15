@@ -56,7 +56,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     inf = p.add_argument_group("inference")
     inf.add_argument("--methods", default="available",
-                     help="comma-separated names or 'available' (default)")
+                     help="comma-separated names, 'available' (default set) or 'all'")
     inf.add_argument("--plugin", action="append", default=None, metavar="SPEC",
                      help="custom model spec file or 'module:Attribute' (repeatable)")
     inf.add_argument("--threads", type=int, default=4)

@@ -11,6 +11,13 @@ comparison, published as a tool with a paper. Headline claims from real data (D-
 pre-registered experiments (D-017).
 
 ## In progress
+- More models (GB, `gb/more-models`): eleven literature methods registered as *extra* (`bicor`,
+  `wgcna_tom`, `propr_rho`, `aracne_dpi`, `mrnet`, `tigress`, `bbsr`, `pcnet`, `extra_trees`,
+  `gradient_boosting`, `community`); `--methods available` still runs exactly the 17 older ones.
+  Checked on unit properties and simulated planted networks only: no real-data score exists, so none
+  is a result. `docs/models_catalog.md` lists differences from the originals and what is not built in.
+  Merged on 2026-10-15 (LD approval; LM's independent agent review, not a second-human review). Next: an
+  exploratory record to score them on real data (HPC, GB's own account).
 - Interface (GB, `gb/ui-explorer`): quick run page, model picker (presets, family, speed, tier), data explorer
   (cell maps before/after cleaning, genes and TFs) and results explorer (edges, network, model agreement,
   precision-recall, per-TF recovery) added to `grnbench ui`. Logic is in `ui/logic.py` and tested without

@@ -48,6 +48,10 @@ class MethodSpec:
     ``probe`` is an optional callable returning ``(available, reason)``,
     re-evaluated on every listing so environment changes (a jar appearing on
     disk, a docker daemon starting) are picked up without a restart.
+
+    ``default`` says whether the method belongs to the set that ``--methods available``
+    runs. Methods added after the first registered experiments are ``default=False`` so
+    that command keeps meaning what it meant; ``--methods all`` runs every available one.
     """
     name: str
     description: str
@@ -56,6 +60,7 @@ class MethodSpec:
     takes: str = "expr"             # "expr" | "adata"
     origin: str = "builtin"         # builtin | entry_point | python | command
     probe: Callable[[], tuple[bool, str]] | None = None
+    default: bool = True
 
 
 def require_finite(X) -> None:
@@ -210,6 +215,7 @@ def list_methods() -> list[dict]:
             "available": reason is None,
             "unavailable_reason": reason,
             "origin": spec.origin,
+            "default": spec.default,
         })
     return entries
 
@@ -268,6 +274,9 @@ def run_method(name: str,
         "regulators": "tf_list" if tf_list else "all_genes",
         "params": {k: str(v) for k, v in params.items()},
     }
+    info = dict(raw.attrs)                      # what a method says about its own run (WGCNA's power ...)
+    if info:
+        prov["method_info"] = info
     return edges, prov
 
 
@@ -284,6 +293,21 @@ from grnbench.infer.cistarget import (  # noqa: E402
     with_motif_prior,
 )
 from grnbench.infer.regdiffusion_adapter import REGDIFFUSION_UNAVAILABLE, regdiffusion_runner  # noqa: E402
+from grnbench.infer.association import (  # noqa: E402
+    aracne_dpi,
+    bicor,
+    mrnet,
+    propr_rho,
+    wgcna_tom,
+)
+from grnbench.infer.community import community, community_availability  # noqa: E402
+from grnbench.infer.regression import (  # noqa: E402
+    bbsr,
+    extra_trees,
+    gradient_boosting,
+    pcnet,
+    tigress,
+)
 from grnbench.infer.classical import (  # noqa: E402
     SKLEARN_UNAVAILABLE,
     clr,
@@ -376,5 +400,41 @@ REGISTRY: dict[str, MethodSpec] = {
                    "GRNBoost2 + cisTarget pruning, i.e. pySCENIC without AUCell",
                    with_cistarget(grnboost2_runner),
                    probe=_all_available(ARBORETO_UNAVAILABLE)),
+
+        # --- widely used methods added later (docs/models_catalog.md). default=False: the set
+        # --methods available runs is unchanged; ``--methods all`` or an explicit name runs them.
+        MethodSpec("bicor",
+                   "Biweight midcorrelation (WGCNA, Langfelder & Horvath 2012); Pearson for genes with MAD 0",
+                   bicor, default=False),
+        MethodSpec("wgcna_tom",
+                   "WGCNA topological overlap: soft power from the scale-free fit (Zhang & Horvath 2005)",
+                   wgcna_tom, default=False),
+        MethodSpec("propr_rho",
+                   "Proportionality rho_p (Quinn et al. 2017) on the normalised log expression",
+                   propr_rho, default=False),
+        MethodSpec("aracne_dpi",
+                   "ARACNe-style: binned MI, G-test threshold, DPI pruning over TF triangles (Margolin 2006); not the ARACNe-AP code",
+                   aracne_dpi, default=False),
+        MethodSpec("mrnet",
+                   "MRNET (Meyer et al. 2007): maximum relevance, minimum redundancy per target on binned MI",
+                   mrnet, default=False),
+        MethodSpec("tigress",
+                   "TIGRESS-style (Haury et al. 2012): LARS stability selection with random regulator weights",
+                   tigress, unavailable=SKLEARN_UNAVAILABLE, default=False),
+        MethodSpec("bbsr",
+                   "BBSR-style (Inferelator): CLR preselection and BIC best-subset regression per target",
+                   bbsr, default=False),
+        MethodSpec("pcnet",
+                   "pcNet (scTenifoldNet, Osorio et al. 2020): principal-component regression per gene",
+                   pcnet, default=False),
+        MethodSpec("extra_trees",
+                   "Extremely randomised trees importance per target (GENIE3's ET option; scikit-learn only)",
+                   extra_trees, unavailable=SKLEARN_UNAVAILABLE, default=False),
+        MethodSpec("gradient_boosting",
+                   "Gradient-boosted trees importance per target (GRNBoost2's idea; scikit-learn only, no dask)",
+                   gradient_boosting, unavailable=SKLEARN_UNAVAILABLE, default=False),
+        MethodSpec("community",
+                   "Mean-rank aggregate of spearman_signed, clr, ppcor, lasso, mrnet, bicor (Marbach et al. 2012)",
+                   community, takes="adata", probe=community_availability, default=False),
     ]
 }
