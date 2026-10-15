@@ -3,6 +3,10 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- `grnbench report --paper` builds again: the record's `report input` path is the first quoted span
+  (EXP-20261002-LM-1 ends it with a full stop); a run with no per-model scores (a candidate study) gets a
+  note instead of an empty table that stopped LaTeX; `compile_tex` reads engine output as UTF-8 and says
+  when an installed engine wrote no PDF instead of "no TeX engine found".
 - Audit of 2026-09-27 brought onto main (`audit/2026-09-27/`); dated caveat on C4-C6 and in
   `docs/models_that_work.md`: the motif-prior lift is partly TF-level and database-membership (#41).
 - Eleven more inference methods from the literature, native and registered as *extra*

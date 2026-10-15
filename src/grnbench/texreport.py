@@ -226,7 +226,10 @@ def resolve_input(target: str, root: Path = ROOT) -> tuple[Path, str | None]:
     if rec is None:
         raise FileNotFoundError(f"{target}: not a folder and no experiments/{target}.md")
     f = record_fields(rec)
-    folder = f.get("report input", "").strip("` ")
+    # the path is the first `quoted` span; records add a full stop or prose after it
+    value = f.get("report input", "")
+    quoted = re.search(r"`([^`]+)`", value)
+    folder = quoted.group(1).strip() if quoted else value.strip()
     if not folder:
         folder = f"benchmarks/results/{target}"
     return root / folder, target
@@ -267,6 +270,8 @@ def _tables(df: pd.DataFrame, out: Path) -> tuple[dict, list[str], dict]:
     for label, fn in (("mean", "mean"), ("median", "median"), ("SD", "std")):
         t.append(label + " & " + " & ".join(fmt(getattr(auto[c].dropna(), fn)(), digits=2) for c in cols) + r" \\")
     t += [r"\bottomrule\end{tabular}}\end{table}"]
+    if not cols:   # a candidate study's rows carry no per-model scores: an empty tabular breaks LaTeX
+        t = [r"\emph{No per-model AUPRC ratio in this run's rows, so no per-dataset table.}"]
     (out / "tables" / "per_dataset.tex").write_text("\n".join(t) + "\n", encoding="utf-8")
 
     comp_inputs, all_comps = [], {}
@@ -279,7 +284,7 @@ def _tables(df: pd.DataFrame, out: Path) -> tuple[dict, list[str], dict]:
             name = f"comparisons_{metric}_{arm}"
             t = [r"\begin{table}[H]\centering\small",
                  f"\\caption{{Declared comparisons, {tex_escape(label)}, {arm} pipeline: paired t over "
-                 f"datasets (compare\\_units), two-sided per direction, Holm over {recs[0]['family']} "
+                 f"datasets (compare\\_units), one-sided p per direction, Holm over {recs[0]['family']} "
                  f"directed hypotheses; 95\\% interval of the mean paired difference.}}",
                  r"\begin{tabular}{llrrlrrl}\toprule",
                  r"A & B & n & mean A$-$B & 95\% interval & $p_{A>B}$ Holm & $p_{B>A}$ Holm & supported \\ \midrule"]
@@ -525,17 +530,25 @@ def build_paper(out: Path | None = None, root: Path = ROOT, compile_pdf: bool = 
 
 
 def compile_tex(main: Path) -> Path | None:
-    """latexmk, else tectonic, else pdflatex; None (with instructions) when no engine is installed."""
+    """latexmk, else tectonic, else pdflatex; an engine that fails falls through to the next.
+    None (with its errors, or with instructions when no engine is installed) if none wrote a PDF."""
     main = Path(main)
+    failed = []
     for cmd in (["latexmk", "-pdf", "-interaction=nonstopmode", "-quiet", main.name],
                 ["tectonic", main.name],
                 ["pdflatex", "-interaction=nonstopmode", main.name]):
         if shutil.which(cmd[0]):
-            subprocess.run(cmd, cwd=main.parent, capture_output=True, text=True)
+            res = subprocess.run(cmd, cwd=main.parent, capture_output=True, text=True,
+                                 encoding="utf-8", errors="replace")
             pdf = main.with_suffix(".pdf")
             if pdf.exists():
                 print(f"compiled {pdf}")
                 return pdf
+            errs = [l for l in (res.stdout + res.stderr).splitlines() if l.startswith(("!", "error"))]
+            failed.append(f"{cmd[0]} ran but wrote no PDF for {main}:\n" + "\n".join(errs[:5]))
+    if failed:
+        print("\n".join(failed))
+        return None
     print(f"no TeX engine found: wrote {main}. Build it with one of: `latexmk -pdf {main.name}` "
           f"(TeX Live / MiKTeX), `tectonic {main.name}`, or `quarto install tinytex` then latexmk, "
           f"run inside {main.parent}")

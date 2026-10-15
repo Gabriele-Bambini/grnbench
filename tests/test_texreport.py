@@ -161,3 +161,46 @@ def test_primary_comparison_note_with_semicolon_is_not_a_second_hypothesis(tmp_p
     tex = texreport.build_report(exp, root=root, out=tmp_path / "out", compile_pdf=False).read_text()
     assert tex.count("Pre-registered primary hypothesis") == 1
     assert "No machine-readable primary comparison" not in tex
+
+
+def test_report_input_ignores_text_after_the_quoted_path(tmp_path):
+    """EXP-20261002-LM-1's record ends the path with '`.'; the template adds prose after it."""
+    root = tmp_path / "repo"
+    exp = "EXP-20260105-DD-1"
+    _run(root / "benchmarks" / "results" / exp)
+    (root / "experiments").mkdir(parents=True)
+    (root / "experiments" / f"{exp}.md").write_text(
+        f"# {exp}\n\n- type: confirmatory\n"
+        f"- report input: `benchmarks/results/{exp}`. (folder with rows/*.json)\n")
+    assert texreport.resolve_input(exp, root=root) == (root / "benchmarks" / "results" / exp, exp)
+    assert texreport.build_report(exp, root=root, out=tmp_path / "out", compile_pdf=False).exists()
+
+
+def _fake_engines(monkeypatch, installed, works):
+    """Fake TeX engines: `installed` are found on PATH, only those in `works` write the PDF."""
+    import types
+
+    monkeypatch.setattr(texreport.shutil, "which", lambda n: n if n in installed else None)
+
+    def run(cmd, cwd, **kw):
+        if cmd[0] in works:
+            (Path(cwd) / "main.pdf").write_bytes(b"%PDF")
+        return types.SimpleNamespace(stdout=f"! {cmd[0]} error\n", stderr="")
+
+    monkeypatch.setattr(texreport.subprocess, "run", run)
+
+
+def test_compile_tex_falls_through_to_the_next_engine(tmp_path, monkeypatch, capsys):
+    """A failing first engine (latexmk without Perl) must not stop a working pdflatex."""
+    _fake_engines(monkeypatch, {"latexmk", "pdflatex"}, works={"pdflatex"})
+    assert texreport.compile_tex(tmp_path / "main.tex") == tmp_path / "main.pdf"
+    assert "wrote no PDF" not in capsys.readouterr().out
+
+
+def test_compile_tex_reports_every_failed_engine_once(tmp_path, monkeypatch, capsys):
+    _fake_engines(monkeypatch, {"latexmk", "pdflatex"}, works=set())
+    assert texreport.compile_tex(tmp_path / "main.tex") is None
+    out = capsys.readouterr().out
+    assert "latexmk ran but wrote no PDF" in out and "pdflatex ran but wrote no PDF" in out
+    assert "! latexmk error" in out and "! pdflatex error" in out
+    assert "no TeX engine found" not in out
