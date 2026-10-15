@@ -8,6 +8,7 @@ figure, add a function and register it in OUTPUTS.
 """
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -138,7 +139,7 @@ def cleaning_variants() -> str:
                       + _md(head, cleaning_variants_rows())) + "\n"
 
 
-OUTPUTS = {  # path under paper/ -> function returning text (tables) or writing a file (figures)
+OUTPUTS = {  # path under paper/ -> function returning the table text
     "tables/T_models_real_EXP-20260925-LM-1.md": models_real_test12,
     "tables/T_motif_lift_real.md": motif_lift_auprc,
     "tables/T_motif_lift_real_epr.md": motif_lift_epr,
@@ -146,15 +147,140 @@ OUTPUTS = {  # path under paper/ -> function returning text (tables) or writing 
     "tables/T_cleaning_variants.md": cleaning_variants,
 }
 
+# ------------------------------------------------------------------------------------------ figures
+# Journal style: 183 mm (double column) or 89 mm (single), 7 pt sans, embedded TrueType, Okabe-Ito.
+MM = 1 / 25.4
+FIG_STYLE = {"font.family": "sans-serif", "font.sans-serif": ["DejaVu Sans"], "font.size": 7,
+             "axes.labelsize": 7, "axes.titlesize": 7, "xtick.labelsize": 7, "ytick.labelsize": 7,
+             "legend.fontsize": 7, "axes.linewidth": 0.6, "lines.linewidth": 1.0, "axes.grid": False, "axes.spines.top": False, "axes.spines.right": False,
+             "xtick.major.width": 0.6, "ytick.major.width": 0.6, "pdf.fonttype": 42, "ps.fonttype": 42,
+             "savefig.dpi": 300, "savefig.bbox": "standard", "figure.dpi": 100}
+OKABE_ITO = {"pearson": "#0072B2", "grnboost2": "#E69F00", "regdiffusion": "#009E73"}
+MODEL_LABEL = {"pearson": "Pearson", "grnboost2": "GRNBoost2", "regdiffusion": "RegDiffusion"}
+JITTER_SEED = 0
 
-def main() -> int:
+
+def motif_lift_points(metric: str) -> list[dict]:
+    """motif_lift_records plus the per-dataset paired differences (A - B) behind each mean."""
+    from grnbench import texreport
+
+    mats = {exp: texreport.model_matrix(texreport.load_rows(RESULTS / exp), "auto", metric)
+            for _, exp in MOTIF_RUNS}
+    out = []
+    for r in motif_lift_records(metric):
+        pair = mats[r["exp"]][[r["a"], r["b"]]].dropna()
+        out.append({**r, "points": (pair[r["a"]] - pair[r["b"]]).to_numpy()})
+    return out
+
+
+def selection_points() -> list[dict]:
+    """CONFIRM.json records of the fixed baseline against the former reference-free choice, per condition,
+    with the per-dataset paired differences (baseline - noref_shipped)."""
+    import json
+
+    import candidate_study
+
+    data = json.loads((RESULTS / SELECTION_EXP / "CONFIRM.json").read_text(encoding="utf-8"))
+    rows = [json.loads(p.read_text(encoding="utf-8")) for p in sorted((RESULTS / SELECTION_EXP / "rows").glob("*.json"))]
+    out = []
+    for cond, recs in data.items():
+        ok = [r for r in rows if r["condition"] == cond and not r.get("error") and not r.get("skipped")]
+        for rec in recs:
+            if (rec["a"], rec["b"]) != ("baseline", "noref_shipped"):
+                continue
+            d = [candidate_study._val(r, candidate_study.CONFIRM_ARMS[rec["a"]](r))
+                 - candidate_study._val(r, candidate_study.CONFIRM_ARMS[rec["b"]](r)) for r in ok]
+            out.append({"condition": cond, **rec, "points": np.array([v for v in d if np.isfinite(v)])})
+    return out
+
+
+def _forest(ax, items, ys, colors, xlabel, annotate=None):
+    """Per-dataset differences (jittered, behind), mean with its 95% interval, zero line."""
+    rng = np.random.default_rng(JITTER_SEED)
+    for it, y, c in zip(items, ys, colors):
+        ax.scatter(it["points"], y + rng.uniform(-.18, .18, len(it["points"])), s=3, color=c, alpha=.4,
+                   linewidths=0, zorder=2)
+        ax.plot(it["ci"], [y, y], color="black", lw=1.2, solid_capstyle="butt", zorder=3)
+        ax.plot(it["diff"], y, "o", color="black", ms=3.5, zorder=4)
+        if annotate:
+            ax.text(it["diff"], y - .26, annotate(it), ha="center", va="bottom", fontsize=6)
+    ax.axvline(0, color="grey", lw=.6, zorder=1)
+    ax.set_xlabel(xlabel)
+    ax.set_ylim(max(ys) + .6, min(ys) - .8)
+
+
+def _save(fig, stem: Path) -> None:
+    stem.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(stem.with_suffix(".pdf"), metadata={"CreationDate": None})
+    fig.savefig(stem.with_suffix(".png"), metadata={"Software": None})
+
+
+def fig_motif_lift(stem: Path) -> None:
+    """C4-C6: paired motif-prior lift per declared comparison, AUPRC ratio (a) and EPR (b)."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    panels = [("a", "auprc_ratio", "AUPRC ratio difference (with prior - without)"),
+              ("b", "epr", "EPR difference (with prior - without)")]
+    with plt.rc_context(FIG_STYLE):
+        fig, axes = plt.subplots(1, 2, figsize=(183 * MM, 62 * MM), sharey=True, layout="constrained")
+        for ax, (letter, metric, xlabel) in zip(axes, panels):
+            items = motif_lift_points(metric)
+            ys, y, prev = [], 0.0, None
+            for it in items:  # a gap between claims
+                y += 0.4 if prev not in (None, it["claim"]) else 0.0
+                ys.append(y)
+                y, prev = y + 1, it["claim"]
+            fams = [it["a"].removesuffix("_motif") for it in items]
+            _forest(ax, items, ys, [OKABE_ITO[f] for f in fams], xlabel)
+            ax.set_yticks(ys, [f"{it['claim']}  {MODEL_LABEL[f]}" for it, f in zip(items, fams)])
+            for it, yy in zip(items, ys):  # n per row, at the right edge
+                ax.annotate(f"n = {it['n']}", (1.0, yy), xycoords=("axes fraction", "data"), xytext=(3, 0),
+                            textcoords="offset points", va="center", fontsize=6, annotation_clip=False)
+            ax.set_title(letter, loc="left", fontweight="bold")
+        _save(fig, stem)
+        plt.close(fig)
+
+
+# candidate_study.py CONDITIONS: fractions of cells degraded before cleaning
+CONDITION_LABELS = {"clean": "clean", "doublets_20": "20% doublets", "damaged_15": "15% damaged cells"}
+
+
+def fig_reference_free(stem: Path) -> None:
+    """C7: fixed baseline minus the former reference-free choice, per dataset and as mean with 95% interval."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    items = selection_points()
+    ys = list(range(len(items)))
+    with plt.rc_context(FIG_STYLE):
+        fig, ax = plt.subplots(figsize=(89 * MM, 55 * MM), layout="constrained")
+        _forest(ax, items, ys, ["#0072B2"] * len(items),
+                "AUPRC ratio difference\n(baseline - former choice)",
+                annotate=lambda it: f"{it['diff']:+.3f} {_interval(it['ci'])}")
+        ax.set_yticks(ys, [f"{CONDITION_LABELS.get(it['condition'], it['condition'])} (n = {it['n']})"
+                           for it in items])
+        _save(fig, stem)
+        plt.close(fig)
+
+
+FIGURES = {"figures/fig_motif_lift": fig_motif_lift, "figures/fig_reference_free": fig_reference_free}  # paper/-relative stems
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out", type=Path, default=Path(__file__).parent, help="output root (default: paper/)")
+    out_root = ap.parse_args(argv).out
     for rel, fn in OUTPUTS.items():
-        out = Path(__file__).parent / rel
+        out = out_root / rel
         out.parent.mkdir(parents=True, exist_ok=True)
-        text = fn()
-        if isinstance(text, str):
-            out.write_text(text, encoding="utf-8", newline="\n")
-        print(f"wrote paper/{rel}")
+        out.write_text(fn(), encoding="utf-8", newline="\n")
+        print(f"wrote {out}")
+    for rel, fn in FIGURES.items():
+        fn(out_root / rel)
+        print(f"wrote {out_root / rel}.pdf, .png")
     return 0
 
 

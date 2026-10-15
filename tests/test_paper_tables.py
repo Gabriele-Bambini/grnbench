@@ -60,11 +60,40 @@ def test_selection_table_matches_json_row_count():
     assert len(body) == sum(len(v) for v in data.values())
 
 
-def test_running_twice_gives_no_diff():
-    tables = ROOT / "paper" / "tables"
-    run = lambda: subprocess.run([sys.executable, str(ROOT / "paper" / "make_figures.py")], cwd=ROOT,  # noqa: E731
-                                 check=True, capture_output=True)
-    run()
-    first = {p.name: p.read_bytes() for p in tables.glob("*.md")}
-    run()
-    assert first == {p.name: p.read_bytes() for p in tables.glob("*.md")}
+def _run_into(out: Path):
+    subprocess.run([sys.executable, str(ROOT / "paper" / "make_figures.py"), "--out", str(out)], cwd=ROOT,
+                   check=True, capture_output=True)
+    return {p.relative_to(out).as_posix(): p.read_bytes() for p in sorted(out.rglob("*")) if p.is_file()}
+
+
+def test_running_twice_gives_no_diff(tmp_path):
+    """Tables and PDF figures are byte-identical across reruns; writes go to tmp, not paper/.
+
+    The PDFs are the byte-compared artifact. PNG bytes are not reproducible across builds
+    (library and font versions change the encoding), so the PNGs are only checked to exist.
+    """
+    first = _run_into(tmp_path / "a")
+    assert {"figures/fig_motif_lift.pdf", "figures/fig_motif_lift.png", "figures/fig_reference_free.pdf",
+            "figures/fig_reference_free.png"} <= set(first)
+    second = _run_into(tmp_path / "b")
+    assert set(first) == set(second)
+    assert {k: v for k, v in first.items() if not k.endswith(".png")} ==         {k: v for k, v in second.items() if not k.endswith(".png")}
+
+
+def test_motif_figure_data_equals_table():
+    for metric in ("auprc_ratio", "epr"):
+        items = mf.motif_lift_points(metric)
+        assert [(r["claim"], r["a"], r["b"], r["n"], r["diff"], r["ci"]) for r in items] ==                [(r["claim"], r["a"], r["b"], r["n"], r["diff"], r["ci"]) for r in mf.motif_lift_records(metric)]
+        for r in items:
+            assert len(r["points"]) == r["n"] and abs(r["points"].mean() - r["diff"]) < 1e-9
+
+
+def test_reference_free_figure_data_equals_confirm_json():
+    import json
+    data = json.loads((mf.RESULTS / mf.SELECTION_EXP / "CONFIRM.json").read_text(encoding="utf-8"))
+    items = mf.selection_points()
+    assert [i["condition"] for i in items] == list(data)
+    for i in items:
+        rec = next(r for r in data[i["condition"]] if (r["a"], r["b"]) == ("baseline", "noref_shipped"))
+        assert (i["n"], i["diff"], i["ci"]) == (rec["n"], rec["diff"], rec["ci"])
+        assert len(i["points"]) == rec["n"] and abs(i["points"].mean() - rec["diff"]) < 1e-9
