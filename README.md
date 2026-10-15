@@ -6,12 +6,20 @@
 ## New in 0.8 (in development): interface + context-aware cleaning
 
 ```
-grnbench ui            # graphical interface in the browser (pip install 'grnbench[ui]')
+grnbench ui            # graphical interface in the browser (from a clone: pip install -e '.[ui]')
 grnbench demo --out d  # synthetic dataset with a known network to try it on
 grnbench kb            # the preprocessing knowledge base: every option, availability
 ```
 
-The interface walks one dataset from raw counts to a model comparison:
+The interface walks one dataset from raw counts to a model comparison. The menu has three groups. **Quick run**
+does it in one click (choose the data and the models, press Run; the results come first and the form folds
+away). **Step by step** (1-7 below) is the same path one decision at a time, with Back / Continue buttons and a
+tick on every step that produced something. **Explore data** (cell maps before and after cleaning, genes and
+TFs) and **Explore results** (top edges, network, agreement between models, precision-recall, per-TF recovery)
+open on whatever has run. A screen that has nothing to show yet says why and offers the way forward.
+`grnbench ui` hands the look (accent colour, radii, chart colours) to Streamlit as command-line options, so any
+`--theme.*` option you add after `ui` wins; the interface follows the browser's light or dark setting.
+Streamlit 1.54 or newer is needed (`pip install -e '.[ui]'`).
 
 1. **Data** - any format, plus README files, download pages (GEO/Zenodo/...) and notes.
 2. **Profile** - what the data are: protocol (from text *and* from the count values),
@@ -23,7 +31,8 @@ The interface walks one dataset from raw counts to a model comparison:
    (retention, depth/batch leakage, edge stability, recovery of the *selection half* of a
    reference network); pros and cons; the data pick the final pipeline.
 5. **Clean** - one run per cellular context, with the exact `grnbench prep` command.
-6. **Models** - built-in methods and **your own model** (a `.py` file), same cleaned input.
+6. **Models** - pick from a table (fast, recommended, everything, or tick by hand) of the built-in methods
+   and **your own model** (a `.py` file), same cleaned input.
 7. **Benchmark** - scores on the *evaluation half* of the reference, never used to choose
    the pipeline.
 

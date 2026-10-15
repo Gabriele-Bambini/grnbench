@@ -33,7 +33,8 @@ dorothea = ["decoupler>=1.6"]
 # but a documented capability must have a declared way to install it.
 plugins = ["pyarrow>=12.0", "pyyaml>=6.0"]
 dev = ["pytest>=7.0", "pyarrow>=12.0", "pyyaml>=6.0"]
-ui = ["streamlit>=1.30", "plotly>=5.0", "scikit-learn>=1.3"]
+# 1.54: the pages use width="stretch", icon_position and the light and dark theme options; the interface tests run on the lock's 1.64.
+ui = ["streamlit>=1.54", "plotly>=5.0", "scikit-learn>=1.3"]
 # .loom input: anndata imports loompy lazily, so nothing else declares it
 loom = ["loompy>=3.0"]
 all = [
@@ -45,7 +46,7 @@ all = [
     "decoupler>=1.6",
     "pyarrow>=12.0",
     "pyyaml>=6.0",
-    "streamlit>=1.30",
+    "streamlit>=1.54",
     "plotly>=5.0",
     "loompy>=3.0",
 ]

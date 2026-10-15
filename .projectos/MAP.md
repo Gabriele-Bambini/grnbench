@@ -1,7 +1,7 @@
 # Map - grnbench (where things are)
 
 Keep this short and current: update it in any PR that adds, moves or removes a module, script or folder.
-Updated: 2026-10-09.
+Updated: 2026-10-15.
 
 ## Run it
 - Tests: `python -m pytest -q -p no:cacheprovider` (floor in AGENTS.md section 4).
@@ -27,7 +27,7 @@ Updated: 2026-10-09.
 | inference | `infer/` (`base` contract, `correlation`, `classical`, `tree_methods` GENIE3/GRNBoost2, `aracne3`, `regdiffusion_adapter`, `cistarget` motif prior / pruning), `plugins` (bring your own model) |
 | evaluation + statistics | `eval/` (`metrics`, `gold`, `universe`, `nulls`, `stability`, `comparison` = `compare_units` paired t + Holm) |
 | reporting | `diagnostics` (portable schema shared by prep/screen/models), `report` + `html_report` (per run), `viz` + `viz.mplstyle` (figures), `texreport` (LaTeX), `board` (team board) |
-| interface | `ui/app.py` (Streamlit), `ui/logic.py` (tested logic), CLIs `cli_*.py` dispatched by `cli_main.py` |
+| interface | `ui/app.py` (Streamlit pages: Quick run, steps 1-7, Explore data, Explore results), `ui/steps.py` (the list of screens and their headlines), `ui/logic.py` (tested logic and plain-language summaries), `ui/catalog.py` (model families, speeds, presets), `ui/style.py` + `ui/theme.py` (stylesheet and the Streamlit options `grnbench ui` passes), CLIs `cli_*.py` dispatched by `cli_main.py` |
 | simulation | `simulate` (shared + per-cell-type planted truth and degradations), `demo` |
 
 ## Records and team memory

@@ -128,9 +128,13 @@ def _ui(rest: list[str]) -> int:
         print("the interface needs streamlit and plotly: from a clone of the repository run "
               "pip install -e '.[ui]'", file=sys.stderr)
         return 1
+    from grnbench.ui import theme
     # The interface can run uploaded Python and read any folder of this computer: listen here only, unless asked.
     local_only = [] if any(a.startswith("--server.address") for a in rest) else ["--server.address", "localhost"]
-    return subprocess.call([sys.executable, "-m", "streamlit", "run", str(app), *local_only, *rest])
+    # The product look (accent, radii, chart colours) rides on the command line, so it needs no config file
+    # next to the user's data; an option the user gives themselves wins.
+    return subprocess.call([sys.executable, "-m", "streamlit", "run", str(app), *local_only,
+                            *theme.streamlit_flags(rest), *rest])
 
 
 def main(argv: list[str] | None = None) -> int:

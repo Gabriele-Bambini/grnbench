@@ -55,6 +55,10 @@ def test_app_renders_every_page_without_data():
     at = AppTest.from_file(str(ROOT / "src" / "grnbench" / "ui" / "app.py"), default_timeout=60)
     at.run()
     assert not at.exception
-    for step in at.sidebar.radio[0].options:
-        at.sidebar.radio[0].set_value(step).run()
+    from grnbench.ui import steps
+    for step in steps.LABELS:
+        at.session_state["step"] = step
+        at.run()
         assert not at.exception, step
+        assert not at.error, step
+        assert step in [b.label.split("  ")[0] for b in at.sidebar.button], "the menu lists every screen"

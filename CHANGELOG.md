@@ -3,6 +3,48 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- Interface (`grnbench ui`): **0 · Quick run** (data, models, Run: baseline cleaning, models, scores with a
+  reference), a model picker with presets, family, speed and tier (default / extra / yours, the engine's own
+  vocabulary) shared by the quick run and step 6, **8 · Explore data** (PCA or UMAP of the cells coloured by any annotation, before
+  vs after cleaning side by side, gene and TF table, expression violins) and **9 · Explore results** (ranked
+  edges with a right/wrong flag, network of the best edges, Jaccard agreement between models, precision-recall,
+  per-TF recovery of reference targets). The explorers are marked exploratory (D-010); ties are handled with
+  the repository's rule (tied blocks kept whole, expected hits at the cut), detection is read from the counts
+  layer, TF recovery counts only reference TFs and targets that are genes of the data, one helper
+  (`reference_for_scoring`) decides which reference every page scores on, and each model's edges are
+  validated and its provenance written next to them. The explorers never make a whole sparse matrix dense
+  (per-gene mean and variance are summed sparsely; only the sampled cells x selected genes are converted), the
+  precision-recall curve counts the regulator x gene universe instead of listing it (equal to `evaluate_ranking`
+  on the listed universe, tested), and the network is directed (A -> B and B -> A are two arrows; each arrow
+  runs the whole edge, so plotly keeps its head wherever the two markers do not overlap, at any plot width).
+  New logic in `grnbench/ui/logic.py` and `grnbench/ui/catalog.py`, tested in `tests/test_ui_explore.py`;
+  nothing in the engine changes.
+- Interface, found by driving the whole tool as a newcomer (issue #70, `tests/test_ui_regressions.py`): the
+  step-1 path box shared its key with the session value of the same name, so Analyse from a file path always
+  crashed; the cell-by-gene orientation of a table can be named when it cannot be guessed; Stop kills the
+  model process (models run in a child process); a quick run that cleaned no context stops with a message
+  instead of showing "Done"; a corrupt TF list or an unusable reference is one red line, not a traceback;
+  with no TF list the picker marks lasso, tigress and community as slow (every gene becomes a regulator) and
+  warns before running them; step 4 keeps the context scope fixed, warns when the plan was edited in step 3 and
+  refuses a no-op or repeated alternative; Apply uses the choices on screen, not a hidden pending change; after
+  a screening the interface names the winning pipeline and lists the cell types it left out (the engine ranks
+  candidates by the mean over their own contexts; changing that rule is a decision for the owners, not this PR).
+- Interface redesign (`grnbench ui`): ten screens in three menu groups (Start here / Step by step / Explore) with
+  plain-language names (the numbers 0, 8 and 9 are gone; steps 1-7 keep theirs); a menu that ticks what produced
+  something; on every screen a header saying where you are and what the screen is for; numbered cards; empty
+  states that explain what is missing and offer the way forward; Back / Continue buttons; after a quick run the
+  results come first (cells kept, genes, models run, the highest score with "one dataset is not a ranking") and the
+  form folds away; a one-sentence quality verdict and a pipeline overview in plain language; the score chart marks
+  the random level and the table explains each score in a tooltip; typed values survive a visit to another page.
+  The look is one accent, neutral overlays that hold in light and dark, segmented radios and colour-blind-safe
+  chart colours; `grnbench ui` passes it to Streamlit as command-line options (an option you give wins). Running
+  "Clean" again after a quick run no longer fails with "Output directory must be empty": the next run is written
+  beside the first (`clean-2`). Results say what they were scored on (full reference or held-out half) and how to read
+  the AUPRC ratio; a quality warning says what it means; a plan warning about an option that cannot run is put in words
+  and the option dropdowns show names, not ids. Light and dark follow the browser; the sidebar starts closed on a phone.
+  The `ui` extra now asks for streamlit>=1.54 (the pages use `width="stretch"`, `icon_position` and the light/dark theme
+  options; the interface tests were also run with 1.54 in front of the lock's 1.64). New `ui/steps.py`, `ui/style.py`,
+  `ui/theme.py`; tested in `tests/test_ui_frame.py`.
 - Tool end to end (#74), found by driving the command line and the interface on hard inputs: a matrix with
   NaN or infinity, a reference no candidate edge can reach, and contradictory `prep` options are refused
   instead of giving all-zero or all-NaN results; cell types whose labels differ only in punctuation, case or

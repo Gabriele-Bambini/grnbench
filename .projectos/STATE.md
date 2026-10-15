@@ -2,8 +2,7 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-10-09 (tool end to end, GB's agent); 2026-10-06 (EXP-20261003-GB-1: review fixes and record note 2.1 on PR #55, agent);
-2026-10-03 (issue #42, GB's agent); 2026-10-02 by LD's and LM's agents. PR #3, PR #7 and the shared-workflow PR were merged by the owner
+Updated: 2026-10-15 (#87, #71, #69 merged at GB's request, GB's agent); 2026-10-10 (interface branch merged with main after #55, GB's agent); 2026-10-09 (interface redesign; tool end to end, GB's agent); 2026-10-07 (interface explorer, GB's agent); 2026-10-06 (EXP-20261003-GB-1: review fixes and record note 2.1 on PR #55, agent); 2026-10-03 (issue #42, GB's agent); 2026-10-02 by LD's and LM's agents. PR #3, PR #7 and the shared-workflow PR were merged by the owner
 after independent agent reviews, not human reviews (GB was away).
 
 ## Focus
@@ -12,6 +11,31 @@ comparison, published as a tool with a paper. Headline claims from real data (D-
 pre-registered experiments (D-017).
 
 ## In progress
+- Interface (GB, `gb/ui-explorer`): quick run page, model picker (presets, family, speed, tier), data explorer
+  (cell maps before/after cleaning, genes and TFs) and results explorer (edges, network, model agreement,
+  precision-recall, per-TF recovery) added to `grnbench ui`. Logic is in `ui/logic.py` and tested without
+  Streamlit; the pages are rendered by Streamlit's AppTest and were checked in a browser on the demo dataset. The
+  picker lists whatever the registry holds (the extra models of #69 appear once it lands). Reviewed against the other open PRs
+  (2026-10-07): fixes for ties, detection, TF denominators, reference choice and edge validation are in; still open and
+  not in this PR: the Fast preset ticks default-tier models only (extras via "Fast, including extras"), thread budget and
+  the run provenance file wait for #40, `pr_figure`/`tf_recovery` duplicate `viz.py` (one definition per quantity, follow-up).
+  Walked through end to end as a newcomer on 2026-10-09 (Chromium + AppTest): the one blocker and every major
+  interface defect found are fixed or mitigated on this branch, with a test per behaviour change
+  (`tests/test_ui_regressions.py`); what is left is the last section of #76, and the screening ranking rule
+  behind one of them is a decision for LM (#75).
+  Redesigned on 2026-10-09 (screen list `ui/steps.py`, stylesheet `ui/style.py`, Streamlit options `ui/theme.py`):
+  three menu groups, a header and numbered cards on every screen, empty states with a way forward, results first after
+  a quick run, plain-language quality verdict and pipeline overview. Looked at in headless Chromium (light, dark, phone
+  width), by AppTest, and by one independent agent session reading the screenshots as a newcomer (its interface-only
+  findings are fixed; open: the compare step still preselects a winner that may leave out cell types, see #75, and the
+  menu ticks Profile and Pipeline only once they were on screen). Nobody but GB's agent has used it. Next: LM or LD click through it on a real dataset and say what
+  is confusing or missing.
+  Not yet tried on a real dataset or by someone else.
+  LD's re-review of 8321f74 (2026-10-10): Explore data no longer makes a whole sparse matrix dense (B2: sparse
+  per-gene moments, only sampled cells x chosen genes converted; the precision-recall universe is counted, not
+  listed), the network is directed with one arrow per edge, drawn over the whole edge so no head is dropped
+  between markers that do not overlap (B4), the two-dataset session test for B1 is in, and
+  the before/after caption no longer implies aligned cells. Still open: `benchmark()` lists the full universe too.
 - Tool end to end (GB, `gb/tool-fixes`, issue #74): the integrated tool was driven like a newcomer on
   2026-10-09 (CLI and interface, hard inputs). The small, local defects in `main` are fixed with a test each
   (input guards, option validation, messages, `python -m grnbench`, ...). A screening rule that lets a
