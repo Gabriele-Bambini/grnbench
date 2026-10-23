@@ -1,0 +1,11 @@
+tasks: same (20 committed, 20 rerun)
+rows: identical - compared 1260 numeric, 40 bool and 404 other fields; 180 timing fields not compared; exact
+report: identical (line endings and timing columns ignored)
+primary: MATCH - regdiffusion_motif > regdiffusion | auprc_ratio | auto
+  committed: n=19 mean +0.184 [+0.132, +0.237] raw one-sided p(A>B) 3.93e-07
+  rerun:     n=19 mean +0.184 [+0.132, +0.237] raw one-sided p(A>B) 3.93e-07
+primary: MATCH - grnboost2_motif > grnboost2 | auprc_ratio | auto
+  committed: n=20 mean +0.130 [+0.108, +0.153] raw one-sided p(A>B) 9.08e-11
+  rerun:     n=20 mean +0.130 [+0.108, +0.153] raw one-sided p(A>B) 9.08e-11
+verdict: MATCH
+exit=0

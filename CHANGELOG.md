@@ -3,6 +3,10 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- EXP-20260926-LM-1 section 4b (#93): GB's second-person rerun on the Bocconi HPC matches the
+  committed results exactly (every non-timing row field, and the report apart from its timing
+  columns; both primaries MATCH at `--rtol 1e-9`). Signed on GB's instruction (typed by the agent,
+  record 4b); C5 is `reproduced`.
 - EXP-20261003-GB-1 run and recorded (issue #52): every dataset of C6 and C4 passed gate 1 and gate 2;
   verdicts from the generated report: C6 inconclusive, C4 mixed, combined inconclusive, so the caveat
   on C4/C6 stays as worded. Results in `benchmarks/results/EXP-20261003-GB-1/`, record section 3.

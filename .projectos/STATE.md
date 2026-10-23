@@ -112,7 +112,8 @@ pre-registered experiments (D-017).
   the motif prior lifts the AUPRC ratio for RegDiffusion by +0.184 [+0.132, +0.237] (n = 19,
   p_Holm 1.2e-6) and for GRNBoost2 by +0.130 [+0.108, +0.153] (n = 20, p_Holm 3.6e-10); both
   supported. EPR: GRNBoost2 lift resolved (+0.61), RegDiffusion unresolved (about 0). Claim C5
-  `reproduced-computational` (agent rerun on the HPC, identical numbers, issue #15); human pending. One dataset lost to a RegDiffusion zero-variance error (issue #13).
+  `reproduced` (GB's second-person rerun on the HPC, job 693267, every non-timing row field, and the
+  report apart from its timing columns, identical; record section 4b signed 2026-10-17, #93; earlier agent rerun identical, #15). One dataset lost to a RegDiffusion zero-variance error (issue #13).
   Edges and processed data (190 MB) stay on the cluster in `~/gb_runs/EXP-20260926-LM-1`.
 - Issue #6 merged (#11): scrublet pools batches under 100 cells.
 - EXP-20260925-LM-2 (confirmatory, merged in #7): the motif prior lifts Pearson's AUPRC ratio by
@@ -131,8 +132,9 @@ pre-registered experiments (D-017).
    section 8 since #35. Post-merge reviews of #3 and #7 are posted (2026-10-01, no blocking finding)
    and GB ratified both merges on the PRs (2026-10-03); the workflow PR (#9) is not reviewed yet.
 2. (done, #11) Issue #6 small-batch scrublet rule.
-3. GB: reproduce EXP-20260926-LM-1 under the same rule (C5 is only `reproduced-computational`). Issue #13 is
-   fixed (#16). A fresh-set rerun would remove the "seen in LM-2" caveat of C5.
+3. (done 2026-10-15, #93, record section 4b) GB's rerun of EXP-20260926-LM-1 on the Bocconi HPC (job
+   693267): `compare_runs.py` verdict MATCH, exact and `--rtol 1e-9`; 4b signed, C5 `reproduced`.
+   C6 (#94) and C7 (#95) reruns: their own PRs.
 4. Review and merge issue #30's validated fix; then use EXP-20261001-LD-1's real ties plus synthetic
    breakpoints to register a separate confirmatory auto-vs-baseline run. Scheduled monitoring stays
    disabled.

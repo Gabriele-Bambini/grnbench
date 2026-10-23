@@ -17,6 +17,7 @@ Updated: 2026-10-15.
   `benchmarks/diagnose_rerun.py` (where a rerun's rows differ from the committed rows; exploratory, #24).
 - Motif-prior lift decomposition: `benchmarks/motif_sensitivity.py` (`plan`, `run`, `report`) from a
   `--keep-artifacts` run (EXP-20261003-GB-1); tests `tests/test_motif_sensitivity.py`.
+- Second-person rerun outputs: `benchmarks/results/EXP-20260926-LM-1-repro-GB/` (#93; record section 4b).
 - Second-person rerun outputs: `benchmarks/results/EXP-20260925-LM-2-repro-GB/` (#24; record section 4b).
 - Figures: `grnbench viz <run_dir>`. LaTeX: `grnbench report <run_dir|EXP-ID>`, `grnbench report --paper`.
 - HPC: `hpc/hpc.sh`, VPN `hpc/vpn.ps1` (Windows), guide `docs/HPC.md`, agent procedure `.claude/skills/grnbench-hpc/SKILL.md`.
