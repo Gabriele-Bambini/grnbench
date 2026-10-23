@@ -2,7 +2,7 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-10-21 (R bridge, step 2b, #135, GB's agent); 2026-10-15 (#87, #71, #69 merged at GB's request, GB's agent); 2026-10-10 (interface branch merged with main after #55, GB's agent); 2026-10-09 (interface redesign; tool end to end, GB's agent); 2026-10-07 (interface explorer, GB's agent); 2026-10-06 (EXP-20261003-GB-1: review fixes and record note 2.1 on PR #55, agent); 2026-10-03 (issue #42, GB's agent); 2026-10-02 by LD's and LM's agents. PR #3, PR #7 and the shared-workflow PR were merged by the owner
+Updated: 2026-10-22 (#129 third review fixes, GB's agent); 2026-10-20 (Block 6, step 15-1, GB's agent); 2026-10-15 (#87, #71, #69 merged at GB's request, GB's agent); 2026-10-10 (interface branch merged with main after #55, GB's agent); 2026-10-09 (interface redesign; tool end to end, GB's agent); 2026-10-07 (interface explorer, GB's agent); 2026-10-06 (EXP-20261003-GB-1: review fixes and record note 2.1 on PR #55, agent); 2026-10-03 (issue #42, GB's agent); 2026-10-02 by LD's and LM's agents. PR #3, PR #7 and the shared-workflow PR were merged by the owner
 after independent agent reviews, not human reviews (GB was away).
 
 ## Focus
@@ -11,13 +11,15 @@ comparison, published as a tool with a paper. Headline claims from real data (D-
 pre-registered experiments (D-017).
 
 ## In progress
-- Preprocessing engine step 2b, optional R bridge (GB, `gb/r-bridge`, issue #135, D-032 proposed):
-  `grnbench.rbridge` finds an Rscript (conda env `grnbench-r` by default), probes its packages once per
-  cache, runs R scripts with a fixed seed and RNG kind and records the session; `grnbench env` and the
-  interface's Environment popover show what is there and the install command for the rest. Checked with a
-  fake Rscript and against the real `grnbench-r` env on GB's Windows PC; not on Linux or the cluster yet
-  (installing R there needs the owner's OK). Planner behaviour unchanged. Next: step 2c (after PR #133)
-  wires `requirement_status` into the knowledge base's availability, R options opt-in.
+- Block 6 of the Phase 0 plan (points 13-17: motif-prior sources, multiplicity, C4's EPR, C7, GB-1
+  stage 2; GB, separate track, reviewer LM). Step 15-1 done on `gb/epr-power-diagnosis` (#127):
+  `grnbench.eval.power` (power of the paired t, G*Power matched-pairs model) and
+  `benchmarks/epr_power.py`; EXP-20261020-GB-1 (exploratory, committed rows only): C4's EPR lift was
+  underpowered at n = 20 (no heavy tails; leaving one dataset out changes the verdict in 0 of 20 drops
+  in the auto arm and in 2 of 20 in the baseline arm, where it turns supported); +0.10 EPR needs 101 (one pair)
+  to 123 (family of 4) never-used datasets for 80% power. C4 unchanged. Next in this track: 16-2
+  (pin `auto_noref` to the pre-D-021 rule, GB's OK first), 14-1 (multiplicity simulation), 13-1
+  (motif-source table). 15-2 (HPC) and 15-3 (new data, confirmatory) only with GB's OK.
 - More models (GB, `gb/more-models`): eleven literature methods registered as *extra* (`bicor`,
   `wgcna_tom`, `propr_rho`, `aracne_dpi`, `mrnet`, `tigress`, `bbsr`, `pcnet`, `extra_trees`,
   `gradient_boosting`, `community`); `--methods available` still runs exactly the 17 older ones.

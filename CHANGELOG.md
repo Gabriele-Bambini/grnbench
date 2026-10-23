@@ -3,6 +3,15 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- `grnbench.eval.power`: power, needed number of datasets and smallest detectable effect of the paired t
+  over datasets (G*Power matched-pairs model, noncentral t; one-sided = the directed test of
+  `compare_units`), tested against the G*Power manual and a simulation. `benchmarks/epr_power.py` re-reads
+  C4's EPR comparison from its committed rows (gate: the registered report code must reprint the committed
+  lines) and writes a descriptive diagnosis and planning tables. EXP-20261020-GB-1 (exploratory, #127): the
+  EPR lift of the motif prior in C4 was underpowered at n = 20; C4 is unchanged. After the review of #129
+  the report also reruns the registered code with each dataset left out (the verdict changes in 0 of 20
+  drops in the auto arm, 2 of 20 in the baseline arm), no longer reports power at C4's own estimate, and
+  `n_for_power` never plans fewer than 3 datasets.
 - Optional R bridge (#135, D-032 proposed): `grnbench.rbridge` runs R as an `Rscript --vanilla` subprocess
   from a dedicated conda env `grnbench-r` (`requirements/r-bridge.yml` on Linux, `requirements/r-bridge.R`
   on both systems, `docs/R_BRIDGE.md`), with seed and RNG kind fixed by `r/_wrapper.R` and R and package

@@ -24,6 +24,8 @@ Updated: 2026-10-20.
   `benchmarks/diff_rows_nested.py` (where two `rows/` folders differ at any depth, timings apart; diagnosis, #95).
 - Motif-prior lift decomposition: `benchmarks/motif_sensitivity.py` (`plan`, `run`, `report`) from a
   `--keep-artifacts` run (EXP-20261003-GB-1); tests `tests/test_motif_sensitivity.py`.
+- C4's EPR comparison re-read from its committed rows, with planning power: `benchmarks/epr_power.py`
+  (EXP-20261020-GB-1); tests `tests/test_epr_power.py`.
 - Second-person rerun outputs: `benchmarks/results/EXP-20261003-LM-1-repro-GB/` (#95; record section 4b).
   `benchmarks/diagnose_rerun.py` (where a rerun's rows differ from the committed rows; exploratory, #24).
 - Motif-prior lift decomposition: `benchmarks/motif_sensitivity.py` (`plan`, `run`, `report`) from a
@@ -43,6 +45,7 @@ Updated: 2026-10-20.
 | R bridge (optional) | `rbridge` (find an Rscript, cached probe, `run_r` / `run_external`, `requirement_status`, `environment_report` / `environment_status`), `r/_wrapper.R` (seed, RNG kind, `session.json`), `r/_probe.R` (versions as one JSON line); not wired into `kb` availability yet |
 | cleaning engine | `kb` (stages, options, evidence, references), `executors` (`PLAN_STEPS`: which options grnbench can run, which are recorded only; refuses imputation, D-002), `context` (what the data are), `profile`, `selector` (rules), `autoprep` (plan, execute), `screen` (candidate pipelines on the data, reference split) |
 | inference | `infer/` (`base` contract + registry, `correlation`, `classical`, `tree_methods` GENIE3/GRNBoost2, `aracne3`, `regdiffusion_adapter`, `cistarget` motif prior / pruning, `association` bicor/WGCNA/propr/ARACNe-style/MRNET, `regression` TIGRESS/BBSR/pcNet/extra-trees/boosting, `community` rank aggregation), `plugins` (bring your own model); what is built in and what is not: `docs/models_catalog.md` |
+| evaluation + statistics | `eval/` (`metrics`, `gold`, `universe`, `nulls`, `stability`, `comparison` = `compare_units` paired t + Holm, `power` = power and needed n of that t, for planning) |
 | evaluation + statistics | `eval/` (`metrics`, `gold`, `universe`, `nulls`, `stability`, `comparison` = `compare_units` paired t + Holm) |
 | seeds | `seeds` (`DEFAULT_SEED`, `derive` named child seeds, `SeedPlan`, `LEGACY` = the seeds each entry point uses today, read back from the code by `tests/test_seeds_legacy.py`; nothing calls it yet, #126) |
 | reporting | `report` + `html_report` (per run), `viz` + `viz.mplstyle` (figures), `explore` (exploratory TF atlas, figures and evidence cards from run artifacts), `texreport` (LaTeX), `board` (team board) |
