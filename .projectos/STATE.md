@@ -120,9 +120,12 @@ pre-registered experiments (D-017).
 
 ## Next steps
 1. GB: reproduce EXP-20260925-LM-2 from the record (#24: GB directs and checks on his own account; an
-   agent may type the commands; on another OS or machine if possible),
-   then fill section 4 and set C4 to `reproduced`. Review, or challenge, the agent-reviewed merges
-   #3, #7 and the workflow PR (AGENTS.md section 5: open an issue citing the PR).
+   agent may type the commands; on another OS or machine if possible), then fill section 4 and set C4
+   to `reproduced`. Claimed in #24 (plan, decision rule and HPC execution notes there; compare with
+   `benchmarks/compare_runs.py`); not launched yet. Reproduce at `1d07221`, not `main` (#11 changed
+   doublet calls), with the registered references LM shared in #24 (D-020). The rule is in AGENTS.md
+   section 8 since #35. Post-merge reviews of #3 and #7 are posted (2026-10-01, no blocking finding)
+   and GB ratified both merges on the PRs (2026-10-03); the workflow PR (#9) is not reviewed yet.
 2. (done, #11) Issue #6 small-batch scrublet rule.
 3. GB: reproduce EXP-20260926-LM-1 under the same rule (C5 is only `reproduced-computational`). Issue #13 is
    fixed (#16). A fresh-set rerun would remove the "seen in LM-2" caveat of C5.

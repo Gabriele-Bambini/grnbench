@@ -3,6 +3,13 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- `benchmarks/compare_runs.py`: judges a rerun of a registered experiment against its committed
+  results from files (task ids, every row field with timings excluded, `REPORT_REAL.md` modulo line
+  endings and timing columns, and the record's `primary comparison`); `verdict: MATCH` / `DIFFERENT` /
+  `NOT EVALUABLE`, optional tolerance, `--json` for the record. A primary is required (`--rows-only`
+  says so in the verdict); a record or `--primary` that does not parse is an error, and a primary with
+  fewer than 3 usable units on a side is `NOT EVALUABLE`, never `MATCH`. For the LM-2 human
+  reproduction (#24).
 - Motif methods (`motif_prior`, `*_motif`, `*_cistarget`) record cisTarget coverage (genes found, regulators with a motif, database names) in the run provenance as `motif_coverage` and warn when under 50% of genes are found or no regulator has a motif (Ensembl IDs?); scores unchanged (#76 M13).
 - `grnbench.explore` (EXPLORATORY, descriptive, no claim): per-(dataset, TF) atlas with detection rate and per-TF AUPRC ratio, TF detectability and motif-vs-coexpression figures, per-TF evidence cards, from saved run artifacts.
 - `docs/related_work.md`: the field's research lines and narrative arcs, open questions (2026), where our

@@ -11,6 +11,7 @@ Agents are tools, not contributors: log the person who directed the agent.
 | 2026-09-25 | LM | Project administration | GitHub repo, experiment registry, paper/ standard |
 | 2026-09-25 | LM | Investigation, Formal analysis, Data curation | EXP-20260925-LM-2 confirmatory run (pre-registration, 20 datasets) |
 | 2026-10-01 | LD | Conceptualization, Methodology, Software, Validation, Investigation, Formal analysis, Data curation, Visualization | context-specific simulator, controlled worst-case stress design and complete resumable synthetic + real benchmark; issues #22/#23, EXP-20261001-LD-1 |
+| 2026-10-02 | GB | Validation, Software | post-merge reviews of #3 and #7 (tests on the PR heads, independent re-derivation of the LM-2 statistics); `benchmarks/compare_runs.py`; LM-2 human reproduction claimed (#24) |
 | 2026-10-03 | GB | Software | ingest count-plausibility warning, specific refusal advice and `benchmarks/count_plausibility.py`; issue #42 |
 | 2026-10-05 | GB | Methodology, Software, Formal analysis | motif-prior lift decomposition (stage 1, Pearson): registration and `benchmarks/motif_sensitivity.py`; EXP-20261003-GB-1, issue #52 |
 | 2026-10-06 | GB | Software | eleven literature GRN methods (bicor, WGCNA, propr, ARACNe-style, MRNET, TIGRESS, BBSR, pcNet, extra-trees, boosting, community), extra-method registry flag, `docs/models_catalog.md`; branch `gb/more-models` |
