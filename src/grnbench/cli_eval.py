@@ -83,10 +83,13 @@ def _build_parser() -> argparse.ArgumentParser:
     r = p.add_argument_group("reporting")
     r.add_argument("--prep-manifest", default=None,
                    help="manifest.json from grnbench-prep, embedded in the HTML report")
+    r.add_argument("--diagnostics", default=None,
+                   help="schema-v1 diagnostics.json rendered consistently in Markdown and HTML")
     r.add_argument("--plugin", action="append", default=None, metavar="SPEC",
                    help="custom model: spec file (.json/.yaml) or 'module:Attribute' "
                         "(repeatable; needed to re-run plugin methods for stability)")
     r.add_argument("--no-html", action="store_true", help="skip eval_report.html")
+    r.add_argument("--defer-report-output", action="store_true", help=argparse.SUPPRESS)
     return p
 
 
@@ -111,7 +114,7 @@ def _method_name(path: Path, taken: set[str]) -> tuple[str, str | None]:
     return candidate, base
 
 
-def _render_markdown(report: dict) -> str:
+def _render_markdown(report: dict, diagnostics: dict | None = None) -> str:
     lines = ["# GRN-Bench evaluation report", "",
              f"- Gold standard: **{report['gold']}** ({report['gold_pairs']} pairs)",
              f"- Null model: {report['null_mode']} ({report['n_nulls']} draws)", "",
@@ -201,7 +204,25 @@ def _render_markdown(report: dict) -> str:
             row = [("-" if a == b else f"{ov['jaccard'][a][b]:.3f}") for b in names]
             lines.append(f"| **{a}** | " + " | ".join(row) + " |")
         lines.append("")
+    from grnbench.diagnostics import render_diagnostics_markdown
+    lines.append(render_diagnostics_markdown(diagnostics))
     return "\n".join(lines)
+
+
+def write_evaluation_reports(report: dict, out_dir: Path, *, prep_manifest: dict | None = None,
+                             diagnostics: dict | None = None, html: bool = True) -> list[Path]:
+    """Write every evaluation report from one result and one validated diagnostic structure."""
+    from grnbench.report import write_json
+    write_json(out_dir / "eval_report.json", report)
+    md_path = out_dir / "eval_report.md"
+    md_path.write_text(_render_markdown(report, diagnostics), encoding="utf-8")
+    outputs = [out_dir / "eval_report.json", md_path]
+    if html:
+        from grnbench.html_report import render_html
+        html_path = out_dir / "eval_report.html"
+        html_path.write_text(render_html(report, prep_manifest, diagnostics), encoding="utf-8")
+        outputs.append(html_path)
+    return outputs
 
 
 def _run_stability(args, report: dict, names: list[str]) -> None:
@@ -263,6 +284,12 @@ def _run_stability(args, report: dict, names: list[str]) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
+    from grnbench.diagnostics import read_diagnostics
+    try:
+        diagnostics = read_diagnostics(args.diagnostics)
+    except ValueError as exc:
+        print(f"[REPORT FAIL] {exc}", file=sys.stderr)
+        return 2
     from grnbench.report import (environment_block, write_json, file_fingerprint,
                                  sequence_identity, require_empty_output)
     try:
@@ -312,6 +339,18 @@ def main(argv: list[str] | None = None) -> int:
             value = getattr(args, key)
             if value:
                 provenance['additional_inputs'][key] = file_fingerprint(value)
+        if args.diagnostics:
+            from grnbench.diagnostics import diagnostics_file
+            diagnostic_source = diagnostics_file(args.diagnostics)
+            diagnostic_fingerprint = file_fingerprint(diagnostic_source)
+            diagnostic_fingerprint['path'] = diagnostic_source.name
+            provenance['additional_inputs']['diagnostics'] = diagnostic_fingerprint
+            provenance['arguments']['diagnostics'] = diagnostic_source.name
+            for index, token in enumerate(provenance['argv']):
+                if token == '--diagnostics' and index + 1 < len(provenance['argv']):
+                    provenance['argv'][index + 1] = diagnostic_source.name
+                elif token.startswith('--diagnostics='):
+                    provenance['argv'][index] = f'--diagnostics={diagnostic_source.name}'
         provenance['plugin_files'] = [file_fingerprint(spec) for spec in (args.plugin or []) if Path(spec).is_file()]
     except Exception as e:
         print(f'[INPUT ERROR] {e}', file=sys.stderr)
@@ -476,18 +515,13 @@ def main(argv: list[str] | None = None) -> int:
             print(f"[WARN] could not read --prep-manifest: {e}", file=sys.stderr)
 
     report['status'] = 'partial-failure' if failures else 'success'
-    write_json(out_dir / "eval_report.json", report)
-    md = _render_markdown(report)
-    (out_dir / "eval_report.md").write_text(md, encoding="utf-8")
-    outputs = [out_dir / "eval_report.json", out_dir / "eval_report.md"]
-    if not args.no_html:
-        from grnbench.html_report import render_html
-        html_path = out_dir / "eval_report.html"
-        html_path.write_text(render_html(report, prep_manifest), encoding="utf-8")
-        outputs.append(html_path)
+    outputs = write_evaluation_reports(report, out_dir, prep_manifest=prep_manifest,
+                                       diagnostics=diagnostics, html=not args.no_html)
+    md = (out_dir / "eval_report.md").read_text(encoding="utf-8")
 
-    print(md)
-    print("\noutputs: " + " , ".join(str(o) for o in outputs))
+    if not args.defer_report_output:
+        print(md)
+        print("\noutputs: " + " , ".join(str(o) for o in outputs))
     return 1 if failures else 0
 
 

@@ -149,7 +149,7 @@ def build_manifest(input_fp: dict, ingest: dict, qc: dict, steps: list[dict],
     return manifest
 
 
-def render_report(manifest: dict) -> str:
+def render_report(manifest: dict, diagnostics: dict | None = None) -> str:
     """Human-readable markdown report from the run manifest."""
     qc = manifest["qc"]
     m = qc["metrics"]
@@ -237,6 +237,9 @@ def render_report(manifest: dict) -> str:
     add("")
     add("- Raw counts verified at ingest; no imputation applied anywhere.")
     add("- Every step recorded above with parameters; input fingerprinted in manifest.json.")
+    add("")
+    from grnbench.diagnostics import render_diagnostics_markdown
+    lines.extend(render_diagnostics_markdown(diagnostics).splitlines())
     return "\n".join(lines)
 
 

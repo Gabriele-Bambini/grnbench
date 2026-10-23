@@ -3,6 +3,12 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- Report diagnostics (#59): Markdown, HTML and LaTeX reports now consume one validated schema-v1
+  diagnostic view for preparation, screening and model outcomes, choices, failure categories and
+  before/after dimensions. Historical runs are marked unavailable; malformed or unsupported
+  diagnostics fail clearly instead of being guessed from other artifacts. Readers require the
+  complete schema and the writer's bounded choice allowlist; one-shot reports fingerprint and
+  render the final diagnostic rather than retaining the temporary partial artifact.
 - `grnbench.eval.power`: power, needed number of datasets and smallest detectable effect of the paired t
   over datasets (G*Power matched-pairs model, noncentral t; one-sided = the directed test of
   `compare_units`), tested against the G*Power manual and a simulation. `benchmarks/epr_power.py` re-reads

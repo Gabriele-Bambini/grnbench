@@ -145,13 +145,19 @@ def test_writer_is_deterministic_and_refuses_unsafe_content(tmp_path):
 def test_writer_emits_strict_lf_json_and_normalises_numpy_and_nonfinite(tmp_path):
     doc = prep_document(_prep_manifest())
     choices = doc["prep"]["default"]["all_cells"]["choices"]
-    choices["integer"] = np.int64(7)
-    choices["nonfinite"] = np.nan
+    choices["n_hvg"] = np.int64(7)
+    choices["subsample_cells"] = np.nan
     raw = write_diagnostics(tmp_path / "strict.json", doc).read_bytes()
     assert b"\r\n" not in raw and b"NaN" not in raw and b"Infinity" not in raw
     parsed = json.loads(raw)
-    assert parsed["prep"]["default"]["all_cells"]["choices"]["integer"] == 7
-    assert parsed["prep"]["default"]["all_cells"]["choices"]["nonfinite"] is None
+    assert parsed["prep"]["default"]["all_cells"]["choices"]["n_hvg"] == 7
+    assert parsed["prep"]["default"]["all_cells"]["choices"]["subsample_cells"] is None
+
+
+def test_safe_message_redacts_probable_barcodes_and_numeric_vectors():
+    assert safe_message(
+        "cell AAACCCAAGAAACCAT-1 had expression [0.0, 1.0, 2.0]"
+    ) == "cell <barcode> had expression <values>"
 
 
 def test_nonfinite_dimension_is_unknown_instead_of_crashing():

@@ -152,7 +152,8 @@ grnbench run --data data.h5ad --out runs/mydata \
 
 Produces `runs/mydata/{prep,infer,eval}/` plus `run_manifest.json` and the portable
 `diagnostics.json` described in [`docs/DIAGNOSTICS.md`](docs/DIAGNOSTICS.md); open
-`runs/mydata/eval/eval_report.html`.
+`runs/mydata/eval/eval_report.html`. Markdown, HTML and LaTeX reports render the same validated
+pipeline outcomes from that artifact; historical runs explicitly show that diagnostics are unavailable.
 
 ### Or stage by stage
 

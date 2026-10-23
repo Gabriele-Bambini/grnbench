@@ -54,6 +54,8 @@ REPORT_TEMPLATE = r"""\documentclass{article}
 <<STATUS>>
 \section{Configuration summary}
 \input{tables/configuration.tex}
+\section{Pipeline diagnostics}
+<<DIAGNOSTICS>>
 \section{Methods}
 <<METHODS>>
 \section{Results}
@@ -402,12 +404,46 @@ def _figures(run_dir: Path, out: Path) -> str:
     return "\n".join(blocks) + "\n" if blocks else "No figures found in the viz folder.\n"
 
 
+def _diagnostics_tex(document: dict | None) -> str:
+    """LaTeX rendering of the same validated rows used by Markdown and HTML."""
+    from grnbench.diagnostics import diagnostics_view, format_choices, format_dimensions
+
+    view = diagnostics_view(document)
+    if not view["available"]:
+        return tex_escape(view["note"]) + "\n"
+    summary = (
+        "Overall outcome: " + tex_escape(view["outcome"])
+        + "; selected candidate: " + tex_escape(view["selected_candidate"] or "none")
+        + "; usable candidates: "
+        + tex_escape(", ".join(view["usable_candidates"]) or "none") + ".\n"
+    )
+    rows = []
+    for entry in view["entries"]:
+        failure = "--"
+        if entry["failure_category"]:
+            failure = f"{entry['failure_category']}: {entry['message']}"
+        values = (
+            entry["stage"], entry["name"], entry["context"], entry["outcome"],
+            format_dimensions(entry["before"]), format_dimensions(entry["after"]),
+            format_choices(entry["choices"]), failure,
+        )
+        rows.append(" & ".join(tex_escape(value) for value in values) + r" \\")
+    table = (
+        r"\begin{small}\begin{tabular}{llllllp{0.20\linewidth}p{0.20\linewidth}}" + "\n"
+        r"\toprule stage & candidate/model & context & outcome & before & after & choices & failure \\ \midrule" + "\n"
+        + "\n".join(rows) + "\n" + r"\bottomrule\end{tabular}\end{small}" + "\n"
+    )
+    return summary + table
+
+
 def build_report(target: str, exp: str | None = None, out: Path | None = None,
                  root: Path = ROOT, compile_pdf: bool = True) -> Path:
     run_dir, exp_found = resolve_input(target, root)
     exp = exp or exp_found or run_dir.name
     fields = record_fields(find_record(exp, root))
     df = load_rows(run_dir)
+    from grnbench.diagnostics import read_diagnostics
+    diagnostics = read_diagnostics(run_dir)
     out = Path(out or run_dir / "latex")
     out.mkdir(parents=True, exist_ok=True)
     macros, comp_inputs, comps = _tables(df, out)
@@ -440,6 +476,7 @@ def build_report(target: str, exp: str | None = None, out: Path | None = None,
                                             if find_record(exp, root) else []) if l.startswith("# ")), exp)
     tex = (REPORT_TEMPLATE.replace("<<TITLE>>", tex_escape(title)).replace("<<EXP>>", tex_escape(exp))
            .replace("<<STATUS>>", status).replace("<<METHODS>>", _methods(fields, df))
+           .replace("<<DIAGNOSTICS>>", _diagnostics_tex(diagnostics))
            .replace("<<PRIMARY>>", _primary(fields, comps))
            .replace("<<COMPARISON_TABLES>>", "\n".join(comp_inputs))
            .replace("<<FIGURES>>", _figures(run_dir, out))
@@ -447,7 +484,7 @@ def build_report(target: str, exp: str | None = None, out: Path | None = None,
     main = out / "report.tex"
     main.write_text(tex, encoding="utf-8")
     if compile_pdf and compile_tex(main) is None:
-        _text_fallback(out, exp, config, comps)
+        _text_fallback(out, exp, config, comps, diagnostics)
     return main
 
 
@@ -458,7 +495,8 @@ def _rel(path: Path, root: Path) -> str:
         return Path(path).name
 
 
-def _text_fallback(out: Path, exp: str, config: dict, comps: dict) -> Path:
+def _text_fallback(out: Path, exp: str, config: dict, comps: dict,
+                   diagnostics: dict | None = None) -> Path:
     """Plain-text report when no TeX engine is installed (the thesis pipeline did the same when
     ReportLab was missing): configuration and every declared comparison, from the same numbers."""
     lines = [f"# {exp}: report (text fallback, no TeX engine found)", ""]
@@ -473,6 +511,8 @@ def _text_fallback(out: Path, exp: str, config: dict, comps: dict) -> Path:
             ci = "unbounded" if lo is None else f"[{fmt(lo, True)}, {fmt(hi, True)}]"
             lines.append(f"| {r['a']} | {r['b']} | {r['n']} | {fmt(r['diff'], True)} | {ci} | "
                          f"{fmt_p(r['p_a_gt_b'])} | {fmt_p(r['p_b_gt_a'])} | {r['supported']} |")
+    from grnbench.diagnostics import render_diagnostics_markdown
+    lines += ["", render_diagnostics_markdown(diagnostics)]
     path = out / "report_fallback.md"
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path

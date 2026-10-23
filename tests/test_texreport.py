@@ -44,6 +44,31 @@ def test_report_numbers_come_from_the_rows(tmp_path):
     assert "\\input{tables/models.tex}" in body
     assert "\\input{tables/comparisons_auprc_ratio_auto.tex}" in body
     assert "fell back to the heuristic in 1 of 6 datasets" in body
+    assert "Portable diagnostics unavailable" in body
+
+
+def test_report_reads_schema_v1_diagnostics_from_the_run_folder(tmp_path):
+    from grnbench.diagnostics import new_document, write_diagnostics
+
+    run, _ = _run(tmp_path / "run")
+    doc = new_document(outcome="ok")
+    doc["selected_candidate"] = "baseline"
+    doc["usable_candidates"] = ["baseline"]
+    doc["prep"] = {"baseline": {"all_cells": {
+        "outcome": "ok", "failure": None, "choices": {"strategy": "cpm_log1p"},
+        "dimensions": {"before": {"cells": 120, "genes": 5000},
+                       "after": {"cells": 100, "genes": 2000}},
+        "steps": [],
+    }}}
+    write_diagnostics(run / "diagnostics.json", doc)
+
+    body = texreport.build_report(str(run), exp="EXP-TEST", out=tmp_path / "out",
+                                  compile_pdf=False).read_text(encoding="utf-8")
+
+    plain = body.replace("\\_", "_")
+    assert "Pipeline diagnostics" in body
+    assert "baseline" in plain and "all_cells" in plain and "cpm_log1p" in plain
+    assert "120 cells x 5,000 genes" in plain and "100 cells x 2,000 genes" in plain
 
 
 def test_report_matches_the_committed_real_bench_report():

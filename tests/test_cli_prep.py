@@ -43,6 +43,10 @@ def test_explicit_zero_threshold_is_honoured_not_replaced_by_default(tmp_path):
     choices = diagnostics["prep"]["default"]["all_cells"]["choices"]
     assert choices["requested_strategy"] == "auto"
     assert choices["strategy"] == manifest["strategy_chosen"]
+    report = (out / "report.md").read_text(encoding="utf-8")
+    assert "## Pipeline diagnostics" in report
+    assert "default" in report and "all_cells" in report
+    assert "100 cells x 400 genes" in report
 
 
 def test_nonzero_threshold_still_overrides_default(tmp_path):

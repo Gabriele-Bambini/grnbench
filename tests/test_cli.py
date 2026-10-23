@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
 
 import pandas as pd
@@ -102,7 +103,7 @@ def test_run_without_gold_stops_after_inference(tmp_path, dataset, capsys):
     assert "no --gold" in capsys.readouterr().out
 
 
-def test_run_full_loop_with_gold_and_stability(tmp_path, dataset):
+def test_run_full_loop_with_gold_and_stability(tmp_path, dataset, capsys):
     src, tfs = dataset
     out1 = tmp_path / "stage"
     assert run_main(["--data", str(src), "--out", str(out1), "--tf-list", str(tfs),
@@ -125,6 +126,12 @@ def test_run_full_loop_with_gold_and_stability(tmp_path, dataset):
         assert (out / artifact).exists(), f"missing {artifact}"
 
     report = json.loads((out / "eval" / "eval_report.json").read_text(encoding="utf-8"))
+    diagnostics_path = out / "diagnostics.json"
+    diagnostics = json.loads(diagnostics_path.read_text(encoding="utf-8"))
+    assert diagnostics["outcome"] == "ok"
+    diagnostic_input = report["provenance"]["additional_inputs"]["diagnostics"]
+    assert diagnostic_input["path"] == "diagnostics.json"
+    assert diagnostic_input["sha256"] == hashlib.sha256(diagnostics_path.read_bytes()).hexdigest()
     m = report["methods"]["spearman_signed"]
     assert m["n_gold_in_list"] > 0, "gold built from real edges must be reachable"
     assert m["auprc"] > 0 and m["null"]["n_nulls_used"] >= 1
@@ -138,6 +145,13 @@ def test_run_full_loop_with_gold_and_stability(tmp_path, dataset):
     assert "<svg" in html and "spearman_signed" in html
     # the prep manifest is threaded through, so QC gates appear in the HTML
     assert "mito_fraction" in html
+    markdown = (out / "eval" / "eval_report.md").read_text(encoding="utf-8")
+    for rendered in (html, markdown):
+        assert "Pipeline diagnostics" in rendered
+        assert "spearman_signed" in rendered and "all_cells" in rendered
+        assert "Portable diagnostics unavailable" not in rendered
+    assert "Overall outcome: **ok**" in markdown
+    assert "Overall outcome: **partial**" not in capsys.readouterr().out
 
     run_manifest = json.loads((out / "run_manifest.json").read_text(encoding="utf-8"))
     assert run_manifest["status"] == "ok"

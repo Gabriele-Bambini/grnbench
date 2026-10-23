@@ -571,7 +571,38 @@ def _provenance(report: dict, prep: dict | None) -> str:
 # public entry point
 # --------------------------------------------------------------------------- #
 
-def render_html(report: dict, prep_manifest: dict | None = None) -> str:
+def _diagnostics_section(document: dict | None) -> str:
+    from grnbench.diagnostics import diagnostics_view, format_choices, format_dimensions
+
+    view = diagnostics_view(document)
+    if not view["available"]:
+        return f'<p class="sub">{_e(view["note"])}</p>'
+    rows = []
+    for entry in view["entries"]:
+        failure = "&ndash;"
+        if entry["failure_category"]:
+            failure = f"{_e(entry['failure_category'])}: {_e(entry['message'])}"
+        rows.append(
+            "<tr>"
+            f"<td>{_e(entry['stage'])}</td><td>{_e(entry['name'])}</td>"
+            f"<td>{_e(entry['context'])}</td><td>{_e(entry['outcome'])}</td>"
+            f"<td>{_e(format_dimensions(entry['before']))}</td>"
+            f"<td>{_e(format_dimensions(entry['after']))}</td>"
+            f"<td>{_e(format_choices(entry['choices']))}</td><td>{failure}</td>"
+            "</tr>"
+        )
+    selected = _e(view["selected_candidate"] or "none")
+    usable = ", ".join(_e(item) for item in view["usable_candidates"]) or "none"
+    return (
+        f'<p class="sub">Overall outcome: <b>{_e(view["outcome"])}</b>; '
+        f'selected candidate: <code>{selected}</code>; usable candidates: {usable}.</p>'
+        '<div class="scroll"><table><thead><tr><th>stage</th><th>candidate/model</th>'
+        '<th>context</th><th>outcome</th><th>before</th><th>after</th><th>choices</th>'
+        '<th>failure</th></tr></thead><tbody>' + "".join(rows) + "</tbody></table></div>"
+    )
+
+def render_html(report: dict, prep_manifest: dict | None = None,
+                diagnostics: dict | None = None) -> str:
     """Render a full evaluation report (see :mod:`grnbench.cli_eval`) as HTML."""
     methods = report.get("methods") or {}
     gold = report.get("gold", "unknown")
@@ -630,6 +661,9 @@ def render_html(report: dict, prep_manifest: dict | None = None) -> str:
 
 <h2>Preprocessing QC</h2>
 {_qc_section(prep_manifest) or '<p class="sub">No preprocessing manifest supplied (pass <code>--prep-manifest manifest.json</code>).</p>'}
+
+<h2>Pipeline diagnostics</h2>
+{_diagnostics_section(diagnostics)}
 
 <h2>Provenance</h2>
 {_provenance(report, prep_manifest)}

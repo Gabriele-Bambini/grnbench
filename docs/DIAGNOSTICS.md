@@ -26,6 +26,11 @@ Each candidate/context/model entry records:
 - cells and genes before and after the relevant stage, when known;
 - compact stage records for preprocessing.
 
+The reader requires the complete schema envelope and accepts only the choice fields emitted by
+the writer. Threshold choices are limited to the named QC thresholds and all other choice values
+must be scalar. Missing schema fields, unknown choice fields and unsanitised messages are errors;
+they are never passed through to a report.
+
 Unknown dimensions are `null`; they are never guessed. A failure remains visible even when another
 candidate or model succeeds.
 
@@ -60,3 +65,16 @@ Consumers must check both `schema` and `schema_version`. New optional entry fiel
 within schema v1, so consumers must ignore fields they do not recognise. A future incompatible
 shape increments the integer version; existing v1 documents remain readable. Registered experiment
 outputs are not rewritten retroactively.
+
+`grnbench.diagnostics.read_diagnostics` is the canonical reader. A missing file means a historical
+run and is rendered explicitly as unavailable. An existing malformed, unsupported or privacy-unsafe
+file raises an error; consumers never fall back to guessing its content from unrelated manifests.
+
+Markdown, HTML and LaTeX reporting use the same normalized diagnostic rows. They show the overall
+outcome, selected and usable candidates, and each preparation, screening and model outcome with its
+context, choices, failure category/message, and before/after dimensions. `grnbench eval` accepts
+`--diagnostics diagnostics.json` for a standalone evaluation; `grnbench run` refreshes its static
+evaluation reports from the final root diagnostic automatically. Older reports remain generatable
+and state why the diagnostic section is unavailable. The refreshed evaluation provenance
+fingerprints that final file itself (not the surrounding run directory), and the one-shot command
+prints the final report rather than its temporary pre-evaluation diagnostic.

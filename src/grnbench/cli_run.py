@@ -180,12 +180,17 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     from grnbench.cli_eval import main as eval_main
+    from grnbench.diagnostics import run_document, try_write_diagnostics
+    diagnostic_path = try_write_diagnostics(
+        out / "diagnostics.json", run_document, out, outcome="partial", stages=stages)
     eval_argv = [
         *edge_files, "--gold", args.gold, "--out", str(eval_dir),
         "--universe", str(infer_dir / 'candidate_universe.tsv.gz'),
         "--n-nulls", str(args.n_nulls), "--null-mode", args.null_mode,
         "--overlap-k", str(args.overlap_k), "--seed", str(args.seed),
         "--prep-manifest", str(prep_dir / "manifest.json"),
+        "--defer-report-output",
+        *(["--diagnostics", str(diagnostic_path)] if diagnostic_path else []),
         *_opt("--top-k", args.top_k),
         *(["--skip-nulls"] if args.skip_nulls else []),
         *(["--no-html"] if args.no_html else []),
@@ -204,6 +209,10 @@ def main(argv: list[str] | None = None) -> int:
     rc = eval_main(eval_argv)
     stages.append({"stage": "eval", "exit_code": rc, "out_dir": str(eval_dir)})
     _write_manifest(out, args, started, stages, "ok" if rc == 0 else "eval failed")
+    outputs = _refresh_evaluation_reports(out, prep_dir, eval_dir, html=not args.no_html)
+    if outputs:
+        print((eval_dir / "eval_report.md").read_text(encoding="utf-8"))
+        print("\noutputs: " + " , ".join(str(path) for path in outputs))
     if rc == 0:
         _summary(out, prep_dir, infer_dir, eval_dir, edge_files)
     return rc
@@ -240,6 +249,37 @@ def _summary(out: Path, prep_dir: Path, infer_dir: Path,
         if html.exists():
             print(f"  report  {html}")
     print(f"  manifest {out / 'run_manifest.json'}")
+
+
+def _refresh_evaluation_reports(out: Path, prep_dir: Path, eval_dir: Path,
+                                *, html: bool) -> list[Path]:
+    """Regenerate static reports after the final root diagnostic exists.
+
+    ``grnbench-eval`` finishes before the one-shot run knows its terminal
+    outcome.  The score JSON is unchanged; only Markdown/HTML are rendered
+    again from that JSON and the final portable diagnostic.
+    """
+    import json
+
+    report_path = eval_dir / "eval_report.json"
+    if not report_path.exists():
+        return []
+    from grnbench.cli_eval import write_evaluation_reports
+    from grnbench.diagnostics import read_diagnostics
+    from grnbench.report import file_fingerprint
+
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    prep_path = prep_dir / "manifest.json"
+    prep = json.loads(prep_path.read_text(encoding="utf-8")) if prep_path.exists() else None
+    diagnostic_path = out / "diagnostics.json"
+    diagnostics = read_diagnostics(diagnostic_path)
+    if diagnostics is not None:
+        diagnostic_fingerprint = file_fingerprint(diagnostic_path)
+        diagnostic_fingerprint["path"] = diagnostic_path.name
+        report.setdefault("provenance", {}).setdefault("additional_inputs", {})[
+            "diagnostics"] = diagnostic_fingerprint
+    return write_evaluation_reports(report, eval_dir, prep_manifest=prep,
+                                    diagnostics=diagnostics, html=html)
 
 
 if __name__ == "__main__":

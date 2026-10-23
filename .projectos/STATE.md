@@ -2,7 +2,12 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-10-22 (#129 third review fixes, GB's agent); 2026-10-20 (Block 6, step 15-1, GB's agent); 2026-10-15 (#87, #71, #69 merged at GB's request, GB's agent); 2026-10-10 (interface branch merged with main after #55, GB's agent); 2026-10-09 (interface redesign; tool end to end, GB's agent); 2026-10-07 (interface explorer, GB's agent); 2026-10-06 (EXP-20261003-GB-1: review fixes and record note 2.1 on PR #55, agent); 2026-10-03 (issue #42, GB's agent); 2026-10-02 by LD's and LM's agents. PR #3, PR #7 and the shared-workflow PR were merged by the owner
+Updated: 2026-10-15 (#87, #71, #69 merged at GB's request, GB's agent); 2026-10-10
+(issue #59, LD; interface branch merged with main after #55, GB's agent); 2026-10-09
+(interface redesign; tool end to end, GB's agent); 2026-10-07 (interface explorer, GB's agent);
+2026-10-06 (EXP-20261003-GB-1: review fixes and record note 2.1 on PR #55, agent);
+2026-10-03 (issue #42, GB's agent); 2026-10-02 by LD's and LM's agents. PR #3, PR #7 and the
+shared-workflow PR were merged by the owner
 after independent agent reviews, not human reviews (GB was away).
 
 ## Focus
@@ -77,6 +82,9 @@ pre-registered experiments (D-017).
   dimensions, effective-vs-requested strategy, real subset context labels and recursive privacy
   validation. Identifier mapping/collision policy and goal-aware selection remain separate
   follow-ups to #34.
+- Issue #59 (LD, `ld/report-diagnostics`): one strict reader
+  normalizes schema-v1 diagnostics for Markdown, HTML and LaTeX reports; historical runs state that
+  diagnostics are unavailable and malformed/unsupported files fail clearly.
 - Issue #42 (GB, `gb/raw-count-check`): ingest warns, never refuses, on integer input that looks
   non-raw (rounded normalized, 0/1) and gives specific advice when it refuses. Calibration (LM, HPC
   job 681752, review of PR #53): 56 real files (CELLxGENE + 10x raw/filtered), would warn 0; the

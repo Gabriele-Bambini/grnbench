@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from grnbench.cli_eval import main
+from grnbench.diagnostics import new_document, write_diagnostics
 
 
 def inputs(tmp_path, method='method'):
@@ -46,6 +47,21 @@ def test_standalone_eval_records_full_inputs_arguments_and_effective_gold(tmp_pa
     assert pd.read_csv(snapshot, sep='\t').to_records(index=False).tolist() == [('TF', 'G1')]
     assert prov['effective_gold']['identity']['count'] == 1
     assert prov['candidate_universe']['identity']['count'] == 3
+
+
+def test_diagnostics_directory_fingerprints_only_the_portable_file(tmp_path):
+    diagnostic_dir = tmp_path / "run"
+    diagnostic_path = write_diagnostics(
+        diagnostic_dir / "diagnostics.json", new_document(outcome="ok"))
+    (diagnostic_dir / "processed.h5ad").write_bytes(b"not part of the diagnostic fingerprint")
+    args = inputs(tmp_path)
+    assert main(args + ["--diagnostics", str(diagnostic_dir), "--no-html"]) == 0
+    report = json.loads((tmp_path / "out/eval_report.json").read_text())
+    fingerprint = report["provenance"]["additional_inputs"]["diagnostics"]
+    assert fingerprint["path"] == "diagnostics.json"
+    assert fingerprint["sha256"] == hashlib.sha256(diagnostic_path.read_bytes()).hexdigest()
+    assert report["provenance"]["arguments"]["diagnostics"] == "diagnostics.json"
+    assert str(diagnostic_dir) not in json.dumps(report["provenance"])
 
 
 @pytest.mark.parametrize('reason', ['not-scored', 'unavailable', 'unknown'])

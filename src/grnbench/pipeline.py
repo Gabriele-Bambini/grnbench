@@ -533,11 +533,12 @@ def run_prep(
         },
     )
     write_json(manifest_path, manifest)
-    from grnbench.diagnostics import context_label, prep_document, try_write_diagnostics
+    from grnbench.diagnostics import context_label, prep_document, read_diagnostics, try_write_diagnostics
     diagnostic_context = context_label(subset_key=subset_key, subset_value=subset_value)
     try_write_diagnostics(diagnostics_path, prep_document, manifest,
                           context=diagnostic_context)
-    report_path.write_text(render_report(manifest), encoding="utf-8")
+    diagnostics = read_diagnostics(diagnostics_path)
+    report_path.write_text(render_report(manifest, diagnostics), encoding="utf-8")
 
     return PrepResult(out_dir=out, processed_path=processed_path,
                       manifest_path=manifest_path, report_path=report_path,

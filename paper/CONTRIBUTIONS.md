@@ -16,6 +16,7 @@ Agents are tools, not contributors: log the person who directed the agent.
 | 2026-10-05 | GB | Methodology, Software, Formal analysis | motif-prior lift decomposition (stage 1, Pearson): registration and `benchmarks/motif_sensitivity.py`; EXP-20261003-GB-1, issue #52 |
 | 2026-10-06 | GB | Software | eleven literature GRN methods (bicor, WGCNA, propr, ARACNe-style, MRNET, TIGRESS, BBSR, pcNet, extra-trees, boosting, community), extra-method registry flag, `docs/models_catalog.md`; branch `gb/more-models` |
 | 2026-10-07 | GB | Software, Visualization | interface: quick run, model picker, data and results explorers (`grnbench ui`); branch `gb/ui-explorer` |
+| 2026-10-08 | LD | Software, Validation | one validated portable-diagnostics reader and consistent Markdown, HTML and LaTeX report rendering; issue #59 |
 | 2026-10-08 | GB | Validation, Investigation | second-person rerun of EXP-20260925-LM-2 on the Bocconi HPC (record section 4b; verdict DIFFERENT); issue #24 |
 | 2026-10-09 | GB | Software, Visualization | interface redesign: screens, menu, theme and plain-language summaries (`grnbench ui`); branch `gb/ui-explorer` |
 | 2026-10-09 | GB | Software, Validation | end-to-end test of the integrated tool and fixes of the input-guard, CLI, ingest and viz defects it found; issue #74 |
