@@ -3,6 +3,11 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- `benchmarks/fetch_perturb.py`: the Replogle 2022 CRISPRi screens (K562 genome-wide, RPE1; also K562
+  essential and Norman 2019) from scPerturb (Zenodo 7041849, CC BY 4.0), pinned by size and md5, into
+  any data root. Fetched as parallel byte ranges: one connection from the Bocconi login node gets about
+  0.25 MB/s. The join appends the parts in place after an md5 check of the stream (no second copy of
+  the file, which filled a home quota at 3 GB of 8.8 on the cluster) and reports any I/O error by file name.
 - Issue #39 (#40): the default `lasso` branch centers X and y before `lasso_path` (no intercept), so
   lasso scores change; its provenance records `params.path = centered`. EXP-20260917-PRE-1's lasso
   rows (and so claim C2's comparison family) came from the uncentered path. `--threads` (>= 1, default

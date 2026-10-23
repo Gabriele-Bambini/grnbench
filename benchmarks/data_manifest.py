@@ -32,6 +32,7 @@ SOURCES = {  # prefix of the relative path -> (source, version note)
     "references/collectri": ("OmniPath CollecTRI via decoupler", "decoupler version in the lock"),
     "references/dorothea": ("OmniPath DoRothEA ABC via decoupler", "decoupler version in the lock"),
     "cistarget/": ("https://resources.aertslab.org/cistarget/", "cisTarget v10 clustered"),
+    "perturb/": ("https://zenodo.org/records/7041849 (fetch_perturb.py)", "scPerturb v1.0, CC BY 4.0"),
     "raw10x/": ("https://cf.10xgenomics.com/samples/cell-exp/ (fetch_10x_raw.py)", "Cell Ranger 3.x public datasets"),
 }
 SKIP = {"INDEX.md", "README.md", "manifest.tsv", "desktop.ini"}

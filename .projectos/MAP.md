@@ -45,3 +45,6 @@ Updated: 2026-10-15.
 ## Data (never in git)
 - Local: a folder outside the repo (e.g. `~/grnbench_data`), filled by `hpc/fetch_engine_datasets.sh`
   and `benchmarks/fetch_cellxgene.py`. Motif files: `GRNBENCH_CISTARGET_DIR`. Cluster: `~/grnbench_data`.
+- Knockdown screens (Replogle 2022, scPerturb Zenodo 7041849): `python benchmarks/fetch_perturb.py --out
+  <your data root>/perturb` on the login node; pinned md5, parallel byte ranges, resumable. Files land
+  directly in `--out` (nothing is appended); `perturb/` is the prefix `data_manifest.py` knows.
