@@ -95,7 +95,10 @@ pre-registered experiments (D-017).
   inconclusive, not shipped.
 - EXP-20261002-LM-1 (confirmatory, fresh-set rerun of C4/C5, HPC job 679411, merged in #31): the
   motif prior lifts the AUPRC ratio on 20 never-used datasets for Pearson +0.203, RegDiffusion
-  +0.234, GRNBoost2 +0.146 (n = 20 each, p_Holm <= 1.6e-6); all supported. Claim C6 `confirmed`.
+  +0.234, GRNBoost2 +0.146 (n = 20 each, p_Holm <= 1.6e-6); all supported. Claim C6 `reproduced`
+  (GB's second-person rerun, job 693269, record section 4b signed 2026-10-17, #94): the three
+  primaries and the report (timing aside) are identical; one planner-warning count differs (4 -> 3,
+  one dataset, not a score; most likely the dataset README, which the data check does not hash).
 - EXP-20261002-LM-2 (exploratory, HPC job 679448, issue #28, branch `lm/candidate-study`): every
   cleaning candidate on 20 real datasets x 7 controlled degradations.
 - Issue #30: the two scoreless EXP-20261001-LD-1 rows were reproduced without changing that

@@ -3,6 +3,11 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- EXP-20261002-LM-1 section 4b (#94): GB's second-person rerun on the Bocconi HPC. The three
+  declared primaries MATCH at `--rtol 1e-9` and the report is identical apart from its timing columns; one row field differs
+  (`n_warnings` 4 -> 3 on one dataset, not a score; most likely the dataset README, which the data
+  check does not hash), so `compare_runs.py` says DIFFERENT overall. By #94's rule, and signed on GB's
+  instruction (typed by the agent, record 4b), C6 is `reproduced`.
 - EXP-20260926-LM-1 section 4b (#93): GB's second-person rerun on the Bocconi HPC matches the
   committed results exactly (every non-timing row field, and the report apart from its timing
   columns; both primaries MATCH at `--rtol 1e-9`). Signed on GB's instruction (typed by the agent,

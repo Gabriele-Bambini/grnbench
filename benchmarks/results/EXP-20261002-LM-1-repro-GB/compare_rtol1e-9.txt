@@ -1,0 +1,15 @@
+tasks: same (20 committed, 20 rerun)
+rows: 1 DIFFERENT - compared 1420 numeric, 40 bool and 400 other fields; 260 timing fields not compared; tolerance rtol=1e-09 atol=0
+  cxg__10x-3-v3__mus-musculus__primary-motor-cortex__4ec57620	n_warnings	4 -> 3
+report: identical (line endings and timing columns ignored)
+primary: MATCH - pearson_motif > pearson_signed | auprc_ratio | auto
+  committed: n=20 mean +0.203 [+0.147, +0.259] raw one-sided p(A>B) 2.02e-07
+  rerun:     n=20 mean +0.203 [+0.147, +0.259] raw one-sided p(A>B) 2.02e-07
+primary: MATCH - regdiffusion_motif > regdiffusion | auprc_ratio | auto
+  committed: n=20 mean +0.234 [+0.172, +0.296] raw one-sided p(A>B) 1.01e-07
+  rerun:     n=20 mean +0.234 [+0.172, +0.296] raw one-sided p(A>B) 1.01e-07
+primary: MATCH - grnboost2_motif > grnboost2 | auprc_ratio | auto
+  committed: n=20 mean +0.146 [+0.119, +0.173] raw one-sided p(A>B) 3.25e-10
+  rerun:     n=20 mean +0.146 [+0.119, +0.173] raw one-sided p(A>B) 3.25e-10
+verdict: DIFFERENT
+exit=1
