@@ -3,6 +3,15 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- Tests: every registered model (17 default, 11 extra) runs once through the registry on tiny data
+  (`tests/test_registry_smoke.py`). Each must give edges to every regulator of its list and to no other gene,
+  with weights that are not all equal, sorted high to low; the cisTarget methods must report motif-supported
+  edges, and every motif method must rank the planted motif targets well above co-expressed genes without a
+  motif. Only aracne3 (java, `ARACNE3_JAR`), regdiffusion and regdiffusion_motif (regdiffusion, torch) may
+  skip, as their dependencies are outside the lock file, and only while one of them is really absent
+  ("not tested here: <registry reason> (waits for: <dependency>)"); a crashed availability probe, an unusable
+  synthetic cisTarget folder, a method unavailable for any other reason and a registered method without a
+  smoke run all fail (#114).
 - EXP-20261003-LM-1 section 4b (#95): rerun on the Bocconi HPC directed by GB, commands typed by an agent session (signature pending). Both primaries
   are identical in every field (`benchmarks/compare_confirm.py`, new), but the registered row check
   `compare_runs.py --rows-only` says DIFFERENT: it compares the per-candidate timing fields inside
