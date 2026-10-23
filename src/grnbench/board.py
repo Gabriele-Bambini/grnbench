@@ -5,11 +5,20 @@
 Live state lives in GitHub (issues labelled ``running``, claimed ``experiment`` issues, open PRs); durable state in
 ``.projectos/STATE.md``. Nothing here writes anything. Needs ``gh`` logged in; without it the
 STATE.md part still prints.
+
+    python -m grnbench.board --digest [--since YYYY-MM-DD] [--post ISSUE]   # weekly digest (default 7 days)
+    python -m grnbench.board --claims                                        # claims status table
+
+The digest reads git history and files from ``origin/main`` when it exists, else ``main``, else ``HEAD``, and
+says which in its first line. ``--post ISSUE`` writes (a comment via ``gh issue comment``); without it, print only.
 """
 from __future__ import annotations
 
+import argparse
+import datetime
 import json
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -83,8 +92,115 @@ def board(gh: list[str] | None = None, root: Path | None = None) -> str:
     return "\n".join(lines)
 
 
+def _git(root: Path, args: list[str]) -> str:
+    res = subprocess.run(["git", "-C", str(root)] + args, capture_output=True, text=True, encoding="utf-8")
+    return res.stdout if res.returncode == 0 else ""
+
+
+def _base(root: Path) -> str:
+    """The ref the digest reads: origin/main when it exists, else main, else HEAD."""
+    return next((r for r in ("origin/main", "main") if _git(root, ["rev-parse", "--verify", "-q", r]).strip()), "HEAD")
+
+
+def _claims(text: str) -> dict[str, list[str]]:
+    """Claim id -> [id, experiments, status, reproduced by, whole row]."""
+    rows = {}
+    for line in text.splitlines():
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if re.fullmatch(r"C\d+", cells[0]):
+            rows[cells[0]] = [cells[0], cells[2], cells[-2], cells[-1], line]
+    return rows
+
+
+def _decisions(text: str) -> dict[str, str]:
+    return {m[1]: m[2] for m in re.finditer(r"^### (D-\d+) \| [^|]*\|[^|]*\|[^|]*\| (.*)$", text, re.M)}
+
+
+def _lines(res: list[dict] | str, fmt) -> list[str]:
+    return [f"- ? {res}"] if isinstance(res, str) else [fmt(r) for r in res] or ["- none"]
+
+
+def digest(since: str | None = None, gh: list[str] | None = None, root: Path | None = None) -> str:
+    gh = gh or shlex.split(os.environ.get("GRNBENCH_GH", "gh"))
+    root = root or (Path.cwd() if (Path.cwd() / ".projectos").is_dir() else ROOT)
+    since = since or (datetime.date.today() - datetime.timedelta(days=7)).isoformat()
+    login = lambda p: p.get("author", {}).get("login", "?")
+    base = _base(root)
+    out = [f"# grnbench digest since {since} (git history and files from {base})", "", "## PRs merged"]
+    out += _lines(_gh(gh, ["pr", "list", "--state", "merged", "--search", f"merged:>={since}",
+                           "--json", "number,title,author"]),
+                  lambda p: f"- #{p['number']} {p['title']} ({login(p)})")
+    out += ["", "## PRs open"]
+    out += _lines(_gh(gh, ["pr", "list", "--state", "open", "--json", "number,title,author,isDraft,reviewDecision"]),
+                  lambda p: f"- #{p['number']} {p['title']} ({login(p)}, "
+                            f"{'draft' if p.get('isDraft') else (p.get('reviewDecision') or 'no review yet').lower()})")
+    out += ["", "## Experiment records added or changed"]
+    files = sorted({f for f in _git(root, ["log", base, f"--since={since}", "--name-only", "--format=",
+                                           "--", "experiments/EXP-*.md"]).split() if f.endswith(".md")})
+    recs = []
+    for f in files:
+        txt = _git(root, ["show", f"{base}:{f}"])
+        typ = re.search(r"^- type: \**(\w+)", txt, re.M)
+        st = re.search(r"^- status: (.*)", txt, re.M)
+        recs.append(f"- {Path(f).stem} ({typ[1] if typ else '?'})" + (f": status {st[1].strip()[:80]}" if st else ""))
+    out += recs or ["- none"]
+    rev = _git(root, ["rev-list", "-1", f"--before={since}", base]).strip()
+    old = lambda path: _git(root, ["show", f"{rev}:{path}"]) if rev else ""
+    now = lambda path: _git(root, ["show", f"{base}:{path}"])
+    before, after = _claims(old("paper/CLAIMS.md")), _claims(now("paper/CLAIMS.md"))
+    out += ["", "## Claims whose status changed"]
+    out += [f"- {c}: {before[c][2] if c in before else '(new)'} -> {r[2]}"
+            for c, r in after.items() if c not in before or before[c][2] != r[2]] or ["- none"]
+    d_old, d_new = _decisions(old(".projectos/DECISIONS.md")), _decisions(now(".projectos/DECISIONS.md"))
+    out += ["", "## Decisions added"]
+    out += [f"- {d}: {t}" for d, t in d_new.items() if d not in d_old] or ["- none"]
+    out += ["", "## Open issues labelled running/experiment"]
+    issues, err = {}, None
+    for label in ("running", "experiment"):
+        res = _gh(gh, ["issue", "list", "--label", label, "--state", "open", "--json", "number,title,assignees"])
+        if isinstance(res, str):
+            err = res
+        else:
+            issues.update({i["number"]: i for i in res})
+    out += _lines(err or list(issues.values()), lambda i: f"- #{i['number']} {i['title']} ({_who(i)})")
+    return "\n".join(out)
+
+
+def claims_table(root: Path | None = None) -> str:
+    root = root or (Path.cwd() if (Path.cwd() / ".projectos").is_dir() else ROOT)
+    outputs = [p for d in ("tables", "figures") for p in sorted((root / "paper" / d).glob("*")) if p.is_file()]
+    texts = {p: p.name + (p.read_text(encoding="utf-8", errors="ignore") if p.suffix in (".md", ".tex", ".csv") else "")
+             for p in outputs}
+    out = ["| claim | status | reproduced by | experiments | issues/PRs | generated files |", "|---|---|---|---|---|---|"]
+    for cid, (_, exps, status, by, row) in _claims((root / "paper" / "CLAIMS.md").read_text(encoding="utf-8")).items():
+        ids = sorted(set(re.findall(r"EXP-\d{8}-[A-Z]+-\d+", exps)))
+        refs = sorted(set(re.findall(r"#\d+", row)), key=lambda r: int(r[1:]))
+        gen = [p.relative_to(root).as_posix() for p, t in texts.items() if any(i in t for i in ids)]
+        out.append(f"| {cid} | {status} | {by} | {', '.join(ids) or '-'} | {', '.join(refs) or '-'} | "
+                   f"{', '.join(gen) or '-'} |")
+    return "\n".join(out)
+
+
 def main(argv: list[str] | None = None) -> int:
-    print(board())
+    ap = argparse.ArgumentParser(prog="grnbench board")
+    ap.add_argument("--digest", action="store_true", help="weekly digest as Markdown")
+    ap.add_argument("--since", help="digest start date YYYY-MM-DD (default: 7 days ago)")
+    ap.add_argument("--claims", action="store_true", help="claims status table")
+    ap.add_argument("--post", metavar="ISSUE", help="with --digest: also post it as a comment on this issue")
+    args = ap.parse_args(argv)
+    if args.claims:
+        print(claims_table())
+    elif args.digest or args.post:
+        text = digest(args.since)
+        print(text)
+        if args.post:
+            gh = shlex.split(os.environ.get("GRNBENCH_GH", "gh"))
+            res = subprocess.run(gh + ["issue", "comment", args.post, "--body-file", "-"], input=text,
+                                 capture_output=True, text=True, encoding="utf-8")
+            print(res.stdout.strip() or res.stderr.strip(), file=sys.stderr)
+            return res.returncode
+    else:
+        print(board())
     return 0
 
 

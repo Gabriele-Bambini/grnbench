@@ -3,6 +3,9 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- `python -m grnbench.board --digest [--since DATE] [--post ISSUE]` prints a weekly digest (merged and open
+  PRs, changed experiment records, claim status changes, new decisions, running/experiment issues);
+  `--claims` prints the claims status table joined with experiments and generated files. Posts only with `--post`.
 - `benchmarks/fetch_perturb.py`: the Replogle 2022 CRISPRi screens (K562 genome-wide, RPE1; also K562
   essential and Norman 2019) from scPerturb (Zenodo 7041849, CC BY 4.0), pinned by size and md5, into
   any data root. Fetched as parallel byte ranges: one connection from the Bocconi login node gets about

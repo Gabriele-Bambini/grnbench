@@ -5,7 +5,7 @@ Updated: 2026-10-15.
 
 ## Run it
 - Tests: `python -m pytest -q -p no:cacheprovider` (floor in AGENTS.md section 4).
-- Board (session start): `python -m grnbench.board`.
+- Board (session start): `python -m grnbench.board`; `--digest` weekly digest, `--claims` claims status table.
 - GUI: `grnbench ui` (Streamlit, `.claude/launch.json` config `grnbench-ui`). Demo data: `grnbench demo --out d`.
 - One dataset end to end: `grnbench run --data d.h5ad --out runs/x --gold dorotheaABC`.
 - Every command also runs as `python -m grnbench <command>` (`src/grnbench/__main__.py`).
