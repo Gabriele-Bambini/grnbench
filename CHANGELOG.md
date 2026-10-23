@@ -3,6 +3,15 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- A user override keeps what the engine chose (#113): a typed value or a knowledge-base choice other than the
+  selector's carries `auto_value`, `auto_reason` and `auto_source`, the executable value the engine's own plan
+  would use (e.g. the MAD bound when `fixed` is chosen), its reason and source, written to `plan.json` only on
+  those decisions; a plan built without choices or with the selector's own is byte-identical; setting the
+  engine's value again withdraws the override; a broken trio or an unknown key in `plan.json` is refused; the
+  interface reads "auto: X (why) → you: Y (chosen: option)" and 0 switches off a threshold the engine left off.
+  "Apply ... and rebuild the plan" in step 3 now keeps the values the new choices set (e.g. `fixed` 200 / 20%):
+  the threshold boxes, which kept their old values on the server and in the browser and wrote them back as the
+  engine's, are given the new plan's values; a value typed in a box stays typed, also one sent with the click.
 - The `cli` recorded in `contexts.json` carries `--seed` (a required argument of `PrepPlan.cli_args`, passed by
   `execute_plan`, which also writes `seed` on each record), so a screened context (prepped at seed 0) no longer
   replays at the CLI default 42 (audit 2026-09-27), and `--force` when `execute_plan(force=True)` ran past a failed

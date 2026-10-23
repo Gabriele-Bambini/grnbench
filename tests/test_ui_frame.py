@@ -328,6 +328,30 @@ def test_a_reason_is_shown_without_the_knowledge_base_prefix():
     assert logic.clean_reason("no prefix [kept]") == "no prefix [kept]"
 
 
+def test_a_value_the_user_set_shows_what_the_engine_chose_and_why():
+    from grnbench.autoprep import Decision, PrepPlan
+    d = Decision("max_pct_mito_cell", "Max % mito", 24.8, "median 17.9% mito; median + 3 MADs = 24.8%", "data")
+    assert logic.decision_caption(d) == "median 17.9% mito; median + 3 MADs = 24.8% (source: data)"
+    d.value, d.reason, d.source = 12.5, "set by the user in the interface", "user"
+    d.auto_value, d.auto_reason, d.auto_source = 24.8, "median 17.9% mito; median + 3 MADs = 24.8%", "data"
+    assert logic.decision_caption(d) == "auto: 24.8 (median 17.9% mito; median + 3 MADs = 24.8%) → you: 12.5"
+    off = Decision("max_genes_per_cell", "Max genes", 3000, "set by the user in the interface", "user",
+                   auto_value=None, auto_reason="no spread in detected genes: no upper bound", auto_source="data")
+    assert logic.decision_caption(off) == "auto: off (no spread in detected genes: no upper bound) → you: 3000"
+    plan = PrepPlan(choices={"cell_qc_thresholds": "fixed", "doublets": "none"},
+                    selection={"results": {"cell_qc_thresholds": {"chosen": "mad"}, "doublets": {"chosen": "scrublet"}}})
+    fixed = Decision("min_genes_per_cell", "Min genes", 200, "[cell_qc_thresholds = fixed] fixed bounds", "user",
+                     auto_value=397, auto_reason="median 597 genes/cell; lower 3-MAD bound", auto_source="data")
+    assert logic.decision_caption(fixed, plan) == \
+        "auto: 397 (median 597 genes/cell; lower 3-MAD bound) → you: 200 (chosen: fixed)"
+    same = PrepPlan(choices={"cell_qc_thresholds": "mad"}, selection={"results": {"cell_qc_thresholds": {"chosen": "mad"}}})
+    assert logic.decision_caption(d, same) == logic.decision_caption(d)        # a typed value names no option
+    doublets = Decision("drop_doublets", "Remove doublets", False, "[doublets = none] none", "user",
+                        auto_value=True, auto_reason="[doublets = scrublet] droplet data", auto_source="knowledge base")
+    assert logic.decision_caption(doublets, plan) == \
+        "auto: True (droplet data; source: knowledge base) → you: False (chosen: none)"
+
+
 def test_a_pasted_path_loses_its_quotes_and_spaces_and_expands_the_home_folder():
     assert logic.clean_path('  "C:\\data\\set.h5ad" ') == Path("C:\\data\\set.h5ad")
     assert logic.clean_path("'/data/x.h5ad'") == Path("/data/x.h5ad")

@@ -42,6 +42,7 @@ for _key in KEPT_INPUTS:
 S.setdefault("step", QUICK)
 
 DOWNSTREAM = ["screen", "records", "runs", "bench", "bench_on", "reference_warning"]
+TYPED = "set by the user in the interface"      # the reason of a value typed in a box of step 3
 
 
 class PageDone(Exception):
@@ -492,6 +493,25 @@ def decision_editor(plan, d, user: dict, *, expanded: bool = False) -> None:
         option_cards(rows)
 
 
+def box_value(key: str, value):
+    """What the box of a threshold shows for a plan value: 0 where the plan has none (off); all but the
+    mitochondrial percentage are counts."""
+    return float(value or 0.0) if key == "max_pct_mito_cell" else int(value or 0)
+
+
+def box_off(dec) -> bool:
+    """0 = off in the box of a decision where the plan or the engine has no bound (a 0 bound drops every cell)."""
+    engine = dec.auto_value if dec.auto_reason is not None else dec.value
+    return dec.value is None or engine is None
+
+
+def from_box(dec, number):
+    """The plan value a number in the box of a decision stands for (the inverse of box_value)."""
+    if box_off(dec) and number == 0:
+        return None
+    return float(number) if dec.key == "max_pct_mito_cell" else int(number)
+
+
 def page_pipeline() -> None:
     need_data()
     mark_seen(PIPELINE)
@@ -540,8 +560,24 @@ def page_pipeline() -> None:
         for d in decisions:
             decision_editor(plan, d, user)
     if user and st.button(f"Apply {len(user)} change(s) and rebuild the plan", type="primary", icon=":material/refresh:"):
-        S["plan"] = plan_preprocessing(diag, tf_list=S.get("tfs"), choices={**plan.choices, **user})
+        for k in [k for k in S.keys() if k.startswith("num_")]:     # a number sent with this click: the boxes, drawn
+            dec = plan.decisions.get(k.removeprefix("num_"))           # below, have not written it into the plan yet
+            if dec is not None and from_box(dec, S[k]) != dec.value:
+                plan.set(dec.key, from_box(dec, S[k]), TYPED)
+        new_plan = plan_preprocessing(diag, tf_list=S.get("tfs"), choices={**plan.choices, **user})
+        for key, dec in plan.decisions.items():      # a value typed in a box stays typed
+            if dec.reason == TYPED and key in new_plan.decisions:
+                new_plan.set(key, dec.value, TYPED)
+        S["plan"] = new_plan
         reset_downstream(*DOWNSTREAM)
+        # A box keeps its value through the rebuild (on the server and in the browser) and would write the old plan's
+        # value into the new one. Writing the new value before the boxes below are drawn makes both show it.
+        for k in [k for k in S.keys() if k.startswith("num_")]:
+            dec = new_plan.decisions.get(k.removeprefix("num_"))
+            if dec is None:
+                del S[k]
+            else:
+                S[k] = box_value(dec.key, dec.value)
         st.rerun()
 
     st.subheader("Thresholds and sizes", anchor=False)
@@ -554,13 +590,13 @@ def page_pipeline() -> None:
             dec = plan.decisions[key]
             cur = dec.value
             as_int = key != "max_pct_mito_cell"      # every other threshold is a count
-            new = col.number_input(dec.label, value=int(cur or 0) if as_int else float(cur or 0.0),
-                                   step=1 if as_int else 0.5, key=f"num_{key}", help="0 = off" if cur is None else None)
-            col.caption(f"{logic.clean_reason(dec.reason)} (source: {dec.source})")
-            new_v = None if (cur is None and new == 0) else (int(new) if as_int else float(new))
+            new = col.number_input(dec.label, value=box_value(key, cur),
+                                   step=1 if as_int else 0.5, key=f"num_{key}", help="0 = off" if box_off(dec) else None)
+            new_v = from_box(dec, new)
             if new_v != cur:
-                plan.set(key, new_v, "set by the user in the interface")
+                plan.set(key, new_v, TYPED)
                 reset_downstream(*DOWNSTREAM)
+            col.caption(logic.decision_caption(dec, plan))      # after set: an edit shows what the engine chose at once
     st.markdown("**Cellular contexts:** " + ", ".join(f"`{c['name']}`" for c in plan.contexts))
 
     with st.expander("Reproduce from a terminal", icon=":material/terminal:"):
@@ -609,7 +645,7 @@ def page_compare() -> None:
     rec = selection.chosen()
     differs = [f"{k} = {v}" for k, v in plan.choices.items() if v != rec.get(k)]
     differs += [f"{d.label} = {d.value}" for d in plan.decisions.values()
-                if d.reason == "set by the user in the interface"]
+                if d.reason == TYPED]
     if differs:
         st.warning("The current plan differs from the engine's recommendation (" + "; ".join(differs) + "). "
                    "The candidates below start from the recommendation, not from the current plan, so none of "

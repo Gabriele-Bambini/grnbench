@@ -211,6 +211,25 @@ def clean_reason(text: str) -> str:
     return re.sub(r"^\s*\[[^\]]*\]\s*", "", str(text or "")).strip()
 
 
+def _plain_value(v) -> str:
+    if v is None:
+        return "off"
+    if isinstance(v, float) and v.is_integer():
+        return str(int(v))
+    return str(v)
+
+
+def decision_caption(dec, plan=None) -> str:
+    """The line under a plan value: its reason and source, or after a user override what the engine chose and why,
+    the engine's source when it is not the data, and the option the user chose when a choice set the value."""
+    if getattr(dec, "auto_reason", None) is None:
+        return f"{clean_reason(dec.reason)} (source: {dec.source})"
+    why = clean_reason(dec.auto_reason) + (f"; source: {dec.auto_source}" if dec.auto_source != "data" else "")
+    text = f"auto: {_plain_value(dec.auto_value)} ({why}) → you: {_plain_value(dec.value)}"
+    chosen = plan.chosen_options(dec.key) if plan is not None else []
+    return text + (f" (chosen: {', '.join(chosen)})" if chosen else "")
+
+
 def pipeline_overview(plan) -> list[dict]:
     """One row per decision of the plan, in the knowledge base's order: stage, question, chosen option, doubt, impact."""
     from grnbench.kb import DECISIONS, STAGES

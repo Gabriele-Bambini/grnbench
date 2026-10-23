@@ -20,6 +20,7 @@ Agents are tools, not contributors: log the person who directed the agent.
 | 2026-10-09 | GB | Software, Visualization | interface redesign: screens, menu, theme and plain-language summaries (`grnbench ui`); branch `gb/ui-explorer` |
 | 2026-10-09 | GB | Software, Validation | end-to-end test of the integrated tool and fixes of the input-guard, CLI, ingest and viz defects it found; issue #74 |
 | 2026-10-09 | LM | Visualization, Software | main figures for C4-C7 (`paper/figures/fig_motif_lift`, `fig_reference_free`, `paper/make_figures.py`); PR #62 |
+| 2026-10-18 | GB | Software | a user override keeps the engine's value, reason and source in the plan record and the interface caption; issue #113 |
 | 2026-10-18 | GB | Software | reproduction command records the seed and --force, interface shows every context shell-quoted, seed-discipline ratchet test; issues #111, #117 |
 | 2026-10-18 | GB | Software, Writing - review & editing | knowledge-base and docstring text corrections (heuristic evidence level, knee cell calling vs DropletUtils, ImageDoubler year, interface reproducibility); issue #112 |
 | 2026-10-18 | GB | Software, Validation | registry smoke run over every registered model with declared skip reasons (`tests/test_registry_smoke.py`); issue #114 |

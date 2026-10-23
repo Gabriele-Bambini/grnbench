@@ -212,6 +212,167 @@ def test_per_batch_bounds_and_qc_gene_exclusion_run(demo, tmp_path):
     assert "--per-batch-bounds" in rec["cli"] and "--exclude-qc-genes" in rec["cli"]
 
 
+# -- user overrides keep what the engine chose (#113) ------------------------------------------ #
+
+_TRIO = ("auto_value", "auto_reason", "auto_source")
+
+
+def _trio(d):
+    return d.auto_value, d.auto_reason, d.auto_source
+
+
+def _written(plan) -> str:
+    return json.dumps(plan.to_dict(), indent=2, default=str)
+
+
+def test_a_plan_nobody_edited_is_written_as_before(demo):
+    paths, tfs, diag = demo
+    plan = plan_preprocessing(diag, tf_list=tfs)
+    data = plan.to_dict()
+    assert all(list(d) == ["key", "label", "value", "reason", "source", "options"]
+               for d in data["decisions"].values())
+    assert data["decisions"]["min_cells_per_gene"] == {
+        "key": "min_cells_per_gene", "label": "Min cells expressing a gene", "value": 3,
+        "reason": "genes seen in fewer than max(3, 0.1% of 1200 cells) = 3 cells", "source": "data",
+        "options": None}
+    for same in ({"doublets": plan.choices["doublets"]}, dict(plan.choices)):   # the selector's own choices
+        assert _written(plan_preprocessing(diag, tf_list=tfs, choices=same)) == _written(plan)
+
+
+def test_a_user_value_keeps_the_data_derived_value_and_its_reason(demo):
+    paths, tfs, diag = demo
+    plan = plan_preprocessing(diag, tf_list=tfs)
+    d = plan.decisions["max_pct_mito_cell"]
+    auto = (d.value, d.reason, d.source)
+    assert "MADs" in d.reason and d.source == "data"
+    plan.set("max_pct_mito_cell", 12.5, "set by the user in the interface")
+    assert (d.value, d.reason, d.source) == (12.5, "set by the user in the interface", "user")
+    assert _trio(d) == auto
+    plan.set("max_pct_mito_cell", 12.5, "another reason")                    # the same value again: no change
+    assert d.reason == "set by the user in the interface" and _trio(d) == auto
+    plan.set("max_pct_mito_cell", 30.0, "set by the user in the interface")
+    assert d.value == 30.0 and _trio(d) == auto                               # the first engine trio stays
+    out = plan.to_dict()["decisions"]
+    assert list(out["max_pct_mito_cell"]) == ["key", "label", "value", "reason", "source", "options", *_TRIO]
+    assert [out["max_pct_mito_cell"][k] for k in _TRIO] == list(auto)
+    assert not any(k in v for k in _TRIO for key, v in out.items() if key != "max_pct_mito_cell")
+
+
+def test_the_engine_value_set_again_is_no_override(demo):
+    paths, tfs, diag = demo
+    plan = plan_preprocessing(diag, tf_list=tfs)
+    before = _written(plan)
+    d = plan.decisions["min_genes_per_cell"]
+    engine = (d.value, d.reason, d.source)
+    plan.set("min_genes_per_cell", engine[0], "set by the user in the interface")
+    assert _written(plan) == before
+    plan.set("min_genes_per_cell", engine[0] + 100, "set by the user in the interface")
+    plan.set("min_genes_per_cell", engine[0], "set by the user in the interface")     # back to the engine's
+    assert _written(plan) == before                                                    # no trace, by design
+    plan.set("min_genes_per_cell", engine[0] + 50, "set by the user in the interface")
+    assert d.value == engine[0] + 50 and _trio(d) == engine                            # captured again
+    plan.set("group_key", "batch", "set by the user in the interface")                 # the engine had it off
+    g = plan.decisions["group_key"]
+    assert _trio(g) == (None, "only used by 'pseudobulk'", "default")
+    assert plan.to_dict()["decisions"]["group_key"]["auto_value"] is None
+    plan.set("group_key", None, "set by the user in the interface")
+    assert g.value is None and _trio(g) == (None, None, None) and g.source == "default"
+
+
+def test_plan_files_load_with_and_without_the_engine_trio(demo, tmp_path):
+    paths, tfs, diag = demo
+    old = {"decisions": {"n_hvg": {"key": "n_hvg", "label": "Highly variable genes", "value": 1000,
+                                   "reason": "[hvg = tf_plus_1000] default", "source": "knowledge base",
+                                   "options": [500, 1000]}}}
+    d = PrepPlan.from_dict(old).decisions["n_hvg"]
+    assert d.value == 1000 and _trio(d) == (None, None, None)
+    assert PrepPlan.from_dict(old).to_dict()["decisions"] == old["decisions"]
+    plan = plan_preprocessing(diag, tf_list=tfs)
+    plan.set("max_pct_mito_cell", 12.5, "set by the user in the interface")
+    plan.set("group_key", "batch", "set by the user in the interface")
+    path = plan.save(tmp_path / "plan.json")
+    again = PrepPlan.load(path)
+    for key in ("max_pct_mito_cell", "group_key"):
+        a, b = again.decisions[key], plan.decisions[key]
+        assert (a.value, a.source, *_trio(a)) == (b.value, b.source, *_trio(b))
+    assert _written(again) == path.read_text(encoding="utf-8")
+
+
+def test_a_broken_engine_trio_or_an_unknown_key_is_refused_by_name():
+    base = {"key": "n_hvg", "label": "HVG", "value": 500, "reason": "set by the user", "source": "user",
+            "options": None}
+    bad = [({**base, "auto_value": 1000}, "n_hvg"),                                   # no reason
+           ({**base, "auto_source": "knowledge base"}, "n_hvg"),
+           ({**base, "auto_value": 1000, "auto_reason": "engine"}, "n_hvg"),          # no source
+           ({**base, "source": "data", "auto_value": 1000, "auto_reason": "engine",
+             "auto_source": "data"}, "n_hvg"),                                         # trio, source not user
+           ({**base, "auto_vlaue": 1000}, "auto_vlaue")]
+    for entry, name in bad:
+        with pytest.raises(ValueError, match=name):
+            PrepPlan.from_dict({"decisions": {"n_hvg": entry}})
+    plan = PrepPlan.from_dict({"decisions": {"n_hvg": base}})
+    plan.decisions["n_hvg"].auto_value = 1000                     # half a trio, made after loading
+    with pytest.raises(ValueError, match="n_hvg"):
+        plan.to_dict()
+
+
+def test_a_knowledge_base_override_keeps_the_engine_value_and_reason(demo):
+    paths, tfs, diag = demo
+    auto = plan_preprocessing(diag, tf_list=tfs)
+    assert auto.choices["doublets"] == "scrublet" and auto.choices["cell_qc_thresholds"] == "mad"
+    plan = plan_preprocessing(diag, tf_list=tfs, choices={"doublets": "none", "cell_qc_thresholds": "fixed"})
+    m, e = plan.decisions["min_genes_per_cell"], auto.decisions["min_genes_per_cell"]
+    assert m.value == 200 and m.reason.startswith("[cell_qc_thresholds = fixed]") and m.source == "user"
+    assert _trio(m) == (e.value, e.reason, "data") and "MAD" in e.reason      # the MAD number, not "mad"
+    d = plan.decisions["drop_doublets"]
+    assert d.value is False and _trio(d) == (True, auto.decisions["drop_doublets"].reason, "knowledge base")
+    for k, x in plan.decisions.items():         # the others are exactly as the engine wrote them
+        if x.auto_reason is None:
+            b = auto.decisions[k]
+            assert (x.value, x.reason, x.source) == (b.value, b.reason, b.source), k
+        else:
+            assert x.source == "user", k
+    plan.set("min_genes_per_cell", 300, "set by the user in the interface")
+    assert m.value == 300 and _trio(m) == (e.value, e.reason, "data")         # a later edit keeps the trio
+    plan.set("min_genes_per_cell", e.value, "set by the user in the interface")
+    assert (m.value, m.reason, m.source, *_trio(m)) == (e.value, e.reason, "data", None, None, None)
+    plan.set("drop_doublets", True)                                             # revert on the KB path too
+    assert (d.value, d.source, d.auto_reason) == (True, "knowledge base", None)
+
+
+def test_strategy_cell_calling_and_global_mad_bounds_keep_the_engine_values(demo):
+    import copy
+    paths, tfs, diag = demo
+    sel = copy.deepcopy(select(Profile(**plan_preprocessing(diag, tf_list=tfs).profile)))
+    sel.results["cell_qc_thresholds"].chosen = "mad_per_batch"       # an engine that bounds per batch
+    engine = plan_preprocessing(diag, tf_list=tfs, selection=sel)
+    plan = plan_preprocessing(diag, tf_list=tfs, selection=sel, choices={
+        "cell_qc_thresholds": "mad", "normalization": "pearson_residuals", "cell_calling": "knee"})
+    g, e = plan.decisions["min_genes_per_cell"], engine.decisions["min_genes_per_cell"]
+    assert "MAD" in g.reason and g.source == "user" and _trio(g) == (e.value, e.reason, "knowledge base")
+    s, es = plan.decisions["strategy"], engine.decisions["strategy"]
+    assert s.value == "pearson_residuals" and _trio(s) == (es.value, es.reason, "knowledge base")
+    for key in ("cell_calling", "max_genes_per_cell"):                # not in the engine's own plan
+        assert key not in engine.decisions and plan.decisions[key].source == "user"
+        assert _trio(plan.decisions[key]) == (None, "not in the engine's own plan", "knowledge base")
+    assert "per_batch_bounds" in engine.decisions and "per_batch_bounds" not in plan.decisions
+
+
+def test_every_decision_a_choice_changed_names_the_option_behind_it(demo):
+    from grnbench.autoprep import KB_DECISIONS_OF
+    paths, tfs, diag = demo
+    many = {"doublets": "none", "cell_qc_thresholds": "fixed", "gene_filter": "min_cells_drop_qc_genes",
+            "normalization": "pearson_residuals", "hvg": "tf_plus_500", "subsample": "stratified",
+            "regulators": "all_genes", "context_scope": "pooled", "cell_calling": "knee"}
+    other = {"sparsity": "metacells", "cell_qc_thresholds": "mad_per_batch"}
+    assert {k for ids in KB_DECISIONS_OF.values() for k in ids} <= set(kb.DECISION_INDEX)
+    for choices in (many, other):
+        plan = plan_preprocessing(diag, tf_list=tfs, choices=choices)
+        changed = [k for k, d in plan.decisions.items() if d.auto_reason is not None]
+        assert len(changed) >= 3
+        for k in changed:
+            assert plan.chosen_options(k) and set(plan.chosen_options(k)) <= set(choices.values()), k
+        assert all(not plan.chosen_options(k) for k, d in plan.decisions.items() if d.auto_reason is None)
 def test_reproduction_command_always_names_the_seed():
     plan = PrepPlan()
     assert plan.cli_args("in.h5ad", "out", seed=0) == ["in.h5ad", "--out", "out", "--seed", "0"]
@@ -354,6 +515,11 @@ def test_screening_ranks_candidates_on_the_selection_half_only(demo, tmp_path):
     for candidate, contexts in diagnostics["prep"].items():
         for entry in contexts.values():
             assert entry["choices"]["strategy"] == res["plans"][candidate].value("strategy")
+    assert not [c for c in res["rows"].columns if c.startswith("auto_")]      # screening rows unchanged (#113)
+    recommended = json.loads((tmp_path / "scr" / "recommended" / "plan.json").read_text())
+    assert not any(k in d for k in _TRIO for d in recommended["decisions"].values())
+    pooled = json.loads((tmp_path / "scr" / "pooled" / "plan.json").read_text())["decisions"]["context_scope"]
+    assert (pooled["value"], pooled["source"], pooled["auto_value"]) == ("pooled", "user", "per_cell_type")
 
 
 def _rank_rows(**cands):

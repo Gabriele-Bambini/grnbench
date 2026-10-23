@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import json
 import math
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 from typing import Any
 
@@ -62,14 +62,54 @@ _CLI_FLAGS = {
 }
 
 
+# The knowledge-base decisions that set each plan decision: a user choice of one of them is
+# named next to the value it changed ("chosen: fixed").
+KB_DECISIONS_OF = {
+    "cell_calling": ("cell_calling",),
+    "min_genes_per_cell": ("cell_qc_thresholds",), "max_genes_per_cell": ("cell_qc_thresholds",),
+    "max_counts_per_cell": ("cell_qc_thresholds",), "max_pct_mito_cell": ("cell_qc_thresholds",),
+    "per_batch_bounds": ("cell_qc_thresholds",),
+    "drop_doublets": ("doublets",), "exclude_qc_genes": ("gene_filter",),
+    "strategy": ("normalization", "batch", "sparsity"), "cells_per_metacell": ("sparsity",),
+    "n_hvg": ("hvg",), "subsample_cells": ("subsample",), "tf_source": ("regulators",),
+    "context_scope": ("context_scope",),
+}
+NOT_IN_ENGINE_PLAN = "not in the engine's own plan"
+
+
 @dataclass
 class Decision:
+    """One executable parameter of the plan.
+
+    After a user override (a typed value or a knowledge-base choice other than the
+    selector's), ``auto_value``, ``auto_reason`` and ``auto_source`` keep the executable value
+    the engine would have used, its reason and its source, and ``source`` is ``"user"``.
+    Without an override they are ``None`` and ``plan.json`` leaves them out.
+    """
     key: str
     label: str
     value: Any
     reason: str
     source: str = "default"
     options: list | None = None
+    auto_value: Any = None
+    auto_reason: str | None = None
+    auto_source: str | None = None
+
+    def __post_init__(self) -> None:
+        _check_trio(self)
+
+
+def _check_trio(d: Decision) -> None:
+    """The engine's value, reason and source come as a whole, and only on a user value."""
+    if d.auto_reason is None:
+        if d.auto_value is not None or d.auto_source is not None:
+            raise ValueError(f"decision {d.key!r}: auto_value/auto_source without auto_reason")
+    elif d.auto_source is None:
+        raise ValueError(f"decision {d.key!r}: auto_reason without auto_source")
+    elif d.source != "user":
+        raise ValueError(f"decision {d.key!r}: the engine's value is kept only on a user value, "
+                         f"but source is {d.source!r}")
 
 
 @dataclass
@@ -91,10 +131,25 @@ class PrepPlan:
         d = self.decisions.get(key)
         return default if d is None else d.value
 
+    def chosen_options(self, key: str) -> list[str]:
+        """The knowledge-base options chosen instead of the selector's that set decision ``key``."""
+        results = self.selection.get("results", {})
+        return [self.choices[k] for k in KB_DECISIONS_OF.get(key, ())
+                if k in self.choices and k in results and self.choices[k] != results[k].get("chosen")]
+
     def set(self, key: str, value, reason: str = "set by the user") -> None:
+        """A user value. The first override keeps the engine's value, reason and source next
+        to it; setting the engine's value again makes the decision the engine's again."""
         d = self.decisions[key]
-        if d.value != value:
-            d.value, d.reason, d.source = value, reason, "user"
+        if d.value == value:
+            return
+        if d.auto_reason is not None and value == d.auto_value:
+            d.value, d.reason, d.source = d.auto_value, d.auto_reason, d.auto_source
+            d.auto_value = d.auto_reason = d.auto_source = None
+            return
+        if d.source != "user":
+            d.auto_value, d.auto_reason, d.auto_source = d.value, d.reason, d.source
+        d.value, d.reason, d.source = value, reason, "user"
 
     def thresholds(self) -> Thresholds:
         return Thresholds(**{k: self.value(k) for k in THRESHOLD_KEYS
@@ -141,7 +196,7 @@ class PrepPlan:
         return argv + ["--seed", str(seed)]
 
     def to_dict(self) -> dict:
-        return {"decisions": {k: asdict(d) for k, d in self.decisions.items()},
+        return {"decisions": {k: _decision_dict(d) for k, d in self.decisions.items()},
                 "warnings": list(self.warnings), "methods": list(self.methods),
                 "context": self.context, "profile": self.profile,
                 "selection": self.selection, "choices": self.choices,
@@ -149,7 +204,7 @@ class PrepPlan:
 
     @classmethod
     def from_dict(cls, data: dict) -> "PrepPlan":
-        plan = cls(decisions={k: Decision(**d) for k, d in data["decisions"].items()},
+        plan = cls(decisions={k: _decision_from_dict(k, d) for k, d in data["decisions"].items()},
                    warnings=list(data.get("warnings", [])),
                    methods=list(data.get("methods", [])),
                    context=dict(data.get("context", {})),
@@ -168,6 +223,37 @@ class PrepPlan:
     @classmethod
     def load(cls, path) -> "PrepPlan":
         return cls.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
+
+
+_AUTO_FIELDS = ("auto_value", "auto_reason", "auto_source")
+
+
+def _decision_dict(d: Decision) -> dict:
+    """``asdict`` of a decision; the engine's value, reason and source only after an override,
+    so a plan nobody edited is written exactly as before overrides kept them."""
+    _check_trio(d)
+    out = asdict(d)
+    if d.auto_reason is None:
+        for k in _AUTO_FIELDS:
+            del out[k]
+    return out
+
+
+def _decision_from_dict(name: str, data: dict) -> Decision:
+    unknown = sorted(set(data) - {f.name for f in fields(Decision)})
+    if unknown:
+        raise ValueError(f"decision {name!r}: unknown key(s) {', '.join(unknown)}")
+    return Decision(**data)
+
+
+def _keep_engine_values(plan: PrepPlan, engine: PrepPlan) -> None:
+    """Next to every decision the choices changed, the engine's own value, reason and source."""
+    for key, d in plan.decisions.items():
+        e = engine.decisions.get(key)
+        own = (e.value, e.reason, e.source) if e else (None, NOT_IN_ENGINE_PLAN, "knowledge base")
+        if (d.value, d.reason, d.source) != own:
+            d.auto_value, d.auto_reason, d.auto_source = own
+            d.source = "user"
 
 
 @dataclass
@@ -308,16 +394,30 @@ def plan_preprocessing(diag: Diagnosis, *, methods: list[dict] | None = None,
     """Executable plan from the knowledge-base selection (or explicit ``choices``).
 
     ``choices`` ({decision_id: option_id}) overrides the selector - that is how
-    an alternative candidate pipeline or a user edit becomes a plan.
+    an alternative candidate pipeline or a user edit becomes a plan. Every decision the
+    choices change keeps the engine's own value, reason and source (``Decision.auto_*``), read
+    from the plan built with the selector's choices.
     """
-    from grnbench.kb import DECISION_INDEX
-    from grnbench.profile import MIN_CELLS_PER_CONTEXT, build_profile
+    from grnbench.profile import build_profile
     from grnbench.selector import select
 
-    adata, qc, ctx = diag.adata, diag.qc, diag.context
-    profile = build_profile(adata, qc.metrics, ctx, id_verdict=diag.id_verdict, tf_list=tf_list,
-                            raw_droplets=diag.raw_droplets)
+    profile = build_profile(diag.adata, diag.qc.metrics, diag.context, id_verdict=diag.id_verdict,
+                            tf_list=tf_list, raw_droplets=diag.raw_droplets)
     selection = selection or select(profile)
+    plan = _build_plan(diag, profile, selection, choices, methods=methods)
+    own = selection.chosen()
+    if choices and any(own.get(k) != v for k, v in choices.items()):
+        # the engine's own plan is only compared: methods=[] skips listing the methods again
+        _keep_engine_values(plan, _build_plan(diag, profile, selection, None, methods=[]))
+    return plan
+
+
+def _build_plan(diag: Diagnosis, profile, selection, choices: dict | None, *,
+                methods: list[dict] | None) -> PrepPlan:
+    from grnbench.kb import DECISION_INDEX
+    from grnbench.profile import MIN_CELLS_PER_CONTEXT
+
+    adata, qc, ctx = diag.adata, diag.qc, diag.context
     chosen = {**selection.chosen(), **(choices or {})}
     plan = PrepPlan(context=ctx.to_dict())
     plan.profile = profile.to_dict()

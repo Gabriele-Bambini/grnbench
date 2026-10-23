@@ -30,6 +30,15 @@ def demo(tmp_path_factory):
     return d, paths, tfs, res
 
 
+@pytest.fixture(scope="module")
+def demo_1200(tmp_path_factory):
+    """The demo at the size of the PR #120 review: enough cells for the engine to call doublets, the engine's own plan."""
+    d = tmp_path_factory.mktemp("uireg_apply")
+    paths = write_demo(d / "demo", n_cells=1200, n_genes=900, n_tfs=15, targets_per_tf=10)
+    tfs = paths["tfs"].read_text().split()
+    return d, paths, tfs, logic.analyze(paths["counts"], tf_list=tfs)
+
+
 def _with_state(demo, **extra):
     d, paths, tfs, res = demo
     at = _at()
@@ -217,6 +226,141 @@ def test_step4_says_when_the_plan_was_edited_in_step3(demo):
     at.session_state["plan"] = logic.analyze(paths["counts"], tf_list=tfs)["plan"]
     _goto(at, "4 · Compare pipelines")
     assert not [w for w in at.warning if "recommendation" in w.value], "quiet when the plan is the recommendation"
+
+
+def test_a_threshold_typed_in_step3_keeps_what_the_engine_chose_and_why(demo):
+    """Typing a threshold replaced its reason, so the MAD numbers the engine derived from the data were lost (#113)."""
+    at = _with_state(demo, user_choices={})
+    _goto(at, "3 · Pipeline")
+    engine = at.session_state["plan"].decisions["max_pct_mito_cell"]
+    auto_value, auto_reason = engine.value, engine.reason
+    assert "MADs" in auto_reason and auto_value != 12.5
+    at.number_input(key="num_max_pct_mito_cell").set_value(12.5).run()
+    assert not at.exception, [e.value for e in at.exception]
+    dec = at.session_state["plan"].decisions["max_pct_mito_cell"]
+    assert dec.value == 12.5 and (dec.auto_value, dec.auto_reason) == (auto_value, auto_reason)
+    shown = [c.value for c in at.caption if c.value.startswith("auto: ")]
+    assert shown == [f"auto: {logic._plain_value(auto_value)} ({auto_reason}) → you: 12.5"], \
+        [c.value for c in at.caption]
+
+
+def test_zero_withdraws_a_threshold_the_engine_left_off(demo):
+    """0 was kept as a bound of 0 once a number had been typed, so a threshold the engine left off could not be
+    switched off again (and a 0 bound removes every cell) (#113)."""
+    at = _with_state(demo, user_choices={})
+    _goto(at, "3 · Pipeline")
+    engine = at.session_state["plan"].decisions["subsample_cells"]
+    reason, source = engine.reason, engine.source
+    assert engine.value is None
+    at.number_input(key="num_subsample_cells").set_value(500).run()
+    dec = at.session_state["plan"].decisions["subsample_cells"]
+    assert dec.value == 500 and (dec.auto_value, dec.auto_reason) == (None, reason)
+    at.run()
+    assert at.number_input(key="num_subsample_cells").help == "0 = off"      # still offered after a number
+    at.number_input(key="num_subsample_cells").set_value(0).run()
+    assert not at.exception, [e.value for e in at.exception]
+    dec = at.session_state["plan"].decisions["subsample_cells"]
+    assert (dec.value, dec.reason, dec.source, dec.auto_reason) == (None, reason, source, None)
+    assert logic.decision_caption(dec) in [c.value for c in at.caption]
+
+
+def _apply_in_step3(demo, typed=None, pending=None, **picks):
+    """Type ``typed`` values in step 3's boxes, pick options in its decision editor and press Apply; ``pending``
+    values are typed in the boxes and sent with the Apply click (no Enter before it). Also returns the plan these
+    choices build directly and the engine's own plan (no choices), to compare with."""
+    from grnbench.autoprep import plan_preprocessing
+    _, _, tfs, res = demo
+    at = _with_state(demo, user_choices={})
+    _goto(at, "3 · Pipeline")
+    for k, v in (typed or {}).items():
+        at.number_input(key=f"num_{k}").set_value(v).run()
+        assert not at.exception, [e.value for e in at.exception]
+    shown = at.session_state["plan"]
+    assert all(shown.choices[k] != v for k, v in picks.items()), "each pick is a change"
+    for k, v in picks.items():
+        at.selectbox(key=f"pick_{k}").set_value(v)
+    at.run()
+    assert _apply_labels(at) == [f"Apply {len(picks)} change(s) and rebuild the plan"]
+    for k, v in (pending or {}).items():
+        at.number_input(key=f"num_{k}").set_value(v)
+    next(b for b in at.button if b.label.startswith("Apply")).click().run()
+    assert not at.exception, [e.value for e in at.exception]
+    direct = plan_preprocessing(res["diag"], tf_list=tfs, choices={**shown.choices, **picks})
+    own = plan_preprocessing(res["diag"], tf_list=tfs)
+    return at, at.session_state["plan"], direct, own
+
+
+def _assert_box_shows(at, key, value):
+    """The box holds ``value`` on the server, and the server sends it to the browser: a browser keeps what a box
+    showed unless the server sets it (``set_value``), and sends that back on the next click anywhere."""
+    box = at.number_input(key=f"num_{key}")
+    assert box.value == value, (key, box.value, value)
+    assert box.proto.set_value and box.proto.value == value, (key, box.proto.set_value, box.proto.value, value)
+
+
+def test_apply_in_step3_keeps_the_thresholds_the_new_choice_sets(demo_1200):
+    """Apply rebuilt the plan, then each number box wrote the value it still held (the engine's) back with plan.set,
+    which took it for the engine's value set again: plan.json said the MAD bounds came from the data while
+    `choices` said fixed, and the boxes showed the MAD bounds (PR #120 review)."""
+    at, plan, direct, own = _apply_in_step3(demo_1200, cell_qc_thresholds="fixed", doublets="none")
+    captions = [c.value for c in at.caption]
+    for key, fixed in (("min_genes_per_cell", 200), ("max_pct_mito_cell", 20.0)):
+        dec, auto = plan.decisions[key], own.decisions[key]
+        assert auto.value != fixed and "MAD" in auto.reason
+        assert (dec.value, dec.source) == (fixed, "user"), (key, dec.value, dec.reason, dec.source)
+        assert (dec.auto_value, dec.auto_reason, dec.auto_source) == (auto.value, auto.reason, auto.source)
+        _assert_box_shows(at, key, fixed)
+        caption = logic.decision_caption(dec, plan)
+        assert caption.startswith(f"auto: {logic._plain_value(auto.value)} (") and caption.endswith(
+            f"→ you: {logic._plain_value(fixed)} (chosen: fixed)") and caption in captions, (caption, captions)
+    assert plan.to_dict() == direct.to_dict(), "the plan after Apply is the one these choices build"
+    at.number_input(key="num_min_genes_per_cell").set_value(150).run()       # typing after Apply still works
+    assert not at.exception, [e.value for e in at.exception]
+    dec, auto = at.session_state["plan"].decisions["min_genes_per_cell"], own.decisions["min_genes_per_cell"]
+    assert (dec.value, dec.source, dec.auto_value, dec.auto_reason) == (150, "user", auto.value, auto.reason)
+
+
+def test_apply_in_step3_keeps_the_subsample_size_the_new_choice_sets(demo_1200):
+    """The same with subsample = stratified where the engine subsamples nothing: the box still held 0 (off), so the
+    stratified size was dropped and the decision went back to the engine's (PR #120 review)."""
+    at, plan, direct, own = _apply_in_step3(demo_1200, subsample="stratified")
+    dec, auto = plan.decisions["subsample_cells"], own.decisions["subsample_cells"]
+    assert auto.value is None and direct.value("subsample_cells") is not None
+    assert (dec.value, dec.source) == (direct.value("subsample_cells"), "user"), (dec.value, dec.reason, dec.source)
+    assert (dec.auto_value, dec.auto_reason, dec.auto_source) == (None, auto.reason, auto.source)
+    _assert_box_shows(at, "subsample_cells", dec.value)
+    assert plan.to_dict() == direct.to_dict(), "the plan after Apply is the one this choice builds"
+
+
+def test_a_value_typed_before_apply_stays_typed(demo_1200):
+    """What was typed in a box before Apply is still the plan's value after it (the boxes used to write it back):
+    giving the boxes the new plan's values must not drop it."""
+    typed = "set by the user in the interface"
+    at, plan, direct, own = _apply_in_step3(demo_1200, typed={"min_genes_per_cell": 150},
+                                            normalization="pearson_residuals")
+    dec, auto = plan.decisions["min_genes_per_cell"], own.decisions["min_genes_per_cell"]
+    assert (dec.value, dec.reason, dec.source) == (150, typed, "user"), (dec.value, dec.reason, dec.source)
+    assert (dec.auto_value, dec.auto_reason, dec.auto_source) == (auto.value, auto.reason, auto.source)
+    _assert_box_shows(at, "min_genes_per_cell", 150)
+    assert plan.choices["normalization"] == "pearson_residuals"
+    direct.set("min_genes_per_cell", 150, typed)
+    assert plan.to_dict() == direct.to_dict(), "the plan these choices build, with the typed value"
+
+
+def test_a_value_sent_with_the_apply_click_stays_typed(demo_1200):
+    """A number typed in a box and sent with the Apply click is not in the plan yet when Apply runs (the boxes are
+    drawn below the button), so giving the boxes the new plan's values dropped it (PR #120 review, round 2). The
+    other boxes are sent too, with the plan's own values (0 = off): they must change nothing."""
+    typed = "set by the user in the interface"
+    at, plan, direct, own = _apply_in_step3(demo_1200, pending={"min_genes_per_cell": 150},
+                                            normalization="pearson_residuals")
+    dec, auto = plan.decisions["min_genes_per_cell"], own.decisions["min_genes_per_cell"]
+    assert (dec.value, dec.reason, dec.source) == (150, typed, "user"), (dec.value, dec.reason, dec.source)
+    assert (dec.auto_value, dec.auto_reason, dec.auto_source) == (auto.value, auto.reason, auto.source)
+    _assert_box_shows(at, "min_genes_per_cell", 150)
+    assert plan.choices["normalization"] == "pearson_residuals"
+    direct.set("min_genes_per_cell", 150, typed)
+    assert plan.to_dict() == direct.to_dict(), "the plan these choices build, with the typed value"
 
 
 # --------------------------------------------------------------------------- #
