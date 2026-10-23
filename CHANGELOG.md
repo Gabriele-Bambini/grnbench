@@ -3,6 +3,7 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- Motif methods (`motif_prior`, `*_motif`, `*_cistarget`) record cisTarget coverage (genes found, regulators with a motif, database names) in the run provenance as `motif_coverage` and warn when under 50% of genes are found or no regulator has a motif (Ensembl IDs?); scores unchanged (#76 M13).
 - `grnbench.explore` (EXPLORATORY, descriptive, no claim): per-(dataset, TF) atlas with detection rate and per-TF AUPRC ratio, TF detectability and motif-vs-coexpression figures, per-TF evidence cards, from saved run artifacts.
 - `docs/related_work.md`: the field's research lines and narrative arcs, open questions (2026), where our
   results fit, and the figure and explainability conventions that earned trust; every claim labelled.

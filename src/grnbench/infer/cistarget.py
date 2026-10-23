@@ -44,6 +44,7 @@ https://resources.aertslab.org/cistarget/ (v10 clustered motifs used here).
 from __future__ import annotations
 
 import os
+import warnings
 from functools import lru_cache
 from pathlib import Path
 from typing import Callable
@@ -118,6 +119,26 @@ def load_rankings(path: str, genes: tuple[str, ...]) -> tuple[np.ndarray, list[s
     ranks = np.column_stack([table.column(db).to_numpy() for _, db in matched]).astype(np.int32) \
         if matched else np.zeros((len(motifs), 0), dtype=np.int32)
     return motifs, [g for g, _ in matched], ranks, len(cols)
+
+
+def coverage_report(regulators, genes, found, motif_ids, tf_motifs, dbs) -> dict:
+    """Share of ``genes`` present in the rankings databases and of ``regulators`` with an annotated
+    motif present in them. Warns (scores untouched) when identifiers probably do not match."""
+    regs = list(dict.fromkeys(map(str, regulators)))
+    with_motif = sum(1 for t in regs if tf_motifs.get(t.casefold(), frozenset()) & motif_ids)
+    n_genes = len(set(map(str, genes)))
+    cov = {"genes_total": n_genes, "genes_in_db": len(found),
+           "gene_coverage": round(len(found) / n_genes, 4) if n_genes else 0.0,
+           "regulators_total": len(regs), "regulators_with_motif": with_motif,
+           "regulator_coverage": round(with_motif / len(regs), 4) if regs else 0.0,
+           "databases": [Path(d).name for d in dbs]}
+    if cov["gene_coverage"] < 0.5 or with_motif == 0:
+        warnings.warn(
+            f"cisTarget coverage is low: {len(found)}/{n_genes} genes ({cov['gene_coverage']:.0%}) are in "
+            f"the rankings and {with_motif}/{len(regs)} regulators have an annotated motif present; the motif "
+            "prior is constant or neutral for the rest. Likely cause: gene identifiers do not match the "
+            "cisTarget symbols (Ensembl IDs?)", RuntimeWarning, stacklevel=3)
+    return cov
 
 
 def guess_species(genes) -> str:
@@ -233,8 +254,11 @@ def cistarget_rerank(edges: pd.DataFrame, expr: pd.DataFrame, species: str | Non
     modules = modules_from_edges(edges, expr)
     support: dict[tuple[str, str], float] = {}
     genes = tuple(map(str, expr.columns))
+    found, motif_ids = set(), set()
     for db in dbs:
         motifs, matched, ranks, n_total = load_rankings(str(db), genes)
+        found.update(matched)
+        motif_ids.update(motifs)
         for k, v in prune(modules, motifs, matched, ranks, n_total, tf_motifs, **params).items():
             support[k] = max(support.get(k, -np.inf), v)
     out = edges.sort_values("weight", ascending=False, kind="stable").reset_index(drop=True)
@@ -246,7 +270,8 @@ def cistarget_rerank(edges: pd.DataFrame, expr: pd.DataFrame, species: str | Non
     out = out.sort_values("weight", ascending=False, kind="stable").reset_index(drop=True)
     out.attrs.update(cistarget_species=species, cistarget_supported=int(supported.sum()),
                      cistarget_modules=len(modules),
-                     cistarget_regulons=len({s for s, _ in support}))
+                     cistarget_regulons=len({s for s, _ in support}),
+                     motif_coverage=coverage_report(out["source"], genes, found, motif_ids, tf_motifs, dbs))
     return out
 
 
@@ -277,8 +302,11 @@ def motif_ranks(tfs, genes, species: str | None = None, root: Path | None = None
         raise MethodError(f"no cisTarget resources for {species} in {root or cistarget_dir()}")
     tf_motifs = load_annotation(str(ann))
     out = None
+    found, motif_ids = set(), set()
     for db in dbs:
         motifs, matched, ranks, n_total = load_rankings(str(db), genes)
+        found.update(matched)
+        motif_ids.update(motifs)
         row = {m: i for i, m in enumerate(motifs)}
         block = np.full((len(tfs), len(genes)), n_total, dtype=np.int32)
         pos = {g: i for i, g in enumerate(genes)}
@@ -288,12 +316,15 @@ def motif_ranks(tfs, genes, species: str | None = None, root: Path | None = None
             if rr and cols:
                 block[i, cols] = ranks[rr].min(0)
         out = block if out is None else np.minimum(out, block)
-    return pd.DataFrame(out, index=list(map(str, tfs)), columns=list(genes))
+    res = pd.DataFrame(out, index=list(map(str, tfs)), columns=list(genes))
+    res.attrs["motif_coverage"] = coverage_report(tfs, genes, found, motif_ids, tf_motifs, dbs)
+    return res
 
 
 def _motif_rank_of_edges(edges: pd.DataFrame, expr: pd.DataFrame, species, root) -> np.ndarray:
     tfs = list(dict.fromkeys(edges["source"].astype(str)))
     mr = motif_ranks(tfs, expr.columns, species, root)
+    edges.attrs["motif_coverage"] = mr.attrs["motif_coverage"]
     r = mr.to_numpy()
     ri = edges["source"].astype(str).map({t: i for i, t in enumerate(mr.index)}).to_numpy()
     ci = edges["target"].astype(str).map({g: i for i, g in enumerate(mr.columns)}).to_numpy()
@@ -309,8 +340,10 @@ def motif_prior(expr: pd.DataFrame, tf_names: list[str] | None = None, species: 
     mr = motif_ranks(tfs, expr.columns, species, root)
     long = mr.stack().rename_axis(["source", "target"]).reset_index(name="rank")
     long = long[long["source"] != long["target"]]
-    return pd.DataFrame({"source": long["source"], "target": long["target"],
-                         "weight": -long["rank"].astype(float)})
+    out = pd.DataFrame({"source": long["source"], "target": long["target"],
+                        "weight": -long["rank"].astype(float)})
+    out.attrs["motif_coverage"] = mr.attrs["motif_coverage"]
+    return out
 
 
 def motif_rank_product(edges: pd.DataFrame, expr: pd.DataFrame, species: str | None = None,
@@ -322,7 +355,10 @@ def motif_rank_product(edges: pd.DataFrame, expr: pd.DataFrame, species: str | N
     mot_rank = pd.Series(_motif_rank_of_edges(out, expr, species, root)).rank(
         ascending=True, method="average").to_numpy()
     out["weight"] = -(np.log(base_rank) + np.log(mot_rank)) / 2
-    return out.sort_values("weight", ascending=False, kind="stable").reset_index(drop=True)
+    cov = out.attrs["motif_coverage"]
+    out = out.sort_values("weight", ascending=False, kind="stable").reset_index(drop=True)
+    out.attrs["motif_coverage"] = cov
+    return out
 
 
 def with_motif_prior(base: Callable[..., pd.DataFrame]) -> Callable[..., pd.DataFrame]:

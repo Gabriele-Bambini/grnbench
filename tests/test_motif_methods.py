@@ -191,3 +191,40 @@ def test_regdiffusion_drops_zero_variance_genes(monkeypatch):
     assert set(edges["source"]) == {"TF1"}
     assert "g2" not in set(edges["target"]) and "TF2" not in set(edges["target"])
     assert (edges["weight"] > 0).all()
+
+
+# --- M13 (#76): coverage of the cisTarget databases is recorded, and low coverage is loud ---------
+
+def _adata(expr):
+    import anndata as ad
+    return ad.AnnData(expr.to_numpy(dtype=np.float32) + 5.0, var=pd.DataFrame(index=expr.columns))
+
+
+@pytest.mark.parametrize("method", ["motif_prior", "pearson_motif", "pearson_cistarget"])
+def test_ensembl_identifiers_warn_and_record_zero_coverage(resources, coexpressed, method):
+    ens = coexpressed.copy()
+    ens.columns = [f"ENSG{i:011d}" for i in range(ens.shape[1])]
+    with pytest.warns(RuntimeWarning, match="Ensembl"):
+        _, prov = run_method(method, _adata(ens), tf_list=list(ens.columns[:2]), assume_normalized=True,
+                             **({"species": "human"} if method != "motif_prior" else {}))
+    cov = prov["motif_coverage"]
+    assert cov["genes_in_db"] == 0 and cov["gene_coverage"] == 0.0
+    assert cov["regulators_with_motif"] == 0 and cov["regulator_coverage"] == 0.0
+    assert cov["genes_total"] == ens.shape[1] and cov["databases"] == ["hg38_test.genes_vs_motifs.rankings.feather"]
+
+
+def test_symbols_record_coverage_without_warning_and_leave_scores_alone(resources, coexpressed, recwarn):
+    adata = _adata(coexpressed)
+    tfs = ["TFA", "TFB"]
+    prior, prov = run_method("motif_prior", adata, tf_list=tfs, assume_normalized=True)
+    assert not [w for w in recwarn if "cisTarget coverage" in str(w.message)]
+    cov = prov["motif_coverage"]
+    assert cov["gene_coverage"] == 1.0 and cov["genes_in_db"] == coexpressed.shape[1]
+    assert cov["regulators_with_motif"] == 2 and cov["regulator_coverage"] == 1.0
+    combined, prov2 = run_method("pearson_motif", adata, tf_list=tfs, assume_normalized=True)
+    assert prov2["motif_coverage"]["gene_coverage"] == 1.0
+    # scores are exactly the database ranks (coverage reporting changes nothing)
+    mr = ct.motif_ranks(tfs, coexpressed.columns, species="human")
+    got = prior.set_index(["source", "target"])["weight"]
+    ref = (-mr.stack().astype(float)).rename_axis(["source", "target"])
+    assert np.array_equal(got.sort_index().to_numpy(), ref.loc[got.index].sort_index().to_numpy())

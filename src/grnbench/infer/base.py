@@ -276,6 +276,8 @@ def run_method(name: str,
         "params": {k: str(v) for k, v in {**params, **raw.attrs.get("params", {})}.items()},
     }
     info = dict(raw.attrs)                      # what a method says about its own run (WGCNA's power ...)
+    if "motif_coverage" in info:                # cisTarget methods: how much of the data the motifs cover
+        prov["motif_coverage"] = info.pop("motif_coverage")
     if info:
         prov["method_info"] = info
     return edges, prov
