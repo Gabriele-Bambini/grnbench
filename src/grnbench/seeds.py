@@ -23,7 +23,8 @@ One run can span two entry points: ``quick_run(screen=True)`` in the interface i
 ``interface_screening`` (the screening) and then ``interface`` (the cleaning, the models, the figures).
 
 Not covered (their seeds are not in LEGACY, see :data:`NOT_COVERED`): beeline_backtest.py,
-motif_sensitivity.py, calibration.py, demo.py, plugins.py (Python and entry-point plugin runners).
+motif_sensitivity.py, calibration.py, demo.py, plugins.py (Python and entry-point plugin runners),
+explore.py, rbridge.py, epr_power.py.
 """
 from __future__ import annotations
 
@@ -67,6 +68,7 @@ NOT_COVERED: tuple[tuple[str, str], ...] = (
     ("src/grnbench/demo.py", "grnbench demo: make_demo seed 0"),
     ("src/grnbench/rbridge.py", "R bridge: seed and RNG kind fixed by r/_wrapper.R per call"),
     ("src/grnbench/explore.py", "grnbench.explore (exploratory): SEED = 0 for its subsamples"),
+    ("benchmarks/epr_power.py", "EPR power analysis: BOOTSTRAP_SEED = 42 for its bootstrap"),
     ("src/grnbench/plugins.py", "Python and entry-point plugin runners keep their own defaults "
                                 "(command plugins are the library row plugin.command)"),
 )
