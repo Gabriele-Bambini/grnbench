@@ -178,3 +178,19 @@ STATUS: PROPOSED | ACTIVE | SUPERSEDED by D-xxx | REVERTED
   back to the default with a warning (still a silent change of the user's choice, and `n_warnings` is
   a field of committed rows); hide external options from the knowledge base (loses the evidence and the
   install guidance).
+### D-032 | 2026-10-21 | claude (for GB) | ACTIVE | Optional R bridge through an Rscript subprocess
+- decision: the R-only cleaning options of the knowledge base (EmptyDrops, SoupX, DecontX, scDblFinder, ...)
+  run through `grnbench.rbridge`: `Rscript --vanilla` in a child process, no rpy2. R comes from a dedicated
+  conda env `grnbench-r` built from `requirements/` (`r-bridge.yml` on Linux, `conda create` + `r-bridge.R`
+  on Windows; `docs/R_BRIDGE.md`); grnbench never installs anything. The wrapper `r/_wrapper.R` fixes
+  `RNGkind("Mersenne-Twister", "Inversion", "Rejection")` and the seed and records them in `session.json`
+  with the R and package versions. A missing requirement keeps the knowledge base's text `missing: <req>`.
+  grnbench never switches quietly to another R: an Rscript that was named (`--rscript`, `GRNBENCH_RSCRIPT`,
+  `GRNBENCH_R_ENV`) or a conda env that exists but does not work is an error, not a fall-through to PATH.
+  R options become choosable only after step 2c (issue #135), and opt-in under the current preset.
+- why: rpy2 is in no registered environment, ties R to the Python process (an R crash takes the run down,
+  no timeout) and breaks with conda R on Windows (its DLLs are found only through PATH); an isolated env
+  keeps the Python lock and every registered row unchanged.
+- alternatives: rpy2 (above); the system R (versions differ per machine and the user library leaks in);
+  Docker only (one more runtime on every laptop, not assumed on the cluster).
+- note: D-031 is proposed in PR #133; this PR takes D-032 (renumber if main takes it first).

@@ -83,3 +83,29 @@ def test_app_renders_every_page_without_data():
         assert not at.exception, step
         assert not at.error, step
         assert step in [b.label.split("  ")[0] for b in at.sidebar.button], "the menu lists every screen"
+
+
+def test_environment_popover_starts_r_only_when_asked(fake_rscript, monkeypatch):
+    """The sidebar's Environment popover must never start R on page load, on any page."""
+    pytest.importorskip("streamlit")
+    from streamlit.testing.v1 import AppTest
+    from grnbench.ui import steps
+    monkeypatch.setenv("GRNBENCH_RSCRIPT", str(fake_rscript.path))
+    at = AppTest.from_file(str(ROOT / "src" / "grnbench" / "ui" / "app.py"), default_timeout=60)
+    at.run()
+    for step in steps.LABELS:
+        at.session_state["step"] = step
+        at.run()
+        assert not at.exception, step
+    assert fake_rscript.calls() == [], "R was started without the button"
+    at.button(key="env-check").click().run()
+    assert not at.exception
+    assert [c["script"] for c in fake_rscript.calls()] == ["_probe.R"]
+    rows = at.session_state["env_report"]
+    assert rows[0]["tool"] == "R" and rows[0]["found"] and rows[0]["version"] == "4.5.3"
+    codes = [c.value for c in at.code]
+    assert any('BiocManager::install("scDblFinder")' in c for c in codes), "a missing package shows its install command"
+    at.run()
+    assert len(fake_rscript.calls()) == 1, "the stored report is shown again without starting R"
+    at.button(key="env-check").click().run()
+    assert len(fake_rscript.calls()) == 2, "pressing Check R again asks R again, not the cache"

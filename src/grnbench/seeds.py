@@ -65,6 +65,7 @@ NOT_COVERED: tuple[tuple[str, str], ...] = (
                                         "bootstrap seed 0 stay in the script"),
     ("src/grnbench/calibration.py", "grnbench calibrate: config seed 42, split by SeedSequence.spawn"),
     ("src/grnbench/demo.py", "grnbench demo: make_demo seed 0"),
+    ("src/grnbench/rbridge.py", "R bridge: seed and RNG kind fixed by r/_wrapper.R per call"),
     ("src/grnbench/explore.py", "grnbench.explore (exploratory): SEED = 0 for its subsamples"),
     ("src/grnbench/plugins.py", "Python and entry-point plugin runners keep their own defaults "
                                 "(command plugins are the library row plugin.command)"),

@@ -28,6 +28,7 @@ Commands:
   methods      list inference methods and availability
   strategies   list preprocessing strategies
   kb           preprocessing knowledge base: options, availability, docs (--write-docs PATH)
+  env          optional tools: R and its packages, Python and command-line extras (--json)
   demo         write the synthetic demo dataset (--out DIR)
   ui           open the graphical interface in the browser
   version      print the installed version
@@ -91,6 +92,12 @@ _BUILTIN_HELP = {
     "strategies": "grnbench strategies\n\nList the preprocessing strategies and whether each can run here.",
     "kb": "grnbench kb [--write-docs [PATH]]\n\nPrint the preprocessing knowledge base (decision, option, evidence level,\n"
           "availability), or write it as Markdown to PATH (default docs/knowledge/preprocessing_kb.md).",
+    "env": "grnbench env [--rscript PATH] [--json]\n\nList the optional tools of the cleaning engine: R (found through --rscript,\n"
+           "GRNBENCH_RSCRIPT, the conda env grnbench-r, R_HOME or PATH), each R package, Python module and\n"
+           "command-line tool the knowledge base names, what needs it, and the command to install what is missing.\n"
+           "Nothing is installed. GRNBENCH_RSCRIPT=none turns R off. Exits 1 when looking for R is an error (an R\n"
+           "you named does not work, GRNBENCH_R_ENV names no env, an existing env has no working R), else 0.\n"
+           "Details: docs/R_BRIDGE.md.",
     "demo": "grnbench demo [--out DIR]\n\nWrite a small synthetic dataset with a known network (counts.h5ad, tfs.txt,\n"
             "gold.tsv, README.md) into DIR (default grnbench_demo). DIR must be new or empty: nothing is overwritten.",
     "ui": "grnbench ui [streamlit options]\n\nOpen the graphical interface in the browser. It listens on this computer only;\n"
@@ -118,6 +125,36 @@ def _demo(rest: list[str]) -> int:
     for name, path in write_demo(args.out).items():
         print(f"{name:7s} {path}")
     return 0
+
+
+def _env(rest: list[str]) -> int:
+    import argparse
+    import json
+    from grnbench import rbridge
+    ap = argparse.ArgumentParser(prog="grnbench env", description="List the optional tools and how to install them.")
+    ap.add_argument("--rscript", metavar="PATH", help="use this Rscript instead of looking for one")
+    ap.add_argument("--json", action="store_true", help="print the rows as JSON")
+    try:
+        args = ap.parse_args(rest)
+    except SystemExit as exc:      # argparse prints its own usage; hand back the code instead of exiting
+        return int(exc.code or 0)
+    # A diagnostic: ask R, not the cache. R being absent (or turned off) is an answer, not a failure; looking
+    # for R being an error (an R you named does not work, GRNBENCH_R_ENV names no env, an existing env has no
+    # working R) is a failure, as it is for run_r, so scripts can check it.
+    rows, failed = rbridge.environment_status(args.rscript, fresh=True)
+    code = 1 if failed else 0
+    if args.json:
+        print(json.dumps(rows, indent=2))
+        return code
+    width = max(len(r["tool"]) for r in rows)
+    print(f"{'tool':{width}s}  found  {'version':10s}  source")
+    for r in rows:
+        print(f"{r['tool']:{width}s}  {'yes' if r['found'] else 'no':5s}  {r['version'] or '-':10s}  {r['source'] or '-'}")
+        if r["used_for"]:
+            print(f"{'':{width}s}  used for: {', '.join(r['used_for'])}")
+        for line in r["install"].splitlines() if r["install"] else ():
+            print(f"{'':{width}s}  {'install: ' if not r['found'] and not line.startswith('#') else ''}{line}")
+    return code
 
 
 def _ui(rest: list[str]) -> int:
@@ -162,6 +199,8 @@ def main(argv: list[str] | None = None) -> int:
         return _strategies()
     if cmd == "kb":
         return _kb(rest)
+    if cmd == "env":
+        return _env(rest)
     if cmd == "demo":
         return _demo(rest)
     if cmd == "ui":

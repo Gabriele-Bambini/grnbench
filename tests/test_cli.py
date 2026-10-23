@@ -397,12 +397,42 @@ def test_kb_refuses_unknown_options_and_stray_arguments(tmp_path, capsys, monkey
 
 def test_builtin_commands_answer_help_and_refuse_stray_arguments(capsys, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    for cmd in ("methods", "strategies", "kb", "demo", "ui", "version"):
+    for cmd in ("methods", "strategies", "kb", "env", "demo", "ui", "version"):
         assert grnbench_main([cmd, "--help"]) == 0, cmd
         assert cmd in capsys.readouterr().out
     assert list(tmp_path.iterdir()) == [], "--help must not create anything (it used to write a folder named --help)"
     assert grnbench_main(["methods", "--bogus"]) == 2 and "takes no arguments" in capsys.readouterr().err
     assert grnbench_main(["demo", "--out"]) == 2 and "expected one argument" in capsys.readouterr().err
+
+
+def test_env_reports_the_optional_tools_and_fails_only_for_an_r_you_named(capsys, monkeypatch, tmp_path):
+    monkeypatch.setenv("GRNBENCH_RSCRIPT", "none")
+    assert grnbench_main(["env", "--json"]) == 0, "R turned off is an answer, not a failure"
+    rows = json.loads(capsys.readouterr().out)
+    assert rows[0]["tool"] == "R" and rows[0]["found"] is False and "GRNBENCH_RSCRIPT=none" in rows[0]["install"]
+    assert any(r["tool"] == "r:SoupX" and "ambient_rna=soupx" in r["used_for"] for r in rows)
+    assert grnbench_main(["env"]) == 0
+    out = capsys.readouterr().out
+    assert out.splitlines()[0].split() == ["tool", "found", "version", "source"] and "r:scDblFinder" in out
+    assert grnbench_main(["env", "--rscript", "no/such/Rscript"]) == 1, "the R you named does not work"
+    assert "no Rscript at" in capsys.readouterr().out
+    assert grnbench_main(["env", "--rscript", ""]) == 1 and "--rscript is empty" in capsys.readouterr().out
+    monkeypatch.setenv("GRNBENCH_RSCRIPT", str(tmp_path / "Rscript"))
+    assert grnbench_main(["env", "--json"]) == 1
+    assert json.loads(capsys.readouterr().out)[0]["found"] is False, "--json still prints the rows"
+    assert grnbench_main(["env", "--bogus"]) == 2 and "unrecognized arguments" in capsys.readouterr().err
+
+
+def test_env_with_a_fake_r_lists_its_packages_and_asks_r_every_time(capsys, monkeypatch, fake_rscript):
+    monkeypatch.setenv("GRNBENCH_RSCRIPT", str(fake_rscript.path))
+    assert grnbench_main(["env"]) == 0
+    out = capsys.readouterr().out
+    soupx = next(line for line in out.splitlines() if line.startswith("r:SoupX "))
+    assert soupx.split()[1:3] == ["yes", "1.6.2"]
+    assert 'install: BiocManager::install("scDblFinder"' in out
+    assert len(fake_rscript.calls()) == 1
+    assert grnbench_main(["env"]) == 0
+    assert len(fake_rscript.calls()) == 2, "a diagnostic does not trust the probe cache"
 
 
 def test_ui_listens_on_this_computer_only_unless_asked(monkeypatch):

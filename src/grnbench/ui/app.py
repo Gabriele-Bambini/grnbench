@@ -265,6 +265,37 @@ GLOSSARY = {
     "Batch": "cells processed separately (run, donor, lane...) whose technical differences can look like biology.",
     "Doublet": "a droplet that captured two cells: it looks like one cell with mixed identity.",
 }
+
+
+def environment_panel() -> None:
+    """Optional tools of the engine (``grnbench env``). Read-only, and R starts only when the button is pressed."""
+    st.caption("The cleaning engine's optional tools: R and its packages, Python and command-line extras. "
+               "grnbench installs nothing: a missing tool shows the command to run yourself.")
+    if st.button("Check R", key="env-check", icon=":material/search:", width="stretch",
+                 help="Starts R to list its packages (about a second). Nothing starts R until you press it."):
+        from grnbench import rbridge
+        with st.spinner("Asking R which packages it has..."):
+            S["env_report"] = rbridge.environment_report(fresh=True)    # pressing the button means: ask R now
+    rows = S.get("env_report")
+    if rows is None:
+        st.caption("Not checked in this session yet.")
+        return
+    no_r = not rows[0]["found"]                     # the first row is R itself
+    for row in rows:
+        mark = ":green[:material/check_circle:]" if row["found"] else ":red[:material/cancel:]"
+        detail = " · ".join(x for x in (row["version"], row["source"]) if x)
+        st.markdown(f"{mark} **{row['tool']}**" + (f" {detail}" if detail else ""))
+        needed = "needed for: " + (", ".join(row["used_for"]) or "-")
+        if row["found"]:
+            if row["install"]:                      # R found, but other candidates were skipped: say why
+                st.code(row["install"], language=None)   # paths verbatim, not read as markdown
+        elif no_r and row["tool"].startswith("r:"):
+            st.caption(f"{needed}; install R first (above)")
+        elif row["install"]:
+            st.caption(needed)
+            st.code(row["install"], language="r" if row["tool"].startswith("r:") else "bash")
+
+
 with st.sidebar:
     st.markdown(style.brand_html(), unsafe_allow_html=True)
     nav_slot = st.container()          # filled after the page ran, so the ticks show this run's progress
@@ -272,6 +303,8 @@ with st.sidebar:
     with st.popover("Glossary", icon=":material/menu_book:", width="stretch"):
         for term, meaning in GLOSSARY.items():
             st.markdown(f"**{term}**: {meaning}")
+    with st.popover("Environment", icon=":material/memory:", width="stretch"):
+        environment_panel()
     S.setdefault("base", str(Path.home() / "grnbench_runs"))
     with st.expander("Settings", icon=":material/settings:"):
         base = st.text_input("Output folder", key="base",

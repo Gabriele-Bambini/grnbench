@@ -1,0 +1,25 @@
+# Optional R bridge of grnbench (docs/R_BRIDGE.md): a conda env of its own, so the Python lock and the
+# registered results do not change. Linux / cluster only: bioconda has no win-64 builds of the compiled
+# Bioconductor packages (Windows: `conda create` line in docs/R_BRIDGE.md, then the same r-bridge.R).
+#
+#   conda env create -f requirements/r-bridge.yml
+#   conda run -n grnbench-r Rscript --vanilla requirements/r-bridge.R   # adds SoupX from CRAN, checks each loads
+#
+# r-soupx on conda-forge is built only for R 4.2/4.3, so SoupX 1.6.2 (pure R) is installed from CRAN by
+# r-bridge.R; its imports (ggplot2, Matrix, Seurat) come from this env.
+# Installing R on the cluster needs the owner's OK first.
+name: grnbench-r
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - r-base=4.5.3
+  - r-jsonlite=2.0.0
+  - r-biocmanager=1.30.27
+  - r-seurat=5.5.1
+  - bioconductor-dropletutils=1.30.0
+  - bioconductor-scdblfinder=1.24.10
+  - bioconductor-celda=1.26.0
+  - bioconductor-miqc=1.18.0
+  - bioconductor-bluster=1.20.0

@@ -3,6 +3,7 @@
 *.sh text eol=lf
 *.sbatch text eol=lf
 *.py text eol=lf
+*.R text eol=lf
 *.png binary
 *.svg text
 # Result files are stored byte-for-byte so SHA256SUMS verify on every OS

@@ -3,6 +3,16 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- Optional R bridge (#135, D-032 proposed): `grnbench.rbridge` runs R as an `Rscript --vanilla` subprocess
+  from a dedicated conda env `grnbench-r` (`requirements/r-bridge.yml` on Linux, `requirements/r-bridge.R`
+  on both systems, `docs/R_BRIDGE.md`), with seed and RNG kind fixed by `r/_wrapper.R` and R and package
+  versions in `session.json`; the package probe runs once per cache. `grnbench env` (and the sidebar's
+  Environment popover, which starts R only on its button) lists R, its packages and the other optional
+  tools with the command to install what is missing. grnbench installs nothing; `GRNBENCH_RSCRIPT=none`
+  turns R off. It never switches quietly to another R: an R you named, or a conda env that exists but
+  does not work, is an error, and `grnbench env` exits 1 for it. The method's own `set.seed` calls and
+  RNG changes are recorded; a timeout or Ctrl+C kills R with its child processes. Not wired into the
+  knowledge base's availability yet (step 2c): planner output is unchanged.
 - An option of the knowledge base is available only when its dependencies are installed AND grnbench can
   run it (`kb.DecisionPoint.availability`; new `executors.py`, whose `PLAN_STEPS` table both availability
   and the plan read, and which never offers imputation or scVI's denoised expression, D-002). An option
