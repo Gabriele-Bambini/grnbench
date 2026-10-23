@@ -3,6 +3,8 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- `docs/related_work.md`: the field's research lines and narrative arcs, open questions (2026), where our
+  results fit, and the figure and explainability conventions that earned trust; every claim labelled.
 - `python -m grnbench.board --digest [--since DATE] [--post ISSUE]` prints a weekly digest (merged and open
   PRs, changed experiment records, claim status changes, new decisions, running/experiment issues);
   `--claims` prints the claims status table joined with experiments and generated files. Posts only with `--post`.
