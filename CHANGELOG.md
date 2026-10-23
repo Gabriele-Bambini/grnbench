@@ -3,6 +3,14 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- The `cli` recorded in `contexts.json` carries `--seed` (a required argument of `PrepPlan.cli_args`, passed by
+  `execute_plan`, which also writes `seed` on each record), so a screened context (prepped at seed 0) no longer
+  replays at the CLI default 42 (audit 2026-09-27), and `--force` when `execute_plan(force=True)` ran past a failed
+  QC gate (issue #117); both tested by replaying the command. The interface's "Reproduce from a terminal" shows one
+  command per context with the seed *Run cleaning* uses (`DEFAULT_SEED`, now passed explicitly by the interface), and
+  every command it shows is shell-quoted (`shlex.join`: labels such as `T|reg` or `NK(bright)` paste back exactly).
+  `tests/test_seed_discipline.py` fails on any new random call without an explicit seed in `src/grnbench` or
+  `benchmarks` (none today). No default, seed value or result row changes (issue #111).
 - Tests: every registered model (17 default, 11 extra) runs once through the registry on tiny data
   (`tests/test_registry_smoke.py`). Each must give edges to every regulator of its list and to no other gene,
   with weights that are not all equal, sorted high to low; the cisTarget methods must report motif-supported

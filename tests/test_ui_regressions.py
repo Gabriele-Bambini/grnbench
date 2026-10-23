@@ -191,6 +191,19 @@ def test_a_second_apply_keeps_the_first_and_an_adopted_pipeline(demo):
     assert ch["normalization"] == "pearson_residuals" and ch["batch"] == "center_per_batch"
 
 
+def test_step3_shows_the_command_of_every_context_with_the_seed_cleaning_uses(demo):
+    """It showed the first context only, and no --seed (issue #111)."""
+    from grnbench.autoprep import DEFAULT_SEED, plan_preprocessing
+    _, _, tfs, res = demo
+    at = _with_state(demo, user_choices={})
+    plan = plan_preprocessing(res["diag"], tf_list=tfs, choices={"context_scope": "per_cell_type"})
+    at.session_state["plan"] = plan
+    _goto(at, "3 · Pipeline")
+    cmds = [c.value for c in at.code if c.value.startswith("grnbench prep")]
+    assert len(cmds) == len(plan.contexts) >= 2, cmds
+    assert all(c.endswith(f"--seed {DEFAULT_SEED}") for c in cmds), cmds
+
+
 def test_step4_says_when_the_plan_was_edited_in_step3(demo):
     at = _with_state(demo, user_choices={})
     _goto(at, "3 · Pipeline")
@@ -404,6 +417,50 @@ def test_a_second_run_gets_its_own_folder_instead_of_the_engine_refusing_to_writ
     (second / "f").write_bytes(b"y")
     assert logic.fresh_folder(tmp_path / "clean") == tmp_path / "clean-3"
     assert (first / "all_cells" / "processed.h5ad").read_bytes() == b"x", "nothing of the first run was touched"
+
+
+def test_step5_exact_commands_paste_back_to_the_recorded_argv(demo):
+    """They quoted only arguments with a space: a label such as 'T|reg' made the pasted command a pipe."""
+    import shlex
+    d, _, _, _ = demo
+    at = _with_state(demo)
+    at.session_state["workdir"] = str(d / "exact")
+    _goto(at, "5 · Clean")
+    next(b for b in at.button if b.label == "Run cleaning").click().run()
+    assert not at.exception and not at.error, [e.value for e in at.error]
+    cmds = [c.value for c in at.code if c.value.startswith("grnbench prep")]
+    assert [shlex.split(c) for c in cmds] == [r["cli"] for r in at.session_state["records"]] != []
+
+
+def test_step3_preview_and_step5_cleaning_use_one_seed(demo, monkeypatch):
+    """The preview named DEFAULT_SEED while "Run cleaning" relied on execute_plan's own default: they could drift."""
+    import grnbench.autoprep
+    monkeypatch.setattr(grnbench.autoprep, "DEFAULT_SEED", 7)
+    at = _with_state(demo)
+    at.session_state["workdir"] = str(demo[0] / "one-seed")
+    _goto(at, "3 · Pipeline")
+    shown = [c.value for c in at.code if c.value.startswith("grnbench prep")]
+    assert shown and all(c.endswith("--seed 7") for c in shown), shown
+    _goto(at, "5 · Clean")
+    next(b for b in at.button if b.label == "Run cleaning").click().run()
+    assert not at.exception and not at.error, [e.value for e in at.error]
+    assert [r["seed"] for r in at.session_state["records"]] == [7] * len(shown)
+
+
+def test_quick_run_cleans_with_the_interface_seed(demo, tmp_path, monkeypatch):
+    import grnbench.autoprep
+    seen = []
+
+    def fake_execute_plan(plan, data_path, out_dir, *, tf_list=None, seed=None, force=False):
+        seen.append(seed)
+        return [{"context": "all_cells", "processed": None, "error": "stub"}]
+
+    monkeypatch.setattr(grnbench.autoprep, "DEFAULT_SEED", 7)
+    monkeypatch.setattr(grnbench.autoprep, "execute_plan", fake_execute_plan)
+    _, paths, tfs, _ = demo
+    with pytest.raises(RuntimeError, match="Nothing was run"):
+        logic.quick_run(paths["counts"], tmp_path / "runs", ["pearson_signed"], tf_list=tfs)
+    assert seen == [7]
 
 
 def test_cleaning_again_after_a_quick_run_works(demo):

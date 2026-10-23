@@ -225,6 +225,24 @@ def pipeline_overview(plan) -> list[dict]:
     return rows
 
 
+def reproduce_commands(plan, data_path, *, tf_list=None, seed: int) -> list[str]:
+    """One ``grnbench prep`` command per context of ``plan``, with the folders ``execute_plan`` writes and ``seed``."""
+    from grnbench.autoprep import unique_folder_names
+    folders = unique_folder_names([str(c["name"]) for c in plan.contexts])
+    cmds = []
+    for ctx, name in zip(plan.contexts, folders):
+        cli = plan.cli_args(data_path, "OUT/" + name, "tf_list.txt" if tf_list else None, context=ctx,
+                            bounds_path="per_batch_bounds.json", seed=seed)
+        cmds.append(shell_command(["grnbench", "prep", *cli]))
+    return cmds
+
+
+def shell_command(argv) -> str:
+    """``argv`` as one line a POSIX shell (Git Bash too) reads back exactly: labels carry spaces, ``|``, ``(``, ``$``."""
+    import shlex
+    return shlex.join(str(a) for a in argv)
+
+
 def clean_path(text) -> Path | None:
     """A path typed or pasted into a box: spaces and the quotes of "Copy as path" removed, ``~`` expanded."""
     t = str(text or "").strip().strip("\"'").strip()
@@ -1099,7 +1117,7 @@ def quick_run(data_path, base, methods, *, tf_list=None, reference=None, text_fi
     Cleaning is the fixed baseline pipeline (D-021) unless ``screen`` asks the engine to compare
     candidate pipelines, which only changes the choice when a reference network is given.
     """
-    from grnbench.autoprep import execute_plan
+    from grnbench.autoprep import DEFAULT_SEED, execute_plan
 
     def tick(frac, msg):
         if progress:
@@ -1122,7 +1140,7 @@ def quick_run(data_path, base, methods, *, tf_list=None, reference=None, text_fi
     else:
         plan = baseline_plan(diag, tf_list)
     tick(0.3, "Cleaning")
-    records = execute_plan(plan, data_path, work / "clean", tf_list=tf_list)
+    records = execute_plan(plan, data_path, work / "clean", tf_list=tf_list, seed=DEFAULT_SEED)
     if not any(r.get("processed") for r in records):
         raise RuntimeError("Nothing was run: the data could not be cleaned. "
                            + "; ".join(f"{r['context']}: {r['error']}" for r in records))

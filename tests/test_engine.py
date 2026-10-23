@@ -212,6 +212,100 @@ def test_per_batch_bounds_and_qc_gene_exclusion_run(demo, tmp_path):
     assert "--per-batch-bounds" in rec["cli"] and "--exclude-qc-genes" in rec["cli"]
 
 
+def test_reproduction_command_always_names_the_seed():
+    plan = PrepPlan()
+    assert plan.cli_args("in.h5ad", "out", seed=0) == ["in.h5ad", "--out", "out", "--seed", "0"]
+    with pytest.raises(TypeError):
+        plan.cli_args("in.h5ad", "out")           # no command without the seed it replays at
+
+
+def test_one_default_seed_for_the_plan_the_prep_command_and_run_prep():
+    import inspect
+
+    from grnbench.autoprep import DEFAULT_SEED
+    from grnbench.cli import _build_parser
+    from grnbench.pipeline import run_prep
+    assert _build_parser().parse_args([]).seed == DEFAULT_SEED == 42
+    assert inspect.signature(run_prep).parameters["seed"].default == DEFAULT_SEED
+    assert inspect.signature(execute_plan).parameters["seed"].default == DEFAULT_SEED
+
+
+def test_reproduction_command_names_force_when_the_run_used_it():
+    plan = PrepPlan()
+    assert "--force" in plan.cli_args("in.h5ad", "out", seed=0, force=True)
+    assert "--force" not in plan.cli_args("in.h5ad", "out", seed=0)
+
+
+@pytest.fixture
+def ran(monkeypatch):
+    """``run_prep`` replaced by a stub that keeps the keyword arguments of every call."""
+    from types import SimpleNamespace
+
+    import grnbench.pipeline
+    calls = []
+
+    def fake_run_prep(input_path, out_dir, **kwargs):
+        calls.append(kwargs)
+        return SimpleNamespace(processed_path=Path(out_dir) / "processed.h5ad",
+                               manifest_path=Path(out_dir) / "manifest.json")
+
+    monkeypatch.setattr(grnbench.pipeline, "run_prep", fake_run_prep)
+    return calls
+
+
+@pytest.mark.parametrize("kw, seed", [({"seed": 0}, 0), ({"seed": 42}, 42), ({}, 42)])
+def test_contexts_json_records_the_seed_each_context_ran_with(demo, tmp_path, ran, kw, seed):
+    """Screening preps at seed 0; the recorded command replayed it at the CLI default 42 (audit 2026-09-27)."""
+    paths, tfs, diag = demo
+    plan = plan_preprocessing(diag, tf_list=tfs, choices={"context_scope": "per_cell_type"})
+    execute_plan(plan, paths["counts"], tmp_path / "run", tf_list=tfs, **kw)
+    recorded = json.loads((tmp_path / "run" / "contexts.json").read_text(encoding="utf-8"))
+    assert len(recorded) == len(plan.contexts) >= 2 and [c["seed"] for c in ran] == [seed] * len(recorded)
+    for rec in recorded:
+        assert rec["seed"] == seed and rec["cli"][rec["cli"].index("--seed") + 1] == str(seed), rec
+
+
+@pytest.mark.parametrize("plan_force, run_force, forced", [(False, True, True), (False, False, False),
+                                                           (True, False, True)])
+def test_contexts_json_records_force_when_the_run_used_it(demo, tmp_path, ran, plan_force, run_force, forced):
+    """execute_plan(force=True) ran past the QC gates but recorded a command without --force (issue #117)."""
+    paths, tfs, diag = demo
+    plan = plan_preprocessing(diag, tf_list=tfs, choices={"context_scope": "pooled"})
+    plan.set("force", plan_force)
+    rec = execute_plan(plan, paths["counts"], tmp_path / "run", tf_list=tfs, force=run_force)[0]
+    assert [c["force"] for c in ran] == [forced] and ("--force" in rec["cli"]) is forced, rec["cli"]
+
+
+def _replay_gives_the_same_matrix(rec, out) -> None:
+    """Run the recorded command into ``out``: it must succeed and write the matrix the run wrote."""
+    from grnbench.cli import main
+    assert rec["error"] is None and rec["cli"][:2] == ["grnbench", "prep"]
+    assert main([str(out) if a == rec["out_dir"] else a for a in rec["cli"][2:]]) == 0
+    a, b = ad.read_h5ad(rec["processed"]), ad.read_h5ad(Path(out) / Path(rec["processed"]).name)
+    assert list(a.obs_names) == list(b.obs_names) and list(a.var_names) == list(b.var_names)
+    dense = [m.toarray() if sparse.issparse(m) else np.asarray(m) for m in (a.X, b.X)]
+    np.testing.assert_array_equal(*dense)
+
+
+def test_replaying_the_recorded_command_rebuilds_the_same_matrix(demo, tmp_path):
+    paths, tfs, diag = demo
+    plan = plan_preprocessing(diag, tf_list=tfs, choices={"context_scope": "pooled"})
+    plan.set("subsample_cells", 800)          # a random step, so a replay at another seed keeps other cells
+    rec = execute_plan(plan, paths["counts"], tmp_path / "run", tf_list=tfs, seed=0)[0]
+    _replay_gives_the_same_matrix(rec, tmp_path / "replay")
+
+
+def test_replaying_a_forced_run_passes_the_gate_it_passed(demo, tmp_path):
+    paths, tfs, diag = demo
+    plan = plan_preprocessing(diag, tf_list=tfs, choices={"context_scope": "pooled"})
+    plan.add("mito_warn", "Dataset mito gate: warn above median %", 5.0, "test: below the demo's median")
+    plan.add("mito_fail", "Dataset mito gate: fail above median %", 10.0, "test: below the demo's median")
+    gated = execute_plan(plan, paths["counts"], tmp_path / "gated", tf_list=tfs)[0]
+    assert gated["error"].startswith("PrepError: QC gate failure"), gated["error"]
+    rec = execute_plan(plan, paths["counts"], tmp_path / "run", tf_list=tfs, force=True)[0]
+    _replay_gives_the_same_matrix(rec, tmp_path / "replay")
+
+
 # -- screening -------------------------------------------------------------------------------- #
 
 def test_reference_split_is_disjoint_complete_and_per_tf_balanced():
@@ -222,6 +316,23 @@ def test_reference_split_is_disjoint_complete_and_per_tf_balanced():
     for i in range(5):
         na = sum(s == f"TF{i}" for s, _ in a)
         assert abs(na - sum(s == f"TF{i}" for s, _ in b)) <= 1
+
+
+@pytest.mark.parametrize("kw, seed", [({}, 0), ({"seed": 3}, 3)])
+def test_screening_cleans_every_candidate_at_its_own_seed(demo, tmp_path, monkeypatch, kw, seed):
+    import grnbench.autoprep
+    from grnbench.screen import screen_candidates
+    seen = []
+
+    def fake_execute_plan(plan, input_path, out_dir, *, tf_list=None, seed=None, force=False):
+        seen.append(seed)
+        return [{"context": c["name"], "out_dir": str(out_dir), "processed": None, "error": "stub", "seed": seed,
+                 "cli": []} for c in plan.contexts]
+
+    monkeypatch.setattr(grnbench.autoprep, "execute_plan", fake_execute_plan)
+    paths, tfs, diag = demo
+    screen_candidates(diag, paths["counts"], tmp_path / "scr", tf_list=tfs, max_candidates=1, **kw)
+    assert len(seen) >= 2 and set(seen) == {seed}          # recommended and baseline at least
 
 
 def test_screening_ranks_candidates_on_the_selection_half_only(demo, tmp_path):

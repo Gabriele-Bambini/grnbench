@@ -564,11 +564,10 @@ def page_pipeline() -> None:
     st.markdown("**Cellular contexts:** " + ", ".join(f"`{c['name']}`" for c in plan.contexts))
 
     with st.expander("Reproduce from a terminal", icon=":material/terminal:"):
-        ctx0 = plan.contexts[0]
-        cli = plan.cli_args(S["data_path"], "OUT/" + str(ctx0["name"]).replace("=", "-"),
-                            "tf_list.txt" if S.get("tfs") else None, context=ctx0,
-                            bounds_path="per_batch_bounds.json")
-        st.code("grnbench prep " + " ".join(f'"{a}"' if " " in a else a for a in cli), language="bash")
+        from grnbench.autoprep import DEFAULT_SEED
+        st.caption("One command per cellular context, with the seed *Run cleaning* uses.")
+        for cmd in logic.reproduce_commands(plan, S["data_path"], tf_list=S.get("tfs"), seed=DEFAULT_SEED):
+            st.code(cmd, language="bash")
         import json
         st.download_button("Download plan.json", json.dumps(plan.to_dict(), indent=2, default=str),
                            file_name="plan.json", icon=":material/download:")
@@ -693,7 +692,7 @@ def page_compare() -> None:
 # -- 5 clean --------------------------------------------------------------------------- #
 def page_clean() -> None:
     need_data()
-    from grnbench.autoprep import execute_plan
+    from grnbench.autoprep import DEFAULT_SEED, execute_plan
 
     plan = S["plan"]
     with st.container(border=True, key="card-clean"):
@@ -703,7 +702,7 @@ def page_clean() -> None:
         if st.button("Run cleaning", type="primary", icon=":material/cleaning_services:"):
             with st.spinner("Cleaning..."):
                 S["records"] = execute_plan(plan, S["data_path"], logic.fresh_folder(Path(S["workdir"]) / "clean"),
-                                            tf_list=S.get("tfs"))
+                                            tf_list=S.get("tfs"), seed=DEFAULT_SEED)    # the seed step 3 shows
             reset_downstream("runs", "bench", "bench_on")
     recs = S.get("records")
     if not recs:
@@ -727,7 +726,7 @@ def page_clean() -> None:
         st.dataframe(tbl, hide_index=True)
     with st.expander("Exact commands", icon=":material/terminal:"):
         for r in recs:
-            st.code(" ".join(f'"{a}"' if " " in a else a for a in r["cli"]), language="bash")
+            st.code(logic.shell_command(r["cli"]), language="bash")
     footer(back=PIPELINE, forward=(f"Continue: {MODELS}", MODELS, True), alt=("Look at the cleaned data", EXPLORE_DATA))
 
 

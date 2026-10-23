@@ -50,6 +50,7 @@ RUN_PREP_KEYS = ("strategy", "n_hvg", "batch_key", "group_key", "stratify_key",
                  "subsample_cells", "drop_doublets", "orientation", "exclude_qc_genes",
                  "per_batch_bounds", "cells_per_metacell", "cell_calling", "force")
 MAX_CONTEXTS = 4   # largest cell types inferred separately; the interface can pick others
+DEFAULT_SEED = 42  # execute_plan's seed when none is given (the interface cleans with it); = `grnbench prep --seed`
 _CLI_FLAGS = {
     "strategy": "--strategy", "n_hvg": "--n-hvg", "batch_key": "--batch-key",
     "group_key": "--group-key", "stratify_key": "--stratify-key",
@@ -110,11 +111,14 @@ class PrepPlan:
         return kw
 
     def cli_args(self, input_path, out_dir, tf_list_path=None, *, context: dict | None = None,
-                 bounds_path=None) -> list[str]:
+                 bounds_path=None, seed: int, force: bool | None = None) -> list[str]:
         """The ``grnbench prep`` argv that reproduces this plan (one context) exactly.
 
         ``per_batch_bounds`` travels as a JSON file: pass the path it was written
-        to as ``bounds_path`` (``execute_plan`` does this).
+        to as ``bounds_path`` (``execute_plan`` does this). ``seed`` is the seed the
+        context ran with, always written: without ``--seed`` the command would
+        replay at the CLI default, other cells for a screened context (seed 0).
+        ``force`` is whether the run went past failed QC gates (None: the plan's value).
         """
         argv = [str(input_path), "--out", str(out_dir)]
         for key, flag in _CLI_FLAGS.items():
@@ -123,7 +127,7 @@ class PrepPlan:
                 argv += [flag, _fmt(v)]
         if self.value("drop_doublets"):
             argv.append("--drop-doublets")
-        if self.value("force"):
+        if self.value("force") if force is None else force:
             argv.append("--force")
         if self.value("exclude_qc_genes"):
             argv.append("--exclude-qc-genes")
@@ -134,7 +138,7 @@ class PrepPlan:
                      "--subset-value", str(context["subset_value"])]
         if tf_list_path is not None:
             argv += ["--tf-list", str(tf_list_path)]
-        return argv
+        return argv + ["--seed", str(seed)]
 
     def to_dict(self) -> dict:
         return {"decisions": {k: asdict(d) for k, d in self.decisions.items()},
@@ -552,12 +556,12 @@ def unique_folder_names(names, limit: int = 80) -> list[str]:
 
 
 def execute_plan(plan: PrepPlan, input_path, out_dir, *, tf_list: list[str] | None = None,
-                 seed: int = 42, force: bool = False) -> list[dict]:
+                 seed: int = DEFAULT_SEED, force: bool = False) -> list[dict]:
     """Run ``run_prep`` once per cellular context of ``plan``.
 
     Writes ``plan.json`` (and ``per_batch_bounds.json`` when used) into
     ``out_dir`` and each context into ``out_dir/<context>``. Returns one record
-    per context: ``{"context", "out_dir", "processed", "cli", "error"}`` - a
+    per context: ``{"context", "out_dir", "processed", "seed", "cli", "error"}`` - a
     context that fails (e.g. a QC gate) is reported, not raised, so the other
     contexts still run.
     """
@@ -575,15 +579,16 @@ def execute_plan(plan: PrepPlan, input_path, out_dir, *, tf_list: list[str] | No
         tf_path = out / "tf_list.txt"
         tf_path.write_text("\n".join(tf_list) + "\n", encoding="utf-8")
     records = []
+    forced = bool(force or plan.value("force", False))      # what runs is what the command records
     folders = unique_folder_names([str(c["name"]) for c in plan.contexts])
     for ctx, name in zip(plan.contexts, folders):
         ctx_dir = out / name
         kwargs = plan.run_prep_kwargs(tf_list)
         kwargs.update(subset_key=ctx.get("subset_key"), subset_value=ctx.get("subset_value"),
-                      seed=seed, force=force or kwargs.get("force", False))
-        rec = {"context": ctx["name"], "out_dir": str(ctx_dir), "processed": None, "error": None,
+                      seed=seed, force=forced)
+        rec = {"context": ctx["name"], "out_dir": str(ctx_dir), "processed": None, "error": None, "seed": seed,
                "cli": ["grnbench", "prep"] + plan.cli_args(input_path, ctx_dir, tf_path, context=ctx,
-                                                           bounds_path=bounds_path)}
+                                                           bounds_path=bounds_path, seed=seed, force=forced)}
         try:
             res = run_prep(input_path, ctx_dir, **kwargs)
             rec["processed"] = str(res.processed_path)
