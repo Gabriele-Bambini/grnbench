@@ -302,9 +302,11 @@ def screen_candidates(diag, input_path, out_dir, *, tf_list=None, reference_pair
     # up by name, so a duplicate run is the price of never silently falling back.
     if not any(c["name"] == "baseline" for c in candidates):
         candidates.append({"name": "baseline", "choices": {**selection.chosen(), **BASELINE_CHOICES}})
-    for cand in candidates:
-        name = cand["name"]
-        plan = plan_preprocessing(diag, tf_list=tf_list, selection=selection, choices=cand["choices"])
+    # Every candidate is planned before any runs: one with an option grnbench cannot run (an
+    # ``extra`` included) fails loudly here, and no candidate is ranked under a name that never ran.
+    planned = [(c["name"], plan_preprocessing(diag, tf_list=tf_list, selection=selection,
+                                              choices=c["choices"])) for c in candidates]
+    for name, plan in planned:
         plans[name] = plan
         from grnbench.autoprep import safe_folder_name
         safe = safe_folder_name(name)

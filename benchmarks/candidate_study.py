@@ -192,7 +192,7 @@ def variant_candidates():
 
     out, skipped = [], []
     for decision, option in VARIANTS:
-        ok, why = DECISION_INDEX[decision].option(option).availability()
+        ok, why = DECISION_INDEX[decision].availability(option)
         if not ok:
             skipped.append({"variant": f"{decision}={option}", "reason": why})
             continue

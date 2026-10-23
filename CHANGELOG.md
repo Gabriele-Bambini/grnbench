@@ -3,6 +3,17 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- An option of the knowledge base is available only when its dependencies are installed AND grnbench can
+  run it (`kb.DecisionPoint.availability`; new `executors.py`, whose `PLAN_STEPS` table both availability
+  and the plan read, and which never offers imputation or scVI's denoised expression, D-002). An option
+  grnbench cannot run is never chosen by the selector, and forcing one fails loudly with the reason and
+  the install hint (D-031). Closes the audit finding "external options silently dropped" (#128, step 2a).
+  Declared change, only where R, scvi or CellBender is installed: the selector no longer picks
+  scDblFinder, EmptyDrops, DecontX & co., which the plan then ignored, and picks the best option grnbench
+  can run (e.g. Scrublet). Without them (every registered run) plans, warnings and the C7
+  `skipped_variants` are unchanged. The "best option ... is unavailable" warning names what actually
+  runs; what it would take to run the best option is in `plan.option_notes` and in the interface. Not
+  fixed here: regulator options are recorded only (#131); six other plan/run mismatches (#132).
 - `test_grnbench_ui_hands_the_theme_to_streamlit` compares the app path after resolving it, so it no longer fails
   where the home directory is a symlink, as on the cluster (#124).
 - `grnbench.seeds` (#126, step 1a): `DEFAULT_SEED = 42`, `derive` (named child seeds from `SeedSequence`,

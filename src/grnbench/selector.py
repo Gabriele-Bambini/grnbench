@@ -5,8 +5,10 @@ explicit rules over the :class:`grnbench.profile.Profile`. Every rule that
 fires leaves a reason (with its references) on the option, so the interface
 can show why an option won or lost.
 
-* The chosen option is the best **available** one; when a better option needs
-  a missing dependency, the selection says so ("best: scDblFinder - needs R").
+* The chosen option is the best **available** one (dependencies installed AND
+  a grnbench executor, ``kb.DecisionPoint.availability``): an option grnbench
+  cannot run is never chosen, and forcing one fails loudly in the plan. When a
+  better option is unavailable, the selection says so ("best: scDblFinder - needs R").
 * A decision is **uncertain** when the runner-up is within ``UNCERTAIN_MARGIN``
   of the winner. Uncertain high-impact decisions are where alternative
   pipelines are generated and tested on the data (``candidates``).
@@ -96,7 +98,7 @@ class _Scores:
         self.d = DECISION_INDEX[decision_id]
         self.opts = {}
         for o in self.d.options:
-            ok, why = o.availability()
+            ok, why = self.d.availability(o.id)
             self.opts[o.id] = ScoredOption(o.id, o.name, 0.0, ok, why)
         self.add(self.d.default, DEFAULT_BONUS, "knowledge-base default")
 

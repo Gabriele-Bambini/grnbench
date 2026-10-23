@@ -123,6 +123,9 @@ class PrepPlan:
     choices: dict = field(default_factory=dict)
     contexts: list = field(default_factory=lambda: [{"name": "all_cells", "subset_key": None,
                                                      "subset_value": None}])
+    # Never in ``warnings`` (n_warnings is a column of benchmark rows): for each best option this
+    # machine cannot run, why and what it would take ("blocked": {decision: Availability + option}).
+    option_notes: dict = field(default_factory=lambda: {"blocked": {}})
 
     def add(self, key, label, value, reason, source="default", options=None) -> None:
         self.decisions[key] = Decision(key, label, value, reason, source, options)
@@ -200,7 +203,7 @@ class PrepPlan:
                 "warnings": list(self.warnings), "methods": list(self.methods),
                 "context": self.context, "profile": self.profile,
                 "selection": self.selection, "choices": self.choices,
-                "contexts": list(self.contexts)}
+                "contexts": list(self.contexts), "option_notes": self.option_notes}
 
     @classmethod
     def from_dict(cls, data: dict) -> "PrepPlan":
@@ -210,7 +213,8 @@ class PrepPlan:
                    context=dict(data.get("context", {})),
                    profile=dict(data.get("profile", {})),
                    selection=dict(data.get("selection", {})),
-                   choices=dict(data.get("choices", {})))
+                   choices=dict(data.get("choices", {})),
+                   option_notes=dict(data.get("option_notes") or {"blocked": {}}))
         if data.get("contexts"):
             plan.contexts = list(data["contexts"])
         return plan
@@ -354,6 +358,8 @@ _STRATEGY_OF = {"cpm_log1p": "cpm_log1p", "pearson_residuals": "pearson_residual
                 "raw_counts": "raw_counts"}
 _BATCH_STRATEGY = {"combat": "cpm_log1p_combat", "center_per_batch": "cpm_log1p_center_batch"}
 _N_HVG = {"tf_plus_500": 500, "tf_plus_1000": 1000, "tf_plus_2000": 2000, "all_genes": None}
+# Recorded only: no step reads tf_source, the TF list that runs is the caller's (issue #131).
+_TF_SOURCE = {"user_file": "file", "dorothea": "dorothea:{organism}", "all_genes": "none"}
 _QC_LABELS = {"min_genes_per_cell": "Min detected genes per cell",
               "max_genes_per_cell": "Max detected genes per cell",
               "max_counts_per_cell": "Max counts per cell",
@@ -366,12 +372,18 @@ def resolve_strategy(choices: dict) -> tuple[str, str, list[str]]:
     Returns ``(strategy, reason, compatibility notes)``. Priority: sparsity
     (metacells/pseudobulk change the samples themselves) > batch correction >
     normalization, because each of the first two already includes a
-    normalization step.
+    normalization step. An option with no plan step
+    (``executors.PLAN_STEPS``) is an error, never a silent fallback.
     """
+    from grnbench import executors
+
     notes = []
     norm = choices.get("normalization", "cpm_log1p")
     batch = choices.get("batch", "none")
     sparsity = choices.get("sparsity", "single_cells")
+    for decision, option in (("normalization", norm), ("batch", batch), ("sparsity", sparsity)):
+        if option not in executors.PLAN_STEPS[decision]:
+            raise ValueError(f"no plan step for {decision}={option}: grnbench cannot execute it")
     if sparsity == "metacells":
         if batch in _BATCH_STRATEGY:
             notes.append(f"batch option '{batch}' not combined with metacells: metacells are built "
@@ -385,7 +397,29 @@ def resolve_strategy(choices: dict) -> tuple[str, str, list[str]]:
         if norm != "cpm_log1p":
             notes.append(f"batch option '{batch}' is applied on cpm_log1p, not '{norm}'")
         return _BATCH_STRATEGY[batch], f"cpm_log1p + batch option '{batch}'", notes
-    return _STRATEGY_OF.get(norm, "cpm_log1p"), f"normalization '{norm}'", notes
+    return _STRATEGY_OF[norm], f"normalization '{norm}'", notes
+
+
+def _user_forced(choices: dict | None, selection, decision: str) -> bool:
+    """Whether ``choices`` sets ``decision`` to an option other than the selector's."""
+    return bool(choices) and decision in choices and choices[decision] != selection.results[decision].chosen
+
+
+def _check_runnable(selection, chosen: dict, choices: dict | None) -> None:
+    """Fail loudly on any chosen option grnbench cannot run (D-004, D-006; issue #128): missing
+    dependency, no executor, planned, not applicable or not offered (D-002). The selector never
+    chooses one; a user-forced one is an error, never a silent substitution."""
+    from grnbench.kb import DECISION_INDEX
+
+    for decision, option in chosen.items():
+        if decision not in DECISION_INDEX:
+            continue
+        a = DECISION_INDEX[decision].availability_full(option)
+        if a.ok:
+            continue
+        who = "was set by the user" if _user_forced(choices, selection, decision) else "was chosen by the selector"
+        more = f" Install: {a.install_hint}." if a.install_hint else (f" {a.detail}." if a.detail else "")
+        raise ValueError(f"{decision}={option} {who}, but grnbench cannot run it: {a.reason}.{more}")
 
 
 def plan_preprocessing(diag: Diagnosis, *, methods: list[dict] | None = None,
@@ -396,7 +430,9 @@ def plan_preprocessing(diag: Diagnosis, *, methods: list[dict] | None = None,
     ``choices`` ({decision_id: option_id}) overrides the selector - that is how
     an alternative candidate pipeline or a user edit becomes a plan. Every decision the
     choices change keeps the engine's own value, reason and source (``Decision.auto_*``), read
-    from the plan built with the selector's choices.
+    from the plan built with the selector's choices. An option
+    grnbench cannot run is never chosen by the selector, and forcing one fails
+    loudly (``ValueError`` naming the option, the reason and the install hint).
     """
     from grnbench.profile import build_profile
     from grnbench.selector import select
@@ -419,17 +455,21 @@ def _build_plan(diag: Diagnosis, profile, selection, choices: dict | None, *,
 
     adata, qc, ctx = diag.adata, diag.qc, diag.context
     chosen = {**selection.chosen(), **(choices or {})}
+    _check_runnable(selection, chosen, choices)
     plan = PrepPlan(context=ctx.to_dict())
     plan.profile = profile.to_dict()
     plan.selection = selection.to_dict()
     plan.choices = dict(chosen)
+    plan.option_notes = {"blocked": {
+        r.decision: {"option": r.best_overall,
+                     **asdict(DECISION_INDEX[r.decision].availability_full(r.best_overall))}
+        for r in selection.results.values() if r.blocked_by_dependency}}
 
     def why(decision: str) -> tuple[str, str]:
         r = selection.results[decision]
         opt = chosen[decision]
         so = next(o for o in r.options if o.option == opt)
-        src = ("user" if choices and decision in choices and choices[decision] != r.chosen
-               else "knowledge base")
+        src = "user" if _user_forced(choices, selection, decision) else "knowledge base"
         text = ("; ".join(x["text"] for x in so.reasons if x["delta"] > 0)
                 or DECISION_INDEX[decision].option(opt).summary)
         return f"[{decision} = {opt}] {text}", src
@@ -542,8 +582,7 @@ def _build_plan(diag: Diagnosis, profile, selection, choices: dict | None, *,
         plan.warnings.append(f"Organism is {profile.organism}: no curated TF list or reference network "
                              "for this species ships with grnbench - provide a TF list (human "
                              "orthologs are an approximation, regulatory edges are not always conserved).")
-    tf_source = {"user_file": "file", "dorothea": f"dorothea:{organism}",
-                 "collectri": f"dorothea:{organism}", "all_genes": "none"}[chosen["regulators"]]
+    tf_source = _TF_SOURCE[chosen["regulators"]].format(organism=organism)
     plan.add("tf_source", "Transcription-factor list", tf_source, *why("regulators"),
              ["file", "dorothea:human", "dorothea:mouse", "none"])
 
@@ -585,7 +624,7 @@ def _build_plan(diag: Diagnosis, profile, selection, choices: dict | None, *,
         if r.blocked_by_dependency:
             best = next(o for o in r.options if o.option == r.best_overall)
             plan.warnings.append(f"{r.decision}: best option '{best.name}' is unavailable "
-                                 f"({best.unavailable_reason}); using '{r.chosen}'.")
+                                 f"({best.unavailable_reason}); using '{chosen[r.decision]}'.")
     for key, votes in ctx.conflicts().items():
         plan.warnings.append(f"Sources disagree on {key}: {votes} - using '{ctx.get(key)}'.")
     if ctx.get("value_type") == "normalized":

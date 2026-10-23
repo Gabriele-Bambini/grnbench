@@ -4,6 +4,9 @@ Keep this short and current: update it in any PR that adds, moves or removes a m
 Updated: 2026-10-20.
 
 ## Run it
+- Tests: `python -m pytest -q -p no:cacheprovider` (floor in AGENTS.md section 4). Golden values frozen
+  from main for A/B tests, with the script that wrote them: `tests/golden/`.
+- Board (session start): `python -m grnbench.board`.
 - Tests: `python -m pytest -q -p no:cacheprovider` (floor in AGENTS.md section 4).
 - Board (session start): `python -m grnbench.board`; `--digest` weekly digest, `--claims` claims status table.
 - GUI: `grnbench ui` (Streamlit, `.claude/launch.json` config `grnbench-ui`). Demo data: `grnbench demo --out d`.
@@ -33,7 +36,7 @@ Updated: 2026-10-20.
 | area | modules |
 |---|---|
 | ingest + preprocessing | `ingest` (formats -> counts AnnData), `pipeline` (`run_prep`, every step in `manifest.json`), `qc` (loud gates), `hygiene` (doublets, metadata), `features` (HVG with TF union), `strategies` (pseudobulk, metacells, ...) |
-| cleaning engine | `kb` (stages, options, evidence, references), `context` (what the data are), `profile`, `selector` (rules), `autoprep` (plan, execute), `screen` (candidate pipelines on the data, reference split) |
+| cleaning engine | `kb` (stages, options, evidence, references), `executors` (`PLAN_STEPS`: which options grnbench can run, which are recorded only; refuses imputation, D-002), `context` (what the data are), `profile`, `selector` (rules), `autoprep` (plan, execute), `screen` (candidate pipelines on the data, reference split) |
 | inference | `infer/` (`base` contract + registry, `correlation`, `classical`, `tree_methods` GENIE3/GRNBoost2, `aracne3`, `regdiffusion_adapter`, `cistarget` motif prior / pruning, `association` bicor/WGCNA/propr/ARACNe-style/MRNET, `regression` TIGRESS/BBSR/pcNet/extra-trees/boosting, `community` rank aggregation), `plugins` (bring your own model); what is built in and what is not: `docs/models_catalog.md` |
 | evaluation + statistics | `eval/` (`metrics`, `gold`, `universe`, `nulls`, `stability`, `comparison` = `compare_units` paired t + Holm) |
 | seeds | `seeds` (`DEFAULT_SEED`, `derive` named child seeds, `SeedPlan`, `LEGACY` = the seeds each entry point uses today, read back from the code by `tests/test_seeds_legacy.py`; nothing calls it yet, #126) |

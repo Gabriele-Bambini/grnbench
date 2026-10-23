@@ -205,6 +205,22 @@ def plain_warning(text: str) -> str:
     return f"**{d.question}** The highest-scoring option, {best}, cannot run here ({why}); the engine uses \u201c{used}\u201d instead."
 
 
+def option_notes(plan) -> list[str]:
+    """For each best option the plan cannot run, what it would take, in words (``plan.option_notes``)."""
+    from grnbench.kb import DECISION_INDEX
+    out = []
+    for decision, note in ((getattr(plan, "option_notes", None) or {}).get("blocked") or {}).items():
+        try:
+            name = DECISION_INDEX[decision].option(note["option"]).name
+        except KeyError:
+            name = note.get("option", decision)
+        if note.get("install_hint"):
+            out.append(f"{name} can run here after: {note['install_hint']}.")
+        elif note.get("detail"):
+            out.append(f"{name}: {note['detail']}.")
+    return out
+
+
 def clean_reason(text: str) -> str:
     """Drop the knowledge base's ``[decision = option]`` prefix from a reason shown to a person."""
     import re

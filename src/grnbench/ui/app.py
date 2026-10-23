@@ -524,6 +524,9 @@ def page_pipeline() -> None:
     if plan.warnings:
         said = [logic.plain_warning(w) for w in plan.warnings]
         st.warning(said[0] if len(said) == 1 else "\n".join(f"- {w}" for w in said))
+        notes = logic.option_notes(plan)
+        if notes:
+            st.caption("  \n".join(notes))
 
     overview = logic.pipeline_overview(plan)
     unsure = [r for r in overview if r["uncertain"]]
@@ -663,7 +666,8 @@ def page_compare() -> None:
         with st.expander("Add your own alternative", icon=":material/add_circle:"):
             c1, c2, c3 = st.columns([2, 2, 1], vertical_alignment="bottom")
             dec = c1.selectbox("Decision", [d.id for d in DECISIONS])
-            opts = [o.id for o in next(d for d in DECISIONS if d.id == dec).options if o.availability()[0]]
+            point = next(d for d in DECISIONS if d.id == dec)
+            opts = [o.id for o in point.options if point.availability(o.id)[0]]
             opt = c2.selectbox("Option", opts)
             if c3.button("Add", width="stretch"):
                 name = f"{dec}={opt}"

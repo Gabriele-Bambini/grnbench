@@ -160,3 +160,21 @@ STATUS: PROPOSED | ACTIVE | SUPERSEDED by D-xxx | REVERTED
 - alternatives: keep the screening-only rule (loses to the baseline in the evidence); drop the
   fallback (no output when the baseline is refused); change the screening metric (a larger redesign,
   not supported by the evidence yet).
+
+### D-031 | 2026-10-21 | claude (for GB) | ACTIVE | An option is available only if its dependencies are installed and grnbench can run it
+- decision: availability is decided per (decision, option) (`DecisionPoint.availability`). An option is
+  available only when its dependencies are installed AND `executors.PLAN_STEPS` maps it onto the
+  pipeline (or `RECORDED_ONLY` says it runs nothing). The selector never chooses an unavailable option;
+  a chosen or forced option grnbench cannot run raises a `ValueError` that names the decision, the
+  option, who set it and why, instead of being replaced in silence. The executor registry refuses
+  `sparsity=imputation` and `batch=scvi_denoised` (D-002), and executors that return a matrix pass
+  `check_integer_counts` (D-001). The reason text `missing: <req>` is unchanged byte for byte.
+- why: the 2026-09-27 audit found that an option whose dependency is installed but that grnbench
+  cannot run (for example scDblFinder) could be chosen by the selector and then dropped by the plan
+  without a word, so the recorded choice was not what ran (#128). In the registered environments none
+  of those dependencies is installed, so plans and rows there are unchanged (golden frozen from main
+  6917c88: option table, 40 whole plans, screening candidates and 451 committed rows, 0 differences).
+- alternatives: keep dependency-only availability (the recorded plan can differ from what ran); fall
+  back to the default with a warning (still a silent change of the user's choice, and `n_warnings` is
+  a field of committed rows); hide external options from the knowledge base (loses the evidence and the
+  install guidance).

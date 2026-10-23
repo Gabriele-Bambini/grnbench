@@ -114,7 +114,10 @@ class Option:
     requires: tuple[str, ...] = ()     # "py:module", "r:package", "cli:tool"
 
     def availability(self) -> tuple[bool, str]:
-        """Whether this option can run here, with the reason when it cannot."""
+        """Whether this option's dependencies are installed, with the reason when they are not.
+
+        Dependencies only: whether grnbench can also run it is
+        :meth:`DecisionPoint.availability`, which the selector uses."""
         if self.implementation == "not-applicable":
             return False, "not applicable to GRN inference (see note)"
         if self.implementation == "planned":
@@ -142,6 +145,25 @@ def _have(req: str) -> bool:
     return False
 
 
+_REQ_HINT = {"py": "pip install {}", "cli": "put {} on PATH",
+             "r": "install the R package {} and rpy2 (grnbench looks for R packages through rpy2)"}
+_REQ_WORDS = {"py": "the Python package {}", "r": "the R package {}", "cli": "the program {}"}
+
+
+def _reqs(reqs, table) -> str:
+    return "; ".join(table.get(r.partition(":")[0], "{}").format(r.partition(":")[2]) for r in reqs)
+
+
+@dataclass(frozen=True)
+class Availability:
+    """Whether one (decision, option) pair can run here (issue #128)."""
+    ok: bool
+    reason: str = ""             # "" when ok
+    install_hint: str = ""       # what to install, when installing it makes the option available
+    executor: str | None = None  # python | r | cli, when grnbench can run the option
+    detail: str = ""
+
+
 @dataclass(frozen=True)
 class DecisionPoint:
     id: str
@@ -158,6 +180,41 @@ class DecisionPoint:
             if o.id == option_id:
                 return o
         raise KeyError(f"{self.id}: unknown option {option_id!r}")
+
+    def availability(self, option_id: str) -> tuple[bool, str]:
+        """``(ok, reason)`` of :meth:`availability_full`."""
+        a = self.availability_full(option_id)
+        return a.ok, a.reason
+
+    def availability_full(self, option_id: str) -> Availability:
+        """Whether ``option_id`` of THIS decision can run here: dependencies installed AND a grnbench
+        executor (``executors.PLAN_STEPS``; option ids such as 'none' repeat across decisions).
+        Reasons, first that applies: not applicable, planned, missing dependency ("missing: <req>",
+        the historical text), not offered (D-002), no executor, then ok. Every reason but ok makes
+        the option unavailable: the selector never chooses it and forcing it fails loudly."""
+        from grnbench.executors import FORBIDDEN, FORBIDDEN_REASON, executor_for
+
+        o = self.option(option_id)
+        if o.implementation == "not-applicable":
+            return Availability(False, "not applicable to GRN inference (see note)", detail=o.grn_note)
+        if o.implementation == "planned":
+            return Availability(False, "planned in grnbench, not implemented yet")
+        ex = executor_for(self.id, o.id)
+        forbidden = (self.id, o.id) in FORBIDDEN
+        d002 = "D-002: grnbench never runs an option that smooths or imputes expression"
+        missing = [r for r in o.requires if not _have(r)]
+        if missing:
+            if ex is None:
+                return Availability(False, "missing: " + ", ".join(missing), detail=d002 if forbidden else
+                                    f"grnbench cannot run it yet, so installing {_reqs(missing, _REQ_WORDS)} "
+                                    "alone would not make it available")
+            return Availability(False, "missing: " + ", ".join(missing), _reqs(missing, _REQ_HINT),
+                                ex.kind, ex.detail)
+        if forbidden:
+            return Availability(False, FORBIDDEN_REASON, detail=d002)
+        if ex is None:
+            return Availability(False, f"no grnbench executor for {self.id}={o.id} yet")
+        return Availability(True, "", executor=ex.kind, detail=ex.detail)
 
 
 @dataclass(frozen=True)
@@ -580,7 +637,7 @@ def option_table() -> list[dict]:
     rows = []
     for d in DECISIONS:
         for o in d.options:
-            ok, why = o.availability()
+            ok, why = d.availability(o.id)
             rows.append({"stage": d.stage, "decision": d.id, "option": o.id, "name": o.name,
                          "evidence": o.evidence, "implementation": o.implementation,
                          "available": ok, "unavailable_reason": why,
