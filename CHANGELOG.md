@@ -3,6 +3,9 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- EXP-20260925-LM-2 section 4b (#24): GB's second-person rerun on the Bocconi HPC is DIFFERENT from
+  the committed rows (exact and `--rtol 1e-9`; H1 unchanged in direction, +0.183 vs +0.182). C4 stays
+  `reproduced-computational`.
 - `benchmarks/compare_runs.py`: judges a rerun of a registered experiment against its committed
   results from files (task ids, every row field with timings excluded, `REPORT_REAL.md` modulo line
   endings and timing columns, and the record's `primary comparison`); `verdict: MATCH` / `DIFFERENT` /

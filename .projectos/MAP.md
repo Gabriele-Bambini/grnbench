@@ -13,9 +13,11 @@ Updated: 2026-10-15.
   `--stress-grid`, immutable task/run manifests, terminal-status completeness and breaking points),
   `benchmarks/real_bench.py` (real data vs CollecTRI halves; `--models`, `--keep-artifacts`;
   reference hashes in `RUN_CONFIG.json`; `report` also writes figures + LaTeX),
-  `benchmarks/count_plausibility.py` (would ingest's non-raw-counts warning fire on a data root; #42).
+  `benchmarks/count_plausibility.py` (would ingest's non-raw-counts warning fire on a data root; #42),
+  `benchmarks/diagnose_rerun.py` (where a rerun's rows differ from the committed rows; exploratory, #24).
 - Motif-prior lift decomposition: `benchmarks/motif_sensitivity.py` (`plan`, `run`, `report`) from a
   `--keep-artifacts` run (EXP-20261003-GB-1); tests `tests/test_motif_sensitivity.py`.
+- Second-person rerun outputs: `benchmarks/results/EXP-20260925-LM-2-repro-GB/` (#24; record section 4b).
 - Figures: `grnbench viz <run_dir>`. LaTeX: `grnbench report <run_dir|EXP-ID>`, `grnbench report --paper`.
 - HPC: `hpc/hpc.sh`, VPN `hpc/vpn.ps1` (Windows), guide `docs/HPC.md`, agent procedure `.claude/skills/grnbench-hpc/SKILL.md`.
   Step-by-step launch runbooks per experiment issue: `docs/runbooks/` (#24 executed 2026-10-08, #52 launched 2026-10-10).

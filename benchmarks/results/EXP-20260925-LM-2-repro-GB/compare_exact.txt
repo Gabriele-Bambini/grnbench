@@ -1,0 +1,69 @@
+tasks: same (20 committed, 20 rerun)
+rows: 556 DIFFERENT - compared 1180 numeric, 40 bool and 400 other fields; 140 timing fields not compared; exact
+  cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002	auto_eval_mean	1.3481373031745483 -> 1.3479065970795123
+  cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002	auto_eval_pearson_signed	1.3070850873478017 -> 1.3063909730770948
+  cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002	auto_eval_spearman_signed	1.5036000211732319 -> 1.5036020171588307
+  cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002	auto_noref_eval_mean	1.3481373031745483 -> 1.3479065970795123
+  cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002	auto_noref_eval_pearson_signed	1.3070850873478017 -> 1.3063909730770948
+  cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002	auto_noref_eval_spearman_signed	1.5036000211732319 -> 1.5036020171588307
+  cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002	baseline_eval_mean	1.3481373031745483 -> 1.3479065970795123
+  cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002	baseline_eval_pearson_signed	1.3070850873478017 -> 1.3063909730770948
+  cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002	baseline_eval_spearman_signed	1.5036000211732319 -> 1.5036020171588307
+  cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002	m_pearson_motif_auto_auprc_ratio	1.5699573373914728 -> 1.569800998507216
+  cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002	m_pearson_motif_baseline_auprc_ratio	1.5699573373914728 -> 1.569800998507216
+  cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002	m_pearson_signed_auto_auprc_ratio	1.3070850873478017 -> 1.3063909730770948
+  cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002	m_pearson_signed_baseline_auprc_ratio	1.3070850873478017 -> 1.3063909730770948
+  cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002	oracle_eval_mean	1.3481373031745483 -> 1.3479065970795123
+  cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002	oracle_eval_pearson_signed	1.3070850873478017 -> 1.3063909730770948
+  cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002	oracle_eval_spearman_signed	1.5036000211732319 -> 1.5036020171588307
+  cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002	permodel_pearson_signed_auto	1.3070850873478017 -> 1.3063909730770948
+  cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002	permodel_pearson_signed_baseline	1.3070850873478017 -> 1.3063909730770948
+  cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002	permodel_pearson_signed_oracle	1.3070850873478017 -> 1.3063909730770948
+  cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002	permodel_pearson_signed_rules	1.078543594884457 -> 1.0789744477057575
+report: 54 lines differ (information only, not in the verdict: with identical rows a difference comes from the report code)
+  - line 6: '- doublet calling fell back to the heuristic (scrublet failed) in 4/20 datasets (baseline or auto arm)'
+  + line 6: '- doublet calling fell back to the heuristic (scrublet failed) in 3/20 datasets (baseline or auto arm)'
+  - line 19: '| pearson_signed | 20 | 30% | 55% | 1.35 | 1.34 | 1.22 |'
+  - line 20: '| spearman_signed | 20 | 30% | 50% | 1.40 | 1.39 | 1.26 |'
+  + line 19: '| pearson_signed | 20 | 25% | 60% | 1.35 | 1.34 | 1.22 |'
+  + line 20: '| spearman_signed | 20 | 25% | 55% | 1.39 | 1.39 | 1.26 |'
+  - line 29: '| pearson_motif | 20 | 1.529 | 1.539 | 1.525 | 6/20 | 3 |'
+  - line 30: '| motif_prior | 20 | 1.373 | 1.386 | 1.373 | 5/20 | 3 |'
+  - line 31: '| pearson_signed | 20 | 1.346 | 1.307 | 1.341 | 5/20 | 2 |'
+  + line 29: '| pearson_motif | 20 | 1.529 | 1.539 | 1.526 | 5/20 | 3 |'
+  + line 30: '| motif_prior | 20 | 1.373 | 1.386 | 1.373 | 4/20 | 3 |'
+  + line 31: '| pearson_signed | 20 | 1.345 | 1.307 | 1.341 | 4/20 | 1 |'
+  - line 37: '| pearson_motif | pearson_signed | 20 | +0.182 | [+0.138, +0.227] | 1.36e-07 | 1 | pearson_motif |'
+  - line 38: '| pearson_motif | motif_prior | 20 | +0.155 | [+0.077, +0.234] | 0.000826 | 1 | pearson_motif |'
+  + line 37: '| pearson_motif | pearson_signed | 20 | +0.183 | [+0.138, +0.229] | 1.39e-07 | 1 | pearson_motif |'
+  + line 38: '| pearson_motif | motif_prior | 20 | +0.155 | [+0.076, +0.235] | 0.000901 | 1 | pearson_motif |'
+  - line 44: '| pearson_motif | pearson_signed | 20 | +0.184 | [+0.143, +0.225] | 2.91e-08 | 1 | pearson_motif |'
+  - line 45: '| pearson_motif | motif_prior | 20 | +0.152 | [+0.076, +0.228] | 0.000733 | 1 | pearson_motif |'
+  + line 44: '| pearson_motif | pearson_signed | 20 | +0.184 | [+0.143, +0.226] | 2.81e-08 | 1 | pearson_motif |'
+  + line 45: '| pearson_motif | motif_prior | 20 | +0.153 | [+0.077, +0.229] | 0.000716 | 1 | pearson_motif |'
+primary: DIFFERENT - pearson_motif > pearson_signed | auprc_ratio | auto
+  committed: n=20 mean +0.182 [+0.138, +0.227] raw one-sided p(A>B) 3.39e-08
+  rerun:     n=20 mean +0.183 [+0.138, +0.229] raw one-sided p(A>B) 3.47e-08
+  report row differs (information): '| pearson_motif | pearson_signed | 20 | +0.182 | [+0.138, +0.227] | 1.36e-07 | 1 | pearson_motif |' -> '| pearson_motif | pearson_signed | 20 | +0.183 | [+0.138, +0.229] | 1.39e-07 | 1 | pearson_motif |'
+  cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002	pearson_motif	1.5699573373914728 -> 1.569800998507216
+  cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002	pearson_signed	1.3070850873478017 -> 1.3063909730770948
+  cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__df287f8d	pearson_motif	1.308132531411779 -> 1.3028683591903347
+  cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__df287f8d	pearson_signed	1.1842291870989754 -> 1.1830802469515005
+  cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__b94e3bdf	pearson_motif	1.636654409079297 -> 1.637298984892981
+  cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__b94e3bdf	pearson_signed	1.3845804223092952 -> 1.3856218555411168
+  cxg__10x-3-v2__mus-musculus__spinal-cord__8ef59750	pearson_motif	1.5258719996116508 -> 1.5258953596582425
+  cxg__10x-3-v2__mus-musculus__spinal-cord__8ef59750	pearson_signed	1.2598874720089897 -> 1.259607025377858
+  cxg__10x-3-v3__homo-sapiens__primary-motor-cortex__9b686bb6	pearson_motif	1.1985946499817344 -> 1.2038696835037934
+  cxg__10x-3-v3__homo-sapiens__primary-motor-cortex__9b686bb6	pearson_signed	1.0083755306288527 -> 1.0121512249622093
+  cxg__10x-3-v3__homo-sapiens__prostate-gland__20de8570	pearson_motif	1.7755688794838778 -> 1.8028917896889864
+  cxg__10x-3-v3__homo-sapiens__prostate-gland__20de8570	pearson_signed	1.599224053077059 -> 1.6177900636334746
+  cxg__10x-3-v3__homo-sapiens__respiratory-airway__eec804b9	pearson_motif	1.8862166797020248 -> 1.8854477571063184
+  cxg__10x-3-v3__homo-sapiens__respiratory-airway__eec804b9	pearson_signed	1.7459029463321205 -> 1.745892385646222
+  cxg__10x-3-v3__mus-musculus__autopod-skin__389b1fd4	pearson_motif	1.5309690909907936 -> 1.5309739941609486
+  cxg__10x-3-v3__mus-musculus__autopod-skin__389b1fd4	pearson_signed	1.3462447528181942 -> 1.346245051521117
+  cxg__10x-3-v3__mus-musculus__epididymal-fat-pad__e2529f66	pearson_motif	1.3522411344836403 -> 1.3522403542373949
+  cxg__10x-3-v3__mus-musculus__epididymal-fat-pad__e2529f66	pearson_signed	1.150559850911504 -> 1.1505632998829258
+  cxg__10x-5-v1__homo-sapiens__lung__62315937	pearson_motif	1.5463036090873499 -> 1.5461752623868825
+  cxg__10x-5-v1__homo-sapiens__lung__62315937	pearson_signed	1.2214310129844135 -> 1.2211901728160672
+verdict: DIFFERENT
+exit=1

@@ -1,0 +1,19 @@
+datasets with at least one differing field: 20/20
+numeric fields differing: 547; relative difference median 5.00e-05, p90 4.86e-03, max 3.33e-01 (n_warnings in cxg__10x-multiome__homo-sapiens__cranial-neural-crest__805832dc)
+non-numeric (planner) fields differing:
+  cxg__10x-3-v3__homo-sapiens__respiratory-airway__eec804b9  auto_noref_candidate: baseline -> gene_filter=min_cells_drop_qc_genes
+  cxg__10x-3-v3__homo-sapiens__respiratory-airway__eec804b9  auto_noref_doublets: not run -> scrublet
+  cxg__10x-5-v1__homo-sapiens__lung__62315937  auto_noref_candidate: context_scope=pooled -> context_scope=selected_type
+  cxg__10x-5-v1__homo-sapiens__lung__7b3368a5  auto_candidate: context_scope=pooled -> baseline
+  cxg__10x-5-v1__homo-sapiens__lung__7b3368a5  auto_doublets: heuristic -> not run
+  cxg__10x-5-v1__homo-sapiens__lung__7b3368a5  oracle_candidate: context_scope=pooled -> baseline
+  cxg__10x-5-v1__homo-sapiens__lung__7b3368a5  oracle_doublets: heuristic -> not run
+  cxg__10x-5-v1__homo-sapiens__lung__7b3368a5  permodel_pearson_signed_candidate: context_scope=pooled -> baseline
+  cxg__10x-5-v1__homo-sapiens__lung__7b3368a5  permodel_spearman_signed_candidate: context_scope=pooled -> baseline
+primary inputs (auto AUPRC ratio, 2 models x 20 datasets): 40 differ; relative difference min 2.22e-07, max 2.81e-02
+  2.81e-02  pearson_signed  cxg__10x-5-v1__homo-sapiens__lung__7b3368a5  1.442356 -> 1.401786
+  2.14e-02  pearson_motif   cxg__10x-5-v1__homo-sapiens__lung__7b3368a5  1.826581 -> 1.787578
+  1.54e-02  pearson_motif   cxg__10x-3-v3__homo-sapiens__prostate-gland__20de8570  1.775569 -> 1.802892
+  1.16e-02  pearson_signed  cxg__10x-3-v3__homo-sapiens__prostate-gland__20de8570  1.599224 -> 1.617790
+  4.40e-03  pearson_motif   cxg__10x-3-v3__homo-sapiens__primary-motor-cortex__9b686bb6  1.198595 -> 1.203870
+  4.02e-03  pearson_motif   cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__df287f8d  1.308133 -> 1.302868
