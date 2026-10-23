@@ -191,7 +191,9 @@ def test_grnbench_ui_hands_the_theme_to_streamlit(monkeypatch):
     monkeypatch.setattr(subprocess, "call", lambda cmd, *a, **k: calls.append(cmd) or 0)
     assert cli_main.main(["ui", "--server.port", "8765", "--theme.primaryColor", "#123456"]) == 0
     cmd = calls[0]
-    assert cmd[:5] == [sys.executable, "-m", "streamlit", "run", str(APP)]
+    assert cmd[:4] == [sys.executable, "-m", "streamlit", "run"]
+    # the same file, whichever way the path is spelled (a symlinked home on the cluster, #124)
+    assert Path(cmd[4]).resolve() == APP.resolve()
     assert "--theme.baseRadius" in cmd and cmd.count("--theme.primaryColor") == 1 and cmd.count("#123456") == 1
     assert cmd[-4:] == ["--server.port", "8765", "--theme.primaryColor", "#123456"], "the user's own options come last"
 

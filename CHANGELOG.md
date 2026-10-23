@@ -3,6 +3,8 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- `test_grnbench_ui_hands_the_theme_to_streamlit` compares the app path after resolving it, so it no longer fails
+  where the home directory is a symlink, as on the cluster (#124).
 - `grnbench.seeds` (#126, step 1a): `DEFAULT_SEED = 42`, `derive` (named child seeds from `SeedSequence`,
   31 bits), `SeedPlan` (`legacy` / `master` / `derived`; `seed_for` = the seed a component really uses,
   `kwargs` = what its call passes, under the real parameter name; knobs per entry point follow the call site)
