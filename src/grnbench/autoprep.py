@@ -47,14 +47,15 @@ THRESHOLD_KEYS = ("min_genes_per_cell", "min_cells_per_gene", "max_genes_per_cel
 HIGH_MITO_TISSUES = ("liver", "hepat", "heart", "cardi", "myocard", "atri", "ventric", "septum",
                      "kidney", "renal", "nephr", "muscle", "brown adipose")
 RUN_PREP_KEYS = ("strategy", "n_hvg", "batch_key", "group_key", "stratify_key",
-                 "subsample_cells", "drop_doublets", "orientation", "exclude_qc_genes",
+                 "subsample_cells", "subsample_mode", "drop_doublets", "orientation", "exclude_qc_genes",
                  "per_batch_bounds", "cells_per_metacell", "cell_calling", "force")
 MAX_CONTEXTS = 4   # largest cell types inferred separately; the interface can pick others
 DEFAULT_SEED = 42  # execute_plan's seed when none is given (the interface cleans with it); = `grnbench prep --seed`
 _CLI_FLAGS = {
     "strategy": "--strategy", "n_hvg": "--n-hvg", "batch_key": "--batch-key",
     "group_key": "--group-key", "stratify_key": "--stratify-key",
-    "subsample_cells": "--subsample-cells", "orientation": "--orientation",
+    "subsample_cells": "--subsample-cells", "subsample_mode": "--subsample-mode",
+    "orientation": "--orientation",
     "min_genes_per_cell": "--min-genes-per-cell", "min_cells_per_gene": "--min-cells-per-gene",
     "max_genes_per_cell": "--max-genes-per-cell", "max_counts_per_cell": "--max-counts-per-cell",
     "max_pct_mito_cell": "--max-pct-mito", "cells_per_metacell": "--cells-per-metacell",
@@ -71,7 +72,8 @@ KB_DECISIONS_OF = {
     "per_batch_bounds": ("cell_qc_thresholds",),
     "drop_doublets": ("doublets",), "exclude_qc_genes": ("gene_filter",),
     "strategy": ("normalization", "batch", "sparsity"), "cells_per_metacell": ("sparsity",),
-    "n_hvg": ("hvg",), "subsample_cells": ("subsample",), "tf_source": ("regulators",),
+    "n_hvg": ("hvg",), "subsample_cells": ("subsample",), "subsample_mode": ("subsample",),
+    "tf_source": ("regulators",),
     "context_scope": ("context_scope",),
 }
 NOT_IN_ENGINE_PLAN = "not in the engine's own plan"
@@ -392,7 +394,17 @@ def resolve_strategy(choices: dict) -> tuple[str, str, list[str]]:
             notes.append(f"metacells are depth-normalized with cpm_log1p (not '{norm}')")
         return "metacells", "sparse data aggregated into metacells (built within batch)", notes
     if sparsity == "pseudobulk":
-        return "pseudobulk", "counts summed per group", notes
+        reason_notes = []
+        if batch != "none":
+            reason_notes.append(
+                f"batch option '{batch}' is not applied after pseudobulk aggregation")
+        if norm != "cpm_log1p":
+            reason_notes.append(
+                f"pseudobulk groups are normalized with cpm_log1p, not '{norm}'")
+        reason = "counts summed per group and normalized with cpm_log1p"
+        if reason_notes:
+            reason += "; " + "; ".join(reason_notes)
+        return "pseudobulk", reason, notes
     if batch in _BATCH_STRATEGY:
         if norm != "cpm_log1p":
             notes.append(f"batch option '{batch}' is applied on cpm_log1p, not '{norm}'")
@@ -434,12 +446,16 @@ def plan_preprocessing(diag: Diagnosis, *, methods: list[dict] | None = None,
     grnbench cannot run is never chosen by the selector, and forcing one fails
     loudly (``ValueError`` naming the option, the reason and the install hint).
     """
+    from grnbench.kb import DECISION_INDEX
     from grnbench.profile import build_profile
     from grnbench.selector import select
 
     profile = build_profile(diag.adata, diag.qc.metrics, diag.context, id_verdict=diag.id_verdict,
                             tf_list=tf_list, raw_droplets=diag.raw_droplets)
     selection = selection or select(profile)
+    unknown = sorted(set(choices or {}) - set(DECISION_INDEX))
+    if unknown:
+        raise KeyError(f"unknown preprocessing decision(s): {unknown}")
     plan = _build_plan(diag, profile, selection, choices, methods=methods)
     own = selection.chosen()
     if choices and any(own.get(k) != v for k, v in choices.items()):
@@ -530,8 +546,11 @@ def _build_plan(diag: Diagnosis, profile, selection, choices: dict | None, *,
         plan.add("min_genes_per_cell", _QC_LABELS["min_genes_per_cell"], MIN_GENES_FLOOR,
                  f"global floor {MIN_GENES_FLOOR}; per-batch bounds apply", qc_src)
     else:
+        fallback = (f"[cell_qc_thresholds = mad_per_batch] no batch column was detected; "
+                    "using global MAD bounds instead; "
+                    if qc_choice == "mad_per_batch" else "")
         for k, (v, r) in _mad_thresholds(genes, counts, mito, n_mito).items():
-            plan.add(k, _QC_LABELS[k], v, r, "data")
+            plan.add(k, _QC_LABELS[k], v, fallback + r, "data")
     v = max(Thresholds().min_cells_per_gene, int(math.ceil(0.001 * profile.n_cells)))
     plan.add("min_cells_per_gene", "Min cells expressing a gene", v,
              f"genes seen in fewer than max(3, 0.1% of {profile.n_cells} cells) = {v} cells", "data")
@@ -559,14 +578,32 @@ def _build_plan(diag: Diagnosis, profile, selection, choices: dict | None, *,
                  [10, 20, 30, 50])
 
     # -- features, cells ------------------------------------------------------------ #
-    n_hvg = _N_HVG[chosen["hvg"]]
-    if n_hvg is not None and profile.n_genes <= 1.5 * n_hvg:
+    requested_hvg = _N_HVG[chosen["hvg"]]
+    n_hvg = requested_hvg
+    hvg_reason, hvg_source = why("hvg")
+    if requested_hvg is not None and profile.n_genes <= 1.5 * requested_hvg:
         n_hvg = None
-    plan.add("n_hvg", "Highly variable genes (TFs always kept)", n_hvg, *why("hvg"),
+        hvg_reason += (f"; the matrix has {profile.n_genes:,} genes (<= 1.5 x "
+                       f"{requested_hvg:,}), so all genes are kept instead")
+    plan.add("n_hvg", "Highly variable genes (TFs always kept)", n_hvg,
+             hvg_reason, hvg_source,
              [500, 1000, 2000, 5000, None])
     sub = chosen["subsample"]
+    sub_reason, sub_source = why("subsample")
+    subsample_mode = None
+    if sub == "random":
+        subsample_mode = "random"
+    elif sub == "stratified":
+        if profile.cell_type_key:
+            subsample_mode = "stratified"
+        else:
+            subsample_mode = "random"
+            sub_reason += "; no cell-type column was detected, so uniform random subsampling runs instead"
     plan.add("subsample_cells", "Subsample cells", None if sub == "none" else SUBSAMPLE_TO,
-             *why("subsample"))
+             sub_reason, sub_source)
+    if subsample_mode is not None:
+        plan.add("subsample_mode", "Subsample mode", subsample_mode,
+                 sub_reason, sub_source, ["random", "stratified"])
     plan.add("stratify_key", "Stratify subsample / metacell purity by", profile.cell_type_key,
              f"cell-type column '{profile.cell_type_key}'" if profile.cell_type_key
              else "no cell-type column", _source(ctx, "cell_type_key"), cols)
@@ -589,6 +626,7 @@ def _build_plan(diag: Diagnosis, profile, selection, choices: dict | None, *,
     # -- cellular context -------------------------------------------------------------- #
     scope = chosen["context_scope"]
     plan.contexts = [{"name": "all_cells", "subset_key": None, "subset_value": None}]
+    context_note = ""
     if scope in ("per_cell_type", "selected_type") and profile.cell_type_key:
         labels = obs[profile.cell_type_key]
         sizes = labels.dropna().astype(str).value_counts()      # a missing label is not a cell type
@@ -598,15 +636,26 @@ def _build_plan(diag: Diagnosis, profile, selection, choices: dict | None, *,
         big = [str(k) for k, n in sizes.items() if n >= MIN_CELLS_PER_CONTEXT]
         if scope == "selected_type":
             big = big[:1]
+            if big:
+                context_note = (f"; selected the largest eligible type '{big[0]}' "
+                                f"({int(sizes.loc[big[0]]):,} cells)")
         elif len(big) > MAX_CONTEXTS:
             plan.warnings.append(f"{len(big)} cell types have >= {MIN_CELLS_PER_CONTEXT} cells; the "
                                  f"{MAX_CONTEXTS} largest are inferred separately (pick others in the "
                                  "interface or with --subset-key/--subset-value)")
             big = big[:MAX_CONTEXTS]
+            context_note = f"; running the {MAX_CONTEXTS} largest eligible cell types"
         if big:
             plan.contexts = [{"name": f"{profile.cell_type_key}={k}",
                               "subset_key": profile.cell_type_key, "subset_value": k} for k in big]
-    plan.add("context_scope", "Cellular context", scope, *why("context_scope"),
+        else:
+            context_note = (f"; no cell type has at least {MIN_CELLS_PER_CONTEXT} cells, "
+                            "so the pooled all-cells context runs instead")
+    elif scope in ("per_cell_type", "selected_type"):
+        context_note = "; no cell-type column was detected, so the pooled all-cells context runs instead"
+    context_reason, context_source = why("context_scope")
+    plan.add("context_scope", "Cellular context", scope,
+             context_reason + context_note, context_source,
              ["pooled", "per_cell_type", "selected_type"])
     if strategy == "metacells":
         sizes = ([int((obs[c["subset_key"]].astype(str) == str(c["subset_value"])).sum())

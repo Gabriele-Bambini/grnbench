@@ -48,7 +48,7 @@ _IDENTITY_TOKEN = re.compile(
 _OUTCOMES = {"unknown", "ok", "failed", "partial"}
 _MANIFEST_CHOICE_KEYS = (
     "strategy", "n_hvg", "group_key", "label_key", "stratify_key", "batch_key",
-    "min_group_cells", "downcast", "subsample_cells", "orientation",
+    "min_group_cells", "downcast", "subsample_cells", "subsample_mode", "orientation",
     "drop_doublets", "force", "seed", "subset_key", "subset_value", "cell_calling",
     "exclude_qc_genes", "cells_per_metacell", "thresholds",
 )

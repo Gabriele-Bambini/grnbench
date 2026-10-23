@@ -2,7 +2,7 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-10-15 (#87, #71, #69 merged at GB's request, GB's agent); 2026-10-10
+Updated: 2026-10-22 (#132 plan/runtime truth, LD); 2026-10-15 (#87, #71, #69 merged at GB's request, GB's agent); 2026-10-10
 (issue #59, LD; interface branch merged with main after #55, GB's agent); 2026-10-09
 (interface redesign; tool end to end, GB's agent); 2026-10-07 (interface explorer, GB's agent);
 2026-10-06 (EXP-20261003-GB-1: review fixes and record note 2.1 on PR #55, agent);
@@ -25,6 +25,9 @@ pre-registered experiments (D-017).
   to 123 (family of 4) never-used datasets for 80% power. C4 unchanged. Next in this track: 16-2
   (pin `auto_noref` to the pre-D-021 rule, GB's OK first), 14-1 (multiplicity simulation), 13-1
   (motif-source table). 15-2 (HPC) and 15-3 (new data, confirmatory) only with GB's OK.
+- Issue #132 (LD, `ld/plan-runtime-truth`): six silent mismatches between requested preprocessing
+  choices and actual execution are fixed with explicit fallback reasons, an auditable subsampling
+  mode and strict decision-key validation; awaiting review.
 - More models (GB, `gb/more-models`): eleven literature methods registered as *extra* (`bicor`,
   `wgcna_tom`, `propr_rho`, `aracne_dpi`, `mrnet`, `tigress`, `bbsr`, `pcnet`, `extra_trees`,
   `gradient_boosting`, `community`); `--methods available` still runs exactly the 17 older ones.

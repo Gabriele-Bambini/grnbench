@@ -103,6 +103,20 @@ def test_run_without_gold_stops_after_inference(tmp_path, dataset, capsys):
     assert "no --gold" in capsys.readouterr().out
 
 
+def test_run_forwards_explicit_subsample_mode_to_prep(tmp_path, dataset):
+    src, tfs = dataset
+    out = tmp_path / "run_subsample"
+    assert run_main([
+        "--data", str(src), "--out", str(out), "--tf-list", str(tfs),
+        "--n-hvg", "120", "--methods", "spearman_signed",
+        "--subsample-cells", "100", "--subsample-mode", "random",
+    ]) == 0
+    manifest = json.loads((out / "prep" / "manifest.json").read_text(encoding="utf-8"))
+    step = [s for s in manifest["steps"] if s["step"] == "subsample_cells"][0]
+    assert manifest["args"]["subsample_mode"] == "random"
+    assert step["mode"] == "random" and step["stratification"] is None
+
+
 def test_run_full_loop_with_gold_and_stability(tmp_path, dataset, capsys):
     src, tfs = dataset
     out1 = tmp_path / "stage"

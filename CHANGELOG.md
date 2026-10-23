@@ -3,6 +3,11 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- Preprocessing plans now tell the truth when a requested option falls back: pseudobulk names the
+  ignored batch/normalization choices, per-batch MAD names its global fallback, small matrices name
+  the all-gene HVG fallback, and context plans name pooled/largest-type behaviour. Random and
+  stratified cell subsampling have an explicit runtime mode recorded in the manifest, and unknown
+  decision keys are refused instead of ignored (#132).
 - Report diagnostics (#59): Markdown, HTML and LaTeX reports now consume one validated schema-v1
   diagnostic view for preparation, screening and model outcomes, choices, failure categories and
   before/after dimensions. Historical runs are marked unavailable; malformed or unsupported

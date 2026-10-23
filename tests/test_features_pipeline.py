@@ -167,7 +167,53 @@ def test_dropped_strata_are_surfaced_as_a_warning(tmp_path):
     assert any("class(es) are absent from the subsample" in w
                for w in res.manifest["warnings"])
     step = [s for s in res.manifest["steps"] if s["step"] == "subsample_cells"][0]
+    assert step["mode"] == "stratified"
     assert step["stratification"]["classes_dropped"] > 0
+
+
+def test_explicit_random_subsample_does_not_silently_stratify(tmp_path):
+    p = tmp_path / "in.h5ad"
+    _labelled_adata(["major"] * 300 + ["minor"] * 100).write_h5ad(p)
+    res = run_prep(
+        p, tmp_path / "out", strategy="cpm_log1p", force=True,
+        subsample_cells=80, subsample_mode="random", stratify_key="ct", seed=1)
+    step = [s for s in res.manifest["steps"] if s["step"] == "subsample_cells"][0]
+    assert step["mode"] == "random"
+    assert step["stratification"] is None
+    assert step["detail"].startswith("random (requested)")
+    assert res.manifest["args"]["subsample_mode"] == "random"
+
+
+def test_legacy_missing_stratify_key_records_the_random_fallback(tmp_path):
+    p = tmp_path / "in.h5ad"
+    _labelled_adata(["major"] * 300 + ["minor"] * 100).write_h5ad(p)
+    res = run_prep(
+        p, tmp_path / "out", strategy="cpm_log1p", force=True,
+        subsample_cells=80, stratify_key="not_a_column", seed=1)
+    step = [s for s in res.manifest["steps"] if s["step"] == "subsample_cells"][0]
+    assert step["mode"] == "random"
+    assert step["stratification"] is None
+    assert step["detail"].startswith("random (no stratify key)")
+
+
+def test_explicit_stratified_subsample_requires_a_key_before_writing_output(tmp_path, synthetic_adata):
+    p = tmp_path / "in.h5ad"
+    synthetic_adata.write_h5ad(p)
+    out = tmp_path / "out"
+    with pytest.raises(PrepError, match="needs --stratify-key"):
+        run_prep(p, out, subsample_cells=50, subsample_mode="stratified")
+    assert not out.exists()
+
+
+def test_explicit_stratified_subsample_refuses_a_missing_obs_key(tmp_path, synthetic_adata):
+    p = tmp_path / "in.h5ad"
+    synthetic_adata.write_h5ad(p)
+    out = tmp_path / "out"
+    with pytest.raises(PrepError, match="is not in obs"):
+        run_prep(
+            p, out, subsample_cells=50, subsample_mode="stratified",
+            stratify_key="not_a_column")
+    assert not (out / "manifest.json").exists()
 
 
 def test_filter_cells_counts_add_up(tmp_path):

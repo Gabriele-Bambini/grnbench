@@ -180,6 +180,9 @@ def test_max_doublet_rate_flag_reaches_thresholds(tmp_path):
     (["--n-hvg", "-5"], "--n-hvg must be at least 1"),
     (["--n-hvg", "0"], "--n-hvg must be at least 1"),
     (["--subsample-cells", "0"], "--subsample-cells must be at least 1"),
+    (["--subsample-mode", "random"], "--subsample-mode needs --subsample-cells"),
+    (["--subsample-cells", "10", "--subsample-mode", "stratified"],
+     "--subsample-mode stratified needs"),
     (["--cells-per-metacell", "0"], "--cells-per-metacell must be at least 1"),
     (["--min-genes-per-cell", "-3"], "cannot be negative"),
     (["--max-doublet-rate", "2"], "fraction between 0 and 1"),
@@ -201,6 +204,20 @@ def test_valid_option_combinations_are_still_accepted(tmp_path):
     _write_adata(src)
     assert main([str(src), "--out", str(tmp_path / "ok"), "--min-genes-per-cell", "0", "--mito-warn", "5",
                  "--mito-fail", "5", "--max-doublet-rate", "0", "--n-hvg", "100"]) == 0
+
+
+def test_explicit_random_subsample_mode_reaches_the_manifest(tmp_path):
+    src = tmp_path / "in.h5ad"
+    _write_adata(src, n_cells=100)
+    out = tmp_path / "run"
+    assert main([str(src), "--out", str(out), "--subsample-cells", "50",
+                 "--subsample-mode", "random"]) == 0
+    manifest = json.loads((out / "manifest.json").read_text())
+    diagnostics = json.loads((out / "diagnostics.json").read_text())
+    step = [s for s in manifest["steps"] if s["step"] == "subsample_cells"][0]
+    assert manifest["args"]["subsample_mode"] == "random"
+    assert step["mode"] == "random" and step["stratification"] is None
+    assert diagnostics["prep"]["default"]["all_cells"]["choices"]["subsample_mode"] == "random"
 
 
 def test_a_gene_filter_that_removes_every_gene_says_so_in_our_words(tmp_path, capsys):

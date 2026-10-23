@@ -44,6 +44,7 @@ def _build_parser() -> argparse.ArgumentParser:
     prep.add_argument("--batch-key", default=None)
     prep.add_argument("--min-group-cells", type=int, default=None)
     prep.add_argument("--subsample-cells", type=int, default=None)
+    prep.add_argument("--subsample-mode", choices=["random", "stratified"], default=None)
     prep.add_argument("--orientation", default="auto",
                       choices=["auto", "genes_x_cells", "cells_x_genes"],
                       help="CSV/TSV layout; 'auto' refuses to guess "
@@ -120,6 +121,7 @@ def main(argv: list[str] | None = None) -> int:
         *_opt("--batch-key", args.batch_key),
         *_opt("--min-group-cells", args.min_group_cells),
         *_opt("--subsample-cells", args.subsample_cells),
+        *_opt("--subsample-mode", args.subsample_mode),
         *_opt("--orientation", args.orientation),
         *_opt("--min-genes-per-cell", args.min_genes_per_cell),
         *_opt("--min-cells-per-gene", args.min_cells_per_gene),

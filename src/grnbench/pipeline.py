@@ -122,6 +122,7 @@ def run_prep(
     downcast: bool = True,
     thresholds: Thresholds | None = None,
     subsample_cells: int | None = None,
+    subsample_mode: str | None = None,
     orientation: str = "auto",
     drop_doublets: bool = False,
     force: bool = False,
@@ -134,6 +135,12 @@ def run_prep(
     cells_per_metacell: int | None = None,
 ) -> PrepResult:
     """Preprocess a dataset for GRN inference. See module docstring."""
+    if subsample_mode not in {None, "random", "stratified"}:
+        raise PrepError("subsample_mode must be 'random' or 'stratified'")
+    if subsample_mode is not None and subsample_cells is None:
+        raise PrepError("subsample_mode needs subsample_cells")
+    if subsample_mode == "stratified" and not (stratify_key or group_key or label_key):
+        raise PrepError("subsample_mode='stratified' needs --stratify-key, --group-key or --label-key")
     t = thresholds or Thresholds()
     out = require_empty_output(out_dir)
     input_identity = file_fingerprint(input_path)
@@ -150,6 +157,8 @@ def run_prep(
         'cells_per_metacell': cells_per_metacell,
         'requested_tfs': sequence_identity(tf_list) if tf_list is not None else None,
     }
+    if subsample_mode is not None:
+        execution_params['subsample_mode'] = subsample_mode
     rng = np.random.default_rng(seed)
     steps: list[dict] = []
     warnings_list: list[str] = []
@@ -395,7 +404,16 @@ def run_prep(
                             f"{t.min_cells_per_gene} or more of its {adata.n_obs} cells (--min-cells-per-gene)")
 
     if subsample_cells is not None and int(subsample_cells) < adata.n_obs:
-        strat_col = stratify_key or group_key or label_key
+        available_strat_col = stratify_key or group_key or label_key
+        has_strat_col = (available_strat_col is not None
+                         and available_strat_col in adata.obs.columns)
+        effective_subsample_mode = subsample_mode or (
+            "stratified" if has_strat_col else "random")
+        if (subsample_mode == "stratified"
+                and not has_strat_col):
+            raise PrepError(
+                f"subsample_mode='stratified' key {available_strat_col!r} is not in obs")
+        strat_col = available_strat_col if effective_subsample_mode == "stratified" else None
         n_unlabelled = 0
         if strat_col is not None and strat_col in adata.obs.columns:
             # Missing labels are not a stratum. Folding them into a literal "nan"
@@ -424,10 +442,12 @@ def run_prep(
             strat_info = None
             idx = np.sort(rng.choice(adata.n_obs, size=int(subsample_cells),
                                      replace=False))
-            kind = "random (no stratify key)"
+            kind = ("random (requested)" if subsample_mode == "random"
+                    else "random (no stratify key)")
         adata = adata[idx].copy()
         steps.append({"step": "subsample_cells",
                       "n_cells_after": int(adata.n_obs), "n_genes_after": int(adata.n_vars),
+                      "mode": effective_subsample_mode,
                       "stratification": strat_info, "n_unlabelled_excluded": n_unlabelled,
                       "detail": f"{kind}, to {int(subsample_cells)} cells (seed={seed})"})
 

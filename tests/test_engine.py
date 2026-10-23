@@ -1,4 +1,5 @@
 """Cleaning engine: knowledge base, profile, selector, plan, execution."""
+import copy
 import json
 from pathlib import Path
 
@@ -140,6 +141,17 @@ def test_strategy_resolution_priorities():
     assert resolve_strategy({"normalization": "pearson_residuals"})[0] == "pearson_residuals"
 
 
+def test_pseudobulk_reason_names_ignored_compatibility_choices_without_new_warning():
+    strategy, reason, warnings = resolve_strategy({
+        "sparsity": "pseudobulk", "batch": "combat",
+        "normalization": "pearson_residuals",
+    })
+    assert strategy == "pseudobulk"
+    assert "batch option 'combat' is not applied" in reason
+    assert "normalized with cpm_log1p, not 'pearson_residuals'" in reason
+    assert warnings == []
+
+
 # -- strategies ------------------------------------------------------------------------------ #
 
 def test_center_per_batch_removes_between_batch_shift_only():
@@ -172,6 +184,16 @@ def demo(tmp_path_factory):
     return paths, tfs, diagnose(paths["counts"])
 
 
+def _without_context_fields(diag, *, obs_columns=(), fact_keys=()):
+    """A diagnosis variant for planner fallbacks, without re-running ingestion."""
+    out = copy.copy(diag)
+    out.adata = diag.adata.copy()
+    out.adata.obs = out.adata.obs.drop(columns=list(obs_columns))
+    out.context = copy.deepcopy(diag.context)
+    out.context.facts = [f for f in out.context.facts if f.key not in set(fact_keys)]
+    return out
+
+
 def test_plan_reads_the_readme_and_explains_every_decision(demo):
     paths, tfs, diag = demo
     plan = plan_preprocessing(diag, tf_list=tfs)
@@ -180,6 +202,84 @@ def test_plan_reads_the_readme_and_explains_every_decision(demo):
     assert all(d.reason for d in plan.decisions.values())
     again = PrepPlan.from_dict(json.loads(json.dumps(plan.to_dict(), default=str)))
     assert again.choices == plan.choices and again.contexts == plan.contexts
+
+
+def test_unknown_decision_key_is_refused_instead_of_ignored(demo):
+    _, tfs, diag = demo
+    with pytest.raises(KeyError, match="unknown preprocessing decision"):
+        plan_preprocessing(diag, tf_list=tfs, choices={"not_a_decision": "none"})
+
+
+def test_per_batch_qc_without_batch_explains_global_mad_fallback(demo):
+    _, tfs, diag = demo
+    no_batch = _without_context_fields(
+        diag, obs_columns=("batch",), fact_keys=("batch_key",))
+    plan = plan_preprocessing(
+        no_batch, tf_list=tfs, choices={"cell_qc_thresholds": "mad_per_batch"})
+    assert plan.value("per_batch_bounds") is None
+    reasons = [plan.decisions[k].reason for k in (
+        "min_genes_per_cell", "max_genes_per_cell", "max_counts_per_cell",
+        "max_pct_mito_cell")]
+    assert all("no batch column was detected" in reason for reason in reasons)
+    assert not any("no batch column was detected" in warning for warning in plan.warnings)
+
+
+def test_hvg_reason_explains_when_small_matrix_keeps_all_genes(demo):
+    _, tfs, diag = demo
+    plan = plan_preprocessing(diag, tf_list=tfs, choices={"hvg": "tf_plus_1000"})
+    assert plan.value("n_hvg") is None
+    reason = plan.decisions["n_hvg"].reason
+    assert "900 genes" in reason and "all genes are kept instead" in reason
+
+
+def test_context_fallback_without_cell_type_is_explicit(demo):
+    _, tfs, diag = demo
+    no_cell_type = _without_context_fields(
+        diag, obs_columns=("cell_type",), fact_keys=("cell_type_key",))
+    plan = plan_preprocessing(
+        no_cell_type, tf_list=tfs, choices={"context_scope": "per_cell_type"})
+    assert plan.contexts == [{"name": "all_cells", "subset_key": None, "subset_value": None}]
+    assert "no cell-type column was detected" in plan.decisions["context_scope"].reason
+    assert "pooled all-cells context" in plan.decisions["context_scope"].reason
+
+
+def test_context_fallback_without_an_eligible_cell_type_is_explicit(demo):
+    _, tfs, diag = demo
+    too_small = copy.copy(diag)
+    too_small.adata = diag.adata.copy()
+    too_small.adata.obs["cell_type"] = [f"type_{i}" for i in range(too_small.adata.n_obs)]
+    too_small.context = copy.deepcopy(diag.context)
+    plan = plan_preprocessing(
+        too_small, tf_list=tfs, choices={"context_scope": "per_cell_type"})
+    assert plan.contexts == [{"name": "all_cells", "subset_key": None, "subset_value": None}]
+    assert "no cell type has at least 200 cells" in plan.decisions["context_scope"].reason
+
+
+def test_selected_type_names_the_automatic_largest_type(demo):
+    _, tfs, diag = demo
+    largest = str(diag.adata.obs["cell_type"].dropna().astype(str).value_counts().index[0])
+    plan = plan_preprocessing(
+        diag, tf_list=tfs, choices={"context_scope": "selected_type"})
+    assert plan.contexts == [{
+        "name": f"cell_type={largest}", "subset_key": "cell_type", "subset_value": largest}]
+    assert f"selected the largest eligible type '{largest}'" in plan.decisions["context_scope"].reason
+
+
+def test_requested_subsample_mode_is_recorded_as_the_actual_runtime_mode(demo):
+    paths, tfs, diag = demo
+    random_plan = plan_preprocessing(
+        diag, tf_list=tfs, choices={"subsample": "random"})
+    assert random_plan.value("subsample_mode") == "random"
+    argv = random_plan.cli_args(paths["counts"], "out", paths["tfs"], seed=42)
+    assert argv[argv.index("--subsample-mode") + 1] == "random"
+
+    no_cell_type = _without_context_fields(
+        diag, obs_columns=("cell_type",), fact_keys=("cell_type_key",))
+    fallback = plan_preprocessing(
+        no_cell_type, tf_list=tfs, choices={"subsample": "stratified"})
+    assert fallback.choices["subsample"] == "stratified"
+    assert fallback.value("subsample_mode") == "random"
+    assert "uniform random subsampling runs instead" in fallback.decisions["subsample_mode"].reason
 
 
 def test_per_context_execution_calls_doublets_before_subsetting(demo, tmp_path):

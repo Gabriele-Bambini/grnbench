@@ -21,6 +21,7 @@ Agents are tools, not contributors: log the person who directed the agent.
 | 2026-10-09 | GB | Software, Visualization | interface redesign: screens, menu, theme and plain-language summaries (`grnbench ui`); branch `gb/ui-explorer` |
 | 2026-10-09 | GB | Software, Validation | end-to-end test of the integrated tool and fixes of the input-guard, CLI, ingest and viz defects it found; issue #74 |
 | 2026-10-09 | LM | Visualization, Software | main figures for C4-C7 (`paper/figures/fig_motif_lift`, `fig_reference_free`, `paper/make_figures.py`); PR #62 |
+| 2026-10-22 | LD | Software, Validation | preprocessing plan/runtime truthfulness and regression coverage; issue #132 |
 | 2026-10-20 | GB | Formal analysis, Methodology, Software | power of the paired t over datasets (`grnbench.eval.power`) and C4's EPR comparison re-read from its committed rows (`benchmarks/epr_power.py`); EXP-20261020-GB-1, issue #127 |
 | 2026-10-21 | GB | Software | optional R bridge (`grnbench.rbridge`, `grnbench env`, R env in `requirements/`); issue #135 |
 | 2026-10-20 | GB | Software | an option is available only if grnbench can run it (`executors.py`, `kb.DecisionPoint.availability`; forcing an unrunnable option fails loudly); issue #128 |

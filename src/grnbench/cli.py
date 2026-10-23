@@ -66,6 +66,9 @@ def _build_parser() -> argparse.ArgumentParser:
                    help="--drop-doublets refuses to drop when the call rate exceeds this "
                         "fraction (default 0.20): a failed threshold, not a doublet population")
     p.add_argument("--subsample-cells", type=int, default=None)
+    p.add_argument("--subsample-mode", choices=["random", "stratified"], default=None,
+                   help="how --subsample-cells selects cells; omitted keeps the historical "
+                        "behaviour (stratified when a key is available, otherwise random)")
     p.add_argument("--orientation", default="auto",
                    choices=["auto", "genes_x_cells", "cells_x_genes"],
                    help="CSV/TSV layout. 'auto' detects it and refuses to "
@@ -111,6 +114,11 @@ def option_problems(args: argparse.Namespace) -> list[str]:
             out.append(f"{flag} cannot be negative (got {value})")
     if args.max_doublet_rate is not None and not 0 <= args.max_doublet_rate <= 1:
         out.append(f"--max-doublet-rate is a fraction between 0 and 1 (0.2 = 20%); got {args.max_doublet_rate}")
+    if args.subsample_mode is not None and args.subsample_cells is None:
+        out.append("--subsample-mode needs --subsample-cells")
+    if (args.subsample_mode == "stratified"
+            and not (args.stratify_key or args.group_key or args.label_key)):
+        out.append("--subsample-mode stratified needs --stratify-key, --group-key or --label-key")
     default = Thresholds()
     warn = default.mito_warn if args.mito_warn is None else args.mito_warn
     fail = default.mito_fail if args.mito_fail is None else args.mito_fail
@@ -194,6 +202,7 @@ def main(argv: list[str] | None = None) -> int:
             downcast=not args.no_downcast,
             thresholds=thresholds,
             subsample_cells=args.subsample_cells,
+            subsample_mode=args.subsample_mode,
             orientation=args.orientation,
             drop_doublets=args.drop_doublets,
             force=args.force,
