@@ -1,0 +1,13 @@
+conditions: committed ['clean', 'damaged_15', 'doublets_20'], rerun ['clean', 'damaged_15', 'doublets_20']; tolerance rtol=1e-09 atol=0
+primary: MATCH - baseline > noref_shipped | eval_mean | clean
+  committed: n=20 excluded=0 mean +0.089 [+0.014, +0.163] p_Holm(A>B) 0.0435 p_Holm(B>A) 1 supported baseline
+  rerun:     n=20 excluded=0 mean +0.089 [+0.014, +0.163] p_Holm(A>B) 0.0435 p_Holm(B>A) 1 supported baseline
+primary: MATCH - ref_geneset_preserving > baseline | eval_mean | clean
+  committed: n=20 excluded=0 mean +0.023 [-0.008, +0.053] p_Holm(A>B) 0.201 p_Holm(B>A) 1 supported unresolved
+  rerun:     n=20 excluded=0 mean +0.023 [-0.008, +0.053] p_Holm(A>B) 0.201 p_Holm(B>A) 1 supported unresolved
+secondary (information only): MATCH - baseline > noref_shipped | damaged_15
+secondary (information only): MATCH - ref_geneset_preserving > baseline | damaged_15
+secondary (information only): MATCH - baseline > noref_shipped | doublets_20
+secondary (information only): MATCH - ref_geneset_preserving > baseline | doublets_20
+verdict: MATCH
+exit=0

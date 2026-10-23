@@ -14,6 +14,11 @@ Updated: 2026-10-15.
   `benchmarks/real_bench.py` (real data vs CollecTRI halves; `--models`, `--keep-artifacts`;
   reference hashes in `RUN_CONFIG.json`; `report` also writes figures + LaTeX),
   `benchmarks/count_plausibility.py` (would ingest's non-raw-counts warning fire on a data root; #42),
+  `benchmarks/compare_confirm.py` (a candidate-study rerun's registered primaries vs `CONFIRM.json`; #95),
+  `benchmarks/diff_rows_nested.py` (where two `rows/` folders differ at any depth, timings apart; diagnosis, #95).
+- Motif-prior lift decomposition: `benchmarks/motif_sensitivity.py` (`plan`, `run`, `report`) from a
+  `--keep-artifacts` run (EXP-20261003-GB-1); tests `tests/test_motif_sensitivity.py`.
+- Second-person rerun outputs: `benchmarks/results/EXP-20261003-LM-1-repro-GB/` (#95; record section 4b).
   `benchmarks/diagnose_rerun.py` (where a rerun's rows differ from the committed rows; exploratory, #24).
 - Motif-prior lift decomposition: `benchmarks/motif_sensitivity.py` (`plan`, `run`, `report`) from a
   `--keep-artifacts` run (EXP-20261003-GB-1); tests `tests/test_motif_sensitivity.py`.

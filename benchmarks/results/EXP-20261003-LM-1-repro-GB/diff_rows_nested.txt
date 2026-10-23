@@ -1,0 +1,4 @@
+rows: 60 committed, 60 rerun, 0 missing in rerun
+leaf values compared: 36180; timing values skipped: 3084 (2937 differ); exact
+non-timing differences: 0 (numeric 0, other 0); max relative numeric difference 0
+exit=0

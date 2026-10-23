@@ -90,7 +90,10 @@ pre-registered experiments (D-017).
   universe -> +0.008 shared). HVG default unchanged; no confirmatory test of gene-set changers.
 - EXP-20261003-LM-1 (confirmatory, job 681213): without a reference the fixed baseline beats the
   engine's former reference-free choice by +0.089 [+0.014, +0.163] (n = 20 unused datasets, p_Holm
-  0.044; also under doublets and damaged cells). Claim C7 `confirmed`; D-021 ACTIVE: the engine now
+  0.044; also under doublets and damaged cells). Claim C7 `confirmed`: the rerun directed by GB and typed by an
+  agent session (job 702612, record section 4b, #95; signature pending) has both primaries identical,
+  but the registered row check says DIFFERENT because of per-candidate timings inside lists. A corrected
+  check (`benchmarks/diff_rows_nested.py`) would apply only to a new rerun registered after it. D-021 ACTIVE: the engine now
   returns the baseline when no reference is given. Gene-set-preserving reference screening: +0.023,
   inconclusive, not shipped.
 - EXP-20261002-LM-1 (confirmatory, fresh-set rerun of C4/C5, HPC job 679411, merged in #31): the

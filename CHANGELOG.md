@@ -3,6 +3,11 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- EXP-20261003-LM-1 section 4b (#95): rerun on the Bocconi HPC directed by GB, commands typed by an agent session (signature pending). Both primaries
+  are identical in every field (`benchmarks/compare_confirm.py`, new), but the registered row check
+  `compare_runs.py --rows-only` says DIFFERENT: it compares the per-candidate timing fields inside
+  `candidates`. `benchmarks/diff_rows_nested.py` (new, diagnosis) finds every non-timing value
+  identical. By #95's rule C7 stays `confirmed`.
 - EXP-20261002-LM-1 section 4b (#94): GB's second-person rerun on the Bocconi HPC. The three
   declared primaries MATCH at `--rtol 1e-9` and the report is identical apart from its timing columns; one row field differs
   (`n_warnings` 4 -> 3 on one dataset, not a score; most likely the dataset README, which the data
