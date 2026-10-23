@@ -3,6 +3,9 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- EXP-20261003-GB-1 run and recorded (issue #52): every dataset of C6 and C4 passed gate 1 and gate 2;
+  verdicts from the generated report: C6 inconclusive, C4 mixed, combined inconclusive, so the caveat
+  on C4/C6 stays as worded. Results in `benchmarks/results/EXP-20261003-GB-1/`, record section 3.
 - EXP-20260925-LM-2 section 4b (#24): GB's second-person rerun on the Bocconi HPC is DIFFERENT from
   the committed rows (exact and `--rtol 1e-9`; H1 unchanged in direction, +0.183 vs +0.182). C4 stays
   `reproduced-computational`.
@@ -103,7 +106,7 @@
   localhost, `grnbench run` checks `--gold` first and skips a
   method that cannot run here; `grnbench viz` creates nothing on a wrong path and reads candidate-study
   rows. What is left is the checklist in #76; the screening ranking rule is #75.
-- EXP-20261003-GB-1 registered (exploratory, issue #52, not launched): `benchmarks/motif_sensitivity.py`
+- EXP-20261003-GB-1 registered (exploratory, issue #52): `benchmarks/motif_sensitivity.py`
   splits the motif-prior lift of Pearson (C6, C4) into target identity, TF-level reweighting,
   database membership and a TF-generic gene propensity from the kept artifacts, with calibration
   gates against the committed rows, a keyed permutation null shared by all datasets and built-in

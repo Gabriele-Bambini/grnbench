@@ -1,0 +1,822 @@
+[
+ {
+  "id": "EXP-20261002-LM-1__cxg__10x-3-v2__homo-sapiens__breast__44941fdb",
+  "exp": "EXP-20261002-LM-1",
+  "task": "cxg__10x-3-v2__homo-sapiens__breast__44941fdb",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20261002-LM-1",
+  "committed": "benchmarks/results/EXP-20261002-LM-1",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif"
+  ],
+  "committed_row_sha256": "66eba21b1841d60a29b34aa14c06dd9068262d89fbc1d7115b19fa1ffe367ad4",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20261002-LM-1__cxg__10x-3-v2__homo-sapiens__cortex-of-kidney__2fc9c59f",
+  "exp": "EXP-20261002-LM-1",
+  "task": "cxg__10x-3-v2__homo-sapiens__cortex-of-kidney__2fc9c59f",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20261002-LM-1",
+  "committed": "benchmarks/results/EXP-20261002-LM-1",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif"
+  ],
+  "committed_row_sha256": "166ff818fce9e56fb3f4ae12091fb251639e7c72428728648301541bf96473b5",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20261002-LM-1__cxg__10x-3-v2__homo-sapiens__duodenum__ee195b7d",
+  "exp": "EXP-20261002-LM-1",
+  "task": "cxg__10x-3-v2__homo-sapiens__duodenum__ee195b7d",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20261002-LM-1",
+  "committed": "benchmarks/results/EXP-20261002-LM-1",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif"
+  ],
+  "committed_row_sha256": "5cdf643f4df8068c64117fee8db36a3b8d8b3b66872d0cc58da2da6cf43add54",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20261002-LM-1__cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__f9ad5649",
+  "exp": "EXP-20261002-LM-1",
+  "task": "cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__f9ad5649",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20261002-LM-1",
+  "committed": "benchmarks/results/EXP-20261002-LM-1",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif"
+  ],
+  "committed_row_sha256": "5323a201b9ecffc908e167187f66a0248dbc53c159b131745d7440b6c8ddd4c7",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20261002-LM-1__cxg__10x-3-v2__homo-sapiens__kidney__4c6f9f26",
+  "exp": "EXP-20261002-LM-1",
+  "task": "cxg__10x-3-v2__homo-sapiens__kidney__4c6f9f26",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20261002-LM-1",
+  "committed": "benchmarks/results/EXP-20261002-LM-1",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif"
+  ],
+  "committed_row_sha256": "1f55f67fd54a46efb3674f18a168cf12060b1bd4690394b97b211a3f08aa0c3b",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20261002-LM-1__cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__ea426edb",
+  "exp": "EXP-20261002-LM-1",
+  "task": "cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__ea426edb",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20261002-LM-1",
+  "committed": "benchmarks/results/EXP-20261002-LM-1",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif"
+  ],
+  "committed_row_sha256": "2aa75d77dbbd33d072be202c43bc0dc79bed82d8e2556177b63514513a21bbc6",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20261002-LM-1__cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__1492eb6b",
+  "exp": "EXP-20261002-LM-1",
+  "task": "cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__1492eb6b",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20261002-LM-1",
+  "committed": "benchmarks/results/EXP-20261002-LM-1",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif"
+  ],
+  "committed_row_sha256": "24f872874ebb433a6bbed5bea3d4f713f76c11497a6c50339acab7406a0eb109",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20261002-LM-1__cxg__10x-3-v3__homo-sapiens__chest-wall__743473de",
+  "exp": "EXP-20261002-LM-1",
+  "task": "cxg__10x-3-v3__homo-sapiens__chest-wall__743473de",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20261002-LM-1",
+  "committed": "benchmarks/results/EXP-20261002-LM-1",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif"
+  ],
+  "committed_row_sha256": "abf4f815e766e77a89d396475e9371b54199cf9668ac57cd0dab9c9ff4c3158b",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20261002-LM-1__cxg__10x-3-v3__homo-sapiens__colon__4269074c",
+  "exp": "EXP-20261002-LM-1",
+  "task": "cxg__10x-3-v3__homo-sapiens__colon__4269074c",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20261002-LM-1",
+  "committed": "benchmarks/results/EXP-20261002-LM-1",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif"
+  ],
+  "committed_row_sha256": "adb95e68f3e64d0471761fd523fff60713f48b505c0fc25d68513f89f2ba12c8",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20261002-LM-1__cxg__10x-3-v3__homo-sapiens__liver__ef0d813e",
+  "exp": "EXP-20261002-LM-1",
+  "task": "cxg__10x-3-v3__homo-sapiens__liver__ef0d813e",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20261002-LM-1",
+  "committed": "benchmarks/results/EXP-20261002-LM-1",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif"
+  ],
+  "committed_row_sha256": "e4909f008788beea9e22b53d70b0b5ef6b37c7c3ccdf842f6f8fe6835b8adca3",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20261002-LM-1__cxg__10x-3-v3__homo-sapiens__respiratory-airway__b25f3834",
+  "exp": "EXP-20261002-LM-1",
+  "task": "cxg__10x-3-v3__homo-sapiens__respiratory-airway__b25f3834",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20261002-LM-1",
+  "committed": "benchmarks/results/EXP-20261002-LM-1",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif"
+  ],
+  "committed_row_sha256": "be64f37a22ecc643cf5e8b34a155bb8e790c02eb55a87dbc2a972a52d2a64110",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20261002-LM-1__cxg__10x-3-v3__homo-sapiens__retina__d95ab381",
+  "exp": "EXP-20261002-LM-1",
+  "task": "cxg__10x-3-v3__homo-sapiens__retina__d95ab381",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20261002-LM-1",
+  "committed": "benchmarks/results/EXP-20261002-LM-1",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif"
+  ],
+  "committed_row_sha256": "53d2bca1fc7ecc691fa5ce8002c3b6b6c8897b59ac74ca278fa9cc4afcbe80bb",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20261002-LM-1__cxg__10x-3-v3__homo-sapiens__telencephalon__6fc37633",
+  "exp": "EXP-20261002-LM-1",
+  "task": "cxg__10x-3-v3__homo-sapiens__telencephalon__6fc37633",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20261002-LM-1",
+  "committed": "benchmarks/results/EXP-20261002-LM-1",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif"
+  ],
+  "committed_row_sha256": "96ec90025de44cd278107ff5179f80bee4003a117723383959d25cdee315558f",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20261002-LM-1__cxg__10x-3-v3__mus-musculus__autopod-skin__1398f3a9",
+  "exp": "EXP-20261002-LM-1",
+  "task": "cxg__10x-3-v3__mus-musculus__autopod-skin__1398f3a9",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20261002-LM-1",
+  "committed": "benchmarks/results/EXP-20261002-LM-1",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif"
+  ],
+  "committed_row_sha256": "1d947340145f7f62e017a26251b9036cae01f9e20382e3d5cc2b6fbf16fbbd49",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20261002-LM-1__cxg__10x-3-v3__mus-musculus__autopod-skin__5bc26721",
+  "exp": "EXP-20261002-LM-1",
+  "task": "cxg__10x-3-v3__mus-musculus__autopod-skin__5bc26721",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20261002-LM-1",
+  "committed": "benchmarks/results/EXP-20261002-LM-1",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif"
+  ],
+  "committed_row_sha256": "05045eff13adff187c249b23c416cc1e5a7f62c9179afc68668e0d9ab0342766",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20261002-LM-1__cxg__10x-3-v3__mus-musculus__ovary__c32b7e3d",
+  "exp": "EXP-20261002-LM-1",
+  "task": "cxg__10x-3-v3__mus-musculus__ovary__c32b7e3d",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20261002-LM-1",
+  "committed": "benchmarks/results/EXP-20261002-LM-1",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif"
+  ],
+  "committed_row_sha256": "88ab17b6e499fcf804df662ee52e1a7e12531ba93f283267f5e659724931196b",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20261002-LM-1__cxg__10x-3-v3__mus-musculus__primary-motor-cortex__4ec57620",
+  "exp": "EXP-20261002-LM-1",
+  "task": "cxg__10x-3-v3__mus-musculus__primary-motor-cortex__4ec57620",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20261002-LM-1",
+  "committed": "benchmarks/results/EXP-20261002-LM-1",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif"
+  ],
+  "committed_row_sha256": "49a7bdc32faec38e8e3b2f1fc774f8ed51335a8b0e7c7ba0a5f129046cef502c",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20261002-LM-1__cxg__10x-multiome__homo-sapiens__brain__00f15b43",
+  "exp": "EXP-20261002-LM-1",
+  "task": "cxg__10x-multiome__homo-sapiens__brain__00f15b43",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20261002-LM-1",
+  "committed": "benchmarks/results/EXP-20261002-LM-1",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif"
+  ],
+  "committed_row_sha256": "a79b263aa1d36409073a4b90b53fbad269b2761d5d288d48f4a46d5746409c66",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20261002-LM-1__cxg__10x-multiome__homo-sapiens__brain__5662e542",
+  "exp": "EXP-20261002-LM-1",
+  "task": "cxg__10x-multiome__homo-sapiens__brain__5662e542",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20261002-LM-1",
+  "committed": "benchmarks/results/EXP-20261002-LM-1",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif"
+  ],
+  "committed_row_sha256": "0718f739ca0bab09c24c1c0bda01a03d4b5d35018b4d9216fb7e1c0b1ef03428",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20261002-LM-1__cxg__smart-seq2__mus-musculus__brown-adipose-tissue__8f1bc86b",
+  "exp": "EXP-20261002-LM-1",
+  "task": "cxg__smart-seq2__mus-musculus__brown-adipose-tissue__8f1bc86b",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20261002-LM-1",
+  "committed": "benchmarks/results/EXP-20261002-LM-1",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif"
+  ],
+  "committed_row_sha256": "3ecfff0d325bb972d537cbe8b3a473c85eaae9efeb4dd4f06f9ae589aa31c0fb",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20260925-LM-2__cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002",
+  "exp": "EXP-20260925-LM-2",
+  "task": "cxg__10x-3-v2__homo-sapiens__entorhinal-cortex__06b91002",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20260925-LM-2",
+  "committed": "benchmarks/results/EXP-20260925-LM-2",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif",
+   "motif_prior"
+  ],
+  "committed_row_sha256": "32644c5c0950f8af6fb50ba85cc3911c18e2f6e39c23ead17cb22df803975363",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20260925-LM-2__cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__df287f8d",
+  "exp": "EXP-20260925-LM-2",
+  "task": "cxg__10x-3-v2__homo-sapiens__peripheral-zone-of-prostate__df287f8d",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20260925-LM-2",
+  "committed": "benchmarks/results/EXP-20260925-LM-2",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif",
+   "motif_prior"
+  ],
+  "committed_row_sha256": "b609c4f7e7d0f8027839c75d8c1a1bb68ba37aa75c5c7237c971db62a649582b",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20260925-LM-2__cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__b94e3bdf",
+  "exp": "EXP-20260925-LM-2",
+  "task": "cxg__10x-3-v2__homo-sapiens__superior-frontal-gyrus__b94e3bdf",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20260925-LM-2",
+  "committed": "benchmarks/results/EXP-20260925-LM-2",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif",
+   "motif_prior"
+  ],
+  "committed_row_sha256": "337f8e24006a8562c766b02c6c4867d4f04ac322a48994dcb8ae6353605e5e46",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20260925-LM-2__cxg__10x-3-v2__mus-musculus__spinal-cord__8ef59750",
+  "exp": "EXP-20260925-LM-2",
+  "task": "cxg__10x-3-v2__mus-musculus__spinal-cord__8ef59750",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20260925-LM-2",
+  "committed": "benchmarks/results/EXP-20260925-LM-2",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif",
+   "motif_prior"
+  ],
+  "committed_row_sha256": "6c04e61a888bdbf59387cd49201a3e165f3727b4c20d6aea5eead31e0eaf2e23",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20260925-LM-2__cxg__10x-3-v3__homo-sapiens__primary-motor-cortex__9b686bb6",
+  "exp": "EXP-20260925-LM-2",
+  "task": "cxg__10x-3-v3__homo-sapiens__primary-motor-cortex__9b686bb6",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20260925-LM-2",
+  "committed": "benchmarks/results/EXP-20260925-LM-2",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif",
+   "motif_prior"
+  ],
+  "committed_row_sha256": "eada81638f1a26532f056cb441d814f269c4aaf515b3397074809b002adfd221",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20260925-LM-2__cxg__10x-3-v3__homo-sapiens__prostate-gland__20de8570",
+  "exp": "EXP-20260925-LM-2",
+  "task": "cxg__10x-3-v3__homo-sapiens__prostate-gland__20de8570",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20260925-LM-2",
+  "committed": "benchmarks/results/EXP-20260925-LM-2",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif",
+   "motif_prior"
+  ],
+  "committed_row_sha256": "af35c5f90bcf7c3f33af92487fae42aa9ee754340baf2f6b57b3d9faf4ad8a98",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20260925-LM-2__cxg__10x-3-v3__homo-sapiens__respiratory-airway__eec804b9",
+  "exp": "EXP-20260925-LM-2",
+  "task": "cxg__10x-3-v3__homo-sapiens__respiratory-airway__eec804b9",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20260925-LM-2",
+  "committed": "benchmarks/results/EXP-20260925-LM-2",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif",
+   "motif_prior"
+  ],
+  "committed_row_sha256": "9785e07117078478ac4442eebf5c347b6a0502267fc898f2d6439811d482f0cf",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20260925-LM-2__cxg__10x-3-v3__mus-musculus__autopod-skin__389b1fd4",
+  "exp": "EXP-20260925-LM-2",
+  "task": "cxg__10x-3-v3__mus-musculus__autopod-skin__389b1fd4",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20260925-LM-2",
+  "committed": "benchmarks/results/EXP-20260925-LM-2",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif",
+   "motif_prior"
+  ],
+  "committed_row_sha256": "9bd4bfff7190362da063437fb2348a29a0272abaa9dbf7df9b8113b28820b2fb",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20260925-LM-2__cxg__10x-3-v3__mus-musculus__epididymal-fat-pad__e2529f66",
+  "exp": "EXP-20260925-LM-2",
+  "task": "cxg__10x-3-v3__mus-musculus__epididymal-fat-pad__e2529f66",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20260925-LM-2",
+  "committed": "benchmarks/results/EXP-20260925-LM-2",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif",
+   "motif_prior"
+  ],
+  "committed_row_sha256": "1e0932d6d2a3a755e060981a7c776923f77dfaa78a195caa679ba87ff0f88326",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20260925-LM-2__cxg__10x-5-v1__homo-sapiens__lung__62315937",
+  "exp": "EXP-20260925-LM-2",
+  "task": "cxg__10x-5-v1__homo-sapiens__lung__62315937",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20260925-LM-2",
+  "committed": "benchmarks/results/EXP-20260925-LM-2",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif",
+   "motif_prior"
+  ],
+  "committed_row_sha256": "85d8e8c7842644a9533287646e1bbb99a520f04876f13ff8696c1944d17a5591",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20260925-LM-2__cxg__10x-5-v1__homo-sapiens__lung__7b3368a5",
+  "exp": "EXP-20260925-LM-2",
+  "task": "cxg__10x-5-v1__homo-sapiens__lung__7b3368a5",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20260925-LM-2",
+  "committed": "benchmarks/results/EXP-20260925-LM-2",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif",
+   "motif_prior"
+  ],
+  "committed_row_sha256": "7ed355ba5893884e4cfb0b3b9a203a8900d1cca7bb1d4a5ed0297bf048ac4de5",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20260925-LM-2__cxg__10x-multiome__homo-sapiens__brain__bdc7e498",
+  "exp": "EXP-20260925-LM-2",
+  "task": "cxg__10x-multiome__homo-sapiens__brain__bdc7e498",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20260925-LM-2",
+  "committed": "benchmarks/results/EXP-20260925-LM-2",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif",
+   "motif_prior"
+  ],
+  "committed_row_sha256": "2046fca89a27f5195b09387547bf641cadf86210cd9d9b69c43349115a5dd587",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20260925-LM-2__cxg__10x-multiome__homo-sapiens__cranial-neural-crest__805832dc",
+  "exp": "EXP-20260925-LM-2",
+  "task": "cxg__10x-multiome__homo-sapiens__cranial-neural-crest__805832dc",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20260925-LM-2",
+  "committed": "benchmarks/results/EXP-20260925-LM-2",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif",
+   "motif_prior"
+  ],
+  "committed_row_sha256": "69f1bb8a90a0ac697e92952eea3f13d2e87393a68c071f4820395689d2a5f4dd",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20260925-LM-2__cxg__cel-seq2__homo-sapiens__bronchial-mucosa__d2bc2703",
+  "exp": "EXP-20260925-LM-2",
+  "task": "cxg__cel-seq2__homo-sapiens__bronchial-mucosa__d2bc2703",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20260925-LM-2",
+  "committed": "benchmarks/results/EXP-20260925-LM-2",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif",
+   "motif_prior"
+  ],
+  "committed_row_sha256": "50a00476bac9d36eab45e853685bb9f587d9f6bea784c2fbed9f64d1dddc0c60",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20260925-LM-2__cxg__cel-seq2__homo-sapiens__pancreas__b07e5164",
+  "exp": "EXP-20260925-LM-2",
+  "task": "cxg__cel-seq2__homo-sapiens__pancreas__b07e5164",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20260925-LM-2",
+  "committed": "benchmarks/results/EXP-20260925-LM-2",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif",
+   "motif_prior"
+  ],
+  "committed_row_sha256": "e419536726fd287f121b6268d6ea847eeafa426792f4ac79eb6f9247b668c1f9",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20260925-LM-2__cxg__patch-seq__mus-musculus__primary-motor-cortex__341a0702",
+  "exp": "EXP-20260925-LM-2",
+  "task": "cxg__patch-seq__mus-musculus__primary-motor-cortex__341a0702",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20260925-LM-2",
+  "committed": "benchmarks/results/EXP-20260925-LM-2",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif",
+   "motif_prior"
+  ],
+  "committed_row_sha256": "9882d812057a642c73be1d12d6276a8e32a9452c6dc0f2cb52982164aa73efc3",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20260925-LM-2__cxg__patch-seq__mus-musculus__primary-motor-cortex__bf6a5c78",
+  "exp": "EXP-20260925-LM-2",
+  "task": "cxg__patch-seq__mus-musculus__primary-motor-cortex__bf6a5c78",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20260925-LM-2",
+  "committed": "benchmarks/results/EXP-20260925-LM-2",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif",
+   "motif_prior"
+  ],
+  "committed_row_sha256": "68cd480ef87c0e9823398debae2be64cac729165ab27a883c478737a93565808",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20260925-LM-2__cxg__smart-seq2__homo-sapiens__cerebral-cortex__774c18c5",
+  "exp": "EXP-20260925-LM-2",
+  "task": "cxg__smart-seq2__homo-sapiens__cerebral-cortex__774c18c5",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20260925-LM-2",
+  "committed": "benchmarks/results/EXP-20260925-LM-2",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif",
+   "motif_prior"
+  ],
+  "committed_row_sha256": "c5a9272acbdd3316e3c09e50e7ba36f6de46bcb790145d49b3c91267cd2ea2d5",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20260925-LM-2__cxg__smart-seq2__mus-musculus__diaphragm__cbd62079",
+  "exp": "EXP-20260925-LM-2",
+  "task": "cxg__smart-seq2__mus-musculus__diaphragm__cbd62079",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20260925-LM-2",
+  "committed": "benchmarks/results/EXP-20260925-LM-2",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif",
+   "motif_prior"
+  ],
+  "committed_row_sha256": "908a4345055fb9449c9964d8a5f91690f4e95609ef234b5ff8e8324bb6c1cf5f",
+  "plan_flags": [],
+  "plan_notes": []
+ },
+ {
+  "id": "EXP-20260925-LM-2__cxg__smart-seq2__mus-musculus__kidney__524179b0",
+  "exp": "EXP-20260925-LM-2",
+  "task": "cxg__smart-seq2__mus-musculus__kidney__524179b0",
+  "run": "~/projects/grnbench/grnbench_artifacts/EXP-20260925-LM-2",
+  "committed": "benchmarks/results/EXP-20260925-LM-2",
+  "pairs": [
+   [
+    "pearson_motif",
+    "pearson_signed"
+   ]
+  ],
+  "recompute": [
+   "pearson_signed",
+   "pearson_motif",
+   "motif_prior"
+  ],
+  "committed_row_sha256": "c2e88195ef463b8ba02a3f12bc9461e47e92be10dde14c2e8eb8f696cdbf3540",
+  "plan_flags": [],
+  "plan_notes": []
+ }
+]

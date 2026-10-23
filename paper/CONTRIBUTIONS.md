@@ -20,3 +20,4 @@ Agents are tools, not contributors: log the person who directed the agent.
 | 2026-10-09 | GB | Software, Visualization | interface redesign: screens, menu, theme and plain-language summaries (`grnbench ui`); branch `gb/ui-explorer` |
 | 2026-10-09 | GB | Software, Validation | end-to-end test of the integrated tool and fixes of the input-guard, CLI, ingest and viz defects it found; issue #74 |
 | 2026-10-09 | LM | Visualization, Software | main figures for C4-C7 (`paper/figures/fig_motif_lift`, `fig_reference_free`, `paper/make_figures.py`); PR #62 |
+| 2026-10-10 | GB | Investigation, Formal analysis, Data curation | EXP-20261003-GB-1 run on the HPC, results and record section 3; issue #52 |

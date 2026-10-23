@@ -56,9 +56,13 @@ pre-registered experiments (D-017).
   (input guards, option validation, messages, `python -m grnbench`, ...). A screening rule that lets a
   candidate scored on fewer cell types win is a decision for LM (#75; it touches the `auto` arm behind
   C4-C6, no claim is said to be wrong). Everything else is the checklist in #76.
-- EXP-20261003-GB-1 (exploratory, issue #52, branch `gb/motif-sensitivity`): registered, stage 1
-  Pearson (C6 primary, C4 secondary), tests T1-T3 (T3 = beyond a TF-generic gene propensity),
-  not launched. Needs the kept artifacts copied from the login node's `/tmp` first (#41). The
+- EXP-20261003-GB-1 (exploratory, issue #52): **done 2026-10-10** (HPC job 692696, commit 42c6fb2,
+  40/40 units, every dataset through gate 1 and gate 2). Verdicts from `SENSITIVITY.md`: C6 (primary)
+  inconclusive, C4 mixed (T3 not supported; a TF-generic gene propensity reaches the lift), combined
+  inconclusive: the caveat on C4/C6 stays as worded. Record section 3; results in
+  `benchmarks/results/EXP-20261003-GB-1/`. Next: the caveat wording (#41, #45); #86 and #88 can now land.
+  History: registered, stage 1
+  Pearson (C6 primary, C4 secondary), tests T1-T3 (T3 = beyond a TF-generic gene propensity). Needs the kept artifacts copied from the login node's `/tmp` first (#41). The
   review fixes on PR #55 (2026-10-06) changed the script and its tests only. The independent agent
   review for LM (same day) asked for dated notes in section 2 before launch: record section 2.1 now
   has them (provenance, simulations as rationale only, cross-set order, motif-sharing TFs with

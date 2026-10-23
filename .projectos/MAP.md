@@ -39,6 +39,8 @@ Updated: 2026-10-15.
 - Direction and rules: `AGENTS.md`. Purpose: `.projectos/PURPOSE.md`. Decisions: `.projectos/DECISIONS.md`.
 - Where things left off: `.projectos/STATE.md`. What is running now: GitHub issues labelled `running`.
 - Runs: `experiments/` (one record per run, `datasets.tsv` provenance). Results: `benchmarks/results/<EXP or legacy folder>/`.
+- `benchmarks/results/EXP-20261003-GB-1/`: motif-lift decomposition (stage 1): rows, `SENSITIVITY.md/json`,
+  `RUN_INPUTS.json`, `INPUT_SHA256SUMS.*`, `perm_seeds/`, `SHA256SUMS`.
 - `benchmarks/results/EXP-20261001-LD-1/synthetic/`: complete synthetic accounting, portable
   manifests, row table, generated stress-curve figures and breaking-point tables.
 - `benchmarks/results/EXP-20261001-LD-1/real/`: complete 40-task accounting, portable task/data
