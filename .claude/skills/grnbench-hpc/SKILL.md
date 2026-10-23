@@ -55,6 +55,11 @@ bash hpc/hpc.sh run 'tail -3 logs/fetch.log'          # poll; ends with "done: .
 
 Only the approved datasets of that script. Anything else needs an issue first.
 
+Traps seen on real runs (`docs/runbooks/issue24_LM2_reproduction.md`, 2026-10-08):
+- `hpc.sh run` does `cd ~/<dir>` first: create a new folder from a tree that already exists.
+- Home folders that are symlinks (`~/gb_runs -> projects/...`) are not traversed by `find ~/X`: use `find -L ~/X/`.
+- From a new ssh session `ps`/`pgrep` may not see `nohup` downloads: poll their logs (`grep -c "^ok "`, `done: ...`).
+
 ## 4. Submit
 
 Limits of QOS `stud` (measured): 1 running + 1 queued job per user, 8 CPUs per user, 24 h wall

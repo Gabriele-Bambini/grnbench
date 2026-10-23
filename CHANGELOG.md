@@ -191,6 +191,9 @@
   the record, human reproduction pending).
 
 ### Added
+- `docs/runbooks/`: launch runbooks for the experiment issues #24 (LM-2 reproduction, executed
+  2026-10-08) and #52 (EXP-20261003-GB-1, launched 2026-10-10, results in #92), with the lessons of the
+  run; the three cluster traps are also in the `grnbench-hpc` skill (section 3).
 - Context-specific synthetic validation (D-019): the simulator writes shared, union and per-cell-type
   truth; selection/evaluation splits happen before context expansion; pooled and split predictions
   are macro-scored against each context. `engine_bench.py --stress-grid` fixes a 740-task design

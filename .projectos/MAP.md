@@ -18,6 +18,7 @@ Updated: 2026-10-15.
   `--keep-artifacts` run (EXP-20261003-GB-1); tests `tests/test_motif_sensitivity.py`.
 - Figures: `grnbench viz <run_dir>`. LaTeX: `grnbench report <run_dir|EXP-ID>`, `grnbench report --paper`.
 - HPC: `hpc/hpc.sh`, VPN `hpc/vpn.ps1` (Windows), guide `docs/HPC.md`, agent procedure `.claude/skills/grnbench-hpc/SKILL.md`.
+  Step-by-step launch runbooks per experiment issue: `docs/runbooks/` (#24 executed 2026-10-08, #52 launched 2026-10-10).
 
 ## Code (`src/grnbench/`)
 | area | modules |
