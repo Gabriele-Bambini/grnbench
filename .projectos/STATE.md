@@ -2,7 +2,7 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-10-15 (#87, #71, #69 merged at GB's request, GB's agent); 2026-10-10 (interface branch merged with main after #55, GB's agent); 2026-10-09 (issue #24, GB's agent); 2026-10-09 (interface redesign; tool end to end, GB's agent); 2026-10-07 (interface explorer, GB's agent); 2026-10-06 (EXP-20261003-GB-1: review fixes and record note 2.1 on PR #55, agent); 2026-10-03 (issue #42, GB's agent); 2026-10-02 by LD's and LM's agents. PR #3, PR #7 and the shared-workflow PR were merged by the owner
+Updated: 2026-10-15 (#95: C7 second-person rerun, GB's agent); 2026-10-15 (#87, #71, #69 merged at GB's request, GB's agent); 2026-10-10 (interface branch merged with main after #55, GB's agent); 2026-10-09 (interface redesign; tool end to end, GB's agent); 2026-10-07 (interface explorer, GB's agent); 2026-10-06 (EXP-20261003-GB-1: review fixes and record note 2.1 on PR #55, agent); 2026-10-03 (issue #42, GB's agent); 2026-10-02 by LD's and LM's agents. PR #3, PR #7 and the shared-workflow PR were merged by the owner
 after independent agent reviews, not human reviews (GB was away).
 
 ## Focus
@@ -11,14 +11,7 @@ comparison, published as a tool with a paper. Headline claims from real data (D-
 pre-registered experiments (D-017).
 
 ## In progress
-- Issue #39, PR #40: until #40 the default lasso path ran on uncentered data (no intercept), so
-  earlier lasso scores are a different model (demo data AUPRC 0.517 -> 0.790 centered); centered runs
-  record `params.path = centered`. EXP-20260917-PRE-1's 22 lasso rows (kept, dated note) feed 24 of
-  the 108 pairs per metric behind claim C2, so C2 stays `draft` until a rerun under a new EXP ID.
-  `--threads` (>= 1, default 4) now bounds RF, GENIE3 and GRNBoost2 in primary inference and
-  stability; the backtest refuses duplicate unit scores; two sbatch scripts take REPO_DIR from
-  SLURM_SUBMIT_DIR. Statistical-method change: GB is the required qualified reviewer (AGENTS.md
-  section 5); LD's review is technical. Follow-up: issue #46.
+- Seeds (GB, `gb/seed-plan-module`, #126 step 1a): `seeds.py` in review; next 1b: wire `SeedPlan` after PR #121.
 - More models (GB, `gb/more-models`): eleven literature methods registered as *extra* (`bicor`,
   `wgcna_tom`, `propr_rho`, `aracne_dpi`, `mrnet`, `tigress`, `bbsr`, `pcnet`, `extra_trees`,
   `gradient_boosting`, `community`); `--methods available` still runs exactly the 17 older ones.
@@ -130,13 +123,13 @@ pre-registered experiments (D-017).
 - The scrublet fix (#3) is merged. Rebuild your venv from the lock (`scikit-image` is new).
 
 ## Next steps
-1. GB: reproduce EXP-20260925-LM-2 from the record (#24: GB directs and checks on his own account; an
-   agent may type the commands; on another OS or machine if possible), then fill section 4 and set C4
-   to `reproduced`. Claimed in #24 (plan, decision rule and HPC execution notes there; compare with
-   `benchmarks/compare_runs.py`); not launched yet. Reproduce at `1d07221`, not `main` (#11 changed
-   doublet calls), with the registered references LM shared in #24 (D-020). The rule is in AGENTS.md
-   section 8 since #35. Post-merge reviews of #3 and #7 are posted (2026-10-01, no blocking finding)
-   and GB ratified both merges on the PRs (2026-10-03); the workflow PR (#9) is not reviewed yet.
+1. (done 2026-10-08, #24, record section 4b) GB's rerun of EXP-20260925-LM-2 on the Bocconi HPC
+   (Linux, job 690538): `compare_runs.py` verdict DIFFERENT, exact and `--rtol 1e-9` (H1 +0.183
+   [+0.138, +0.229] vs +0.182 [+0.138, +0.227]; numeric drift across platforms, planner choices
+   changed in 3 datasets). By #24's rule C4 stays `reproduced-computational`. D-026 (#89) applies only
+   to reproductions launched after it; C4's route to `reproduced` is a rerun directed by GB on the
+   registered platform class (Windows, venv from the lock, Python 3.11). Still open: review, or challenge, the
+   agent-reviewed merges #3, #7 and the workflow PR (AGENTS.md section 5: open an issue citing the PR).
 2. (done, #11) Issue #6 small-batch scrublet rule.
 3. (done 2026-10-15, #93, record section 4b) GB's rerun of EXP-20260926-LM-1 on the Bocconi HPC (job
    693267): `compare_runs.py` verdict MATCH, exact and `--rtol 1e-9`; 4b signed, C5 `reproduced`.
