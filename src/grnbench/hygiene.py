@@ -178,15 +178,47 @@ def organism_hint(var_names) -> str:
 def knee_cell_threshold(totals, min_counts: int = 100) -> dict | None:
     """Counts threshold separating cells from empty droplets on the barcode-rank curve.
 
-    Log-rank vs log-total, interpolated and smoothed: the *knee* is the point
-    farthest above the chord between the first and last barcode (end of the cell
-    plateau); the threshold is the *inflection* after it (steepest descent),
-    halfway down the cliff to the ambient plateau - the same two landmarks as
-    DropletUtils' ``barcodeRanks``, including its floor: barcodes under 100 UMIs are
-    assumed empty and left out of the curve (``lower = 100``). A lower floor let the
-    ambient -> empty-droplet drop win on heart_10k_v3 (92k "cells" for 7.7k). Returns
-    ``None`` when the curve has no clear cliff (fewer than 50 or more than 90% of
-    barcodes would be called).
+    grnbench's own rule (A-017 in ``.projectos/ATTEMPTS.md``). Barcodes with fewer
+    than ``min_counts`` (default 100) UMIs are assumed empty and left out of the
+    curve; a lower floor let the ambient -> empty-droplet drop win on heart_10k_v3
+    (92k "cells" for 7.7k). The rest are ranked by total counts, and log10(total)
+    against log10(rank) is interpolated at 400 evenly spaced log-rank points and
+    smoothed with a 9-point moving average. The *knee* is the point of that curve
+    farthest above the chord from its first to its last point (end of the cell
+    plateau); the threshold is the *inflection* after it, the point of steepest
+    descent between the knee and the end of the curve, so it is never above the
+    knee. It is the smoothed total there, not necessarily an observed one.
+    Barcodes with a total at or above it are called cells.
+
+    ``None`` means "no call", not "every barcode is a cell": ``pipeline.run_prep``
+    turns it into a ``PrepError``, while ``autoprep.diagnose`` currently keeps
+    every barcode and does not warn (issue #116). It is returned when fewer than
+    200 barcodes reach the floor, or when fewer than 50 or more than 90% of all
+    barcodes would be called. That guard is a count band only: it does not check
+    that the drop it found is the cell/empty one (heart_10k_v3 with the old floor
+    of 10 called 92,106 barcodes for 7,713 cells and passed the band), so callers
+    should inspect ``n_called``.
+
+    Relation to DropletUtils (source and NEWS read at devel 1.33.2; release 1.32.1
+    was not diffed against it): its knee method changed across versions. The
+    EmptyDrops paper (Lun et al. 2019) took the minimum signed curvature of a
+    smoothing spline; ``barcodeRanks`` 1.28.0 took the largest distance from a
+    line between the plateau and the inflection (this rests on NEWS only); 1.30.0
+    onward slides a window along the curve (knee where it bends most above the
+    window's chord, inflection where the window's gradient is most negative, the
+    50 top-ranked barcodes ignored) and limits both searches to the windows up to
+    the first elbow (a window whose midpoint lies below its chord with a gradient
+    under ``gradient.threshold = -1``). The knee rule here matches none of them
+    (none uses a chord from the first to the last barcode); the inflection is the
+    same idea as 1.30.0 onward on a different smoothing, but it is searched from
+    the knee to the end of the curve and only the floor stops it.
+    ``barcodeRanks``' ``lower = 100`` drops barcodes at or below 100; this
+    function keeps exactly 100. In ``emptyDrops``, ``retain`` defaults to the
+    ``barcodeRanks`` knee, and barcodes with a total at or above it are kept
+    regardless of their p-value (set to 0 before BH); the paper prefers the knee
+    to the inflection as the more conservative cut. This function cuts at the
+    inflection. Re-check: github.com/MarioniLab/DropletUtils (``R/barcodeRanks.R``,
+    ``inst/NEWS.Rd`` on devel) and https://doi.org/10.1186/s13059-019-1662-y.
     """
     t = np.sort(np.asarray(totals, dtype=float))[::-1]
     t = t[t >= min_counts]

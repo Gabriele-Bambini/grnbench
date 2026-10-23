@@ -35,6 +35,24 @@ def test_embedding_only_integration_is_never_available():
     assert not ok and "not applicable" in why
 
 
+def test_heuristic_evidence_level_does_not_claim_validation():
+    """#112: the level said "validated on the grnbench bench"; no confirmatory experiment has tested a heuristic."""
+    text = kb.EVIDENCE_LEVELS["heuristic"]
+    assert "not yet confirmed by a confirmatory experiment" in text, text
+    if kb.__doc__ is not None:                       # python -OO strips docstrings
+        assert text in " ".join(kb.__doc__.split()), "module docstring and EVIDENCE_LEVELS say the same thing"
+
+
+def test_knee_option_describes_the_threshold_the_code_uses():
+    """#112: hygiene.knee_cell_threshold keeps barcodes at or above the inflection after the knee."""
+    import inspect
+    from grnbench.hygiene import knee_cell_threshold
+    floor = inspect.signature(knee_cell_threshold).parameters["min_counts"].default
+    summary = kb.DECISION_INDEX["cell_calling"].option("knee").summary
+    assert "inflection" in summary and "above the knee" not in summary, summary
+    assert str(floor) in summary, summary
+
+
 # -- profile ----------------------------------------------------------------------------- #
 
 def test_count_values_reveal_the_protocol():
@@ -419,6 +437,23 @@ def test_knee_calls_cells_and_rejects_curves_without_a_cliff():
     call = knee_cell_threshold(totals)
     assert call is not None and 900 <= call["n_called"] <= 1100
     assert knee_cell_threshold(rng.lognormal(np.log(3000), 0.4, 2000)) is None
+
+
+def test_knee_threshold_respects_floor_knee_and_count_band():
+    """#112 review: floor <= threshold <= knee, n_called counts totals >= threshold, None under 200 at the floor."""
+    import inspect
+    import numpy as np
+    from grnbench.hygiene import knee_cell_threshold
+    floor = inspect.signature(knee_cell_threshold).parameters["min_counts"].default
+    rng = np.random.default_rng(0)
+    totals = np.concatenate([rng.lognormal(np.log(3000), 0.4, 1000), rng.lognormal(np.log(15), 0.8, 30000)])
+    call = knee_cell_threshold(totals)
+    assert call is not None and floor <= call["threshold"] <= call["knee_counts"]
+    assert call["n_called"] == int((totals >= call["threshold"]).sum())
+    cells, cliff = np.geomspace(5000, 1000, 150), np.geomspace(900, 120, 50)
+    at_200 = np.concatenate([cells, cliff, np.full(5000, floor - 1.0)])   # exactly 200 barcodes reach the floor
+    assert knee_cell_threshold(at_200) is not None
+    assert knee_cell_threshold(at_200[1:]) is None                       # 199
 
 
 # Barcode-rank curve of 10x's public heart_10k_v3 raw matrix (rank, total UMIs), sampled at

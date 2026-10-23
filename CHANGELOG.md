@@ -325,6 +325,16 @@
   `scrublet_groups`. On those four datasets every cell is now scored by scrublet.
 - `test_list_methods_reports_unavailability` assumed java on PATH; aracne3 has two
   documented prerequisites.
+- Texts that said something false, no behaviour change (issue #112; no rule, option id, score or
+  default changed): the `heuristic` evidence level now says "not yet confirmed by a confirmatory
+  experiment on the grnbench bench", like the module docstring; the `knee` cell-calling option says it
+  keeps barcodes at or above the inflection after the knee (what `hygiene.knee_cell_threshold` does),
+  not those above the knee, and when it stops with an error or finds the wrong cliff; that function's
+  docstring describes the A-017 chord knee, what `None` means and how it differs from each DropletUtils
+  knee method instead of claiming `barcodeRanks`' landmarks; ImageDoubler is cited as 2025 (Crossref),
+  key `imagedoubler2024` kept; the interface docstring says the `grnbench prep` commands reproduce a
+  cleaning and `plan.json` is a record of the choices that no command or screen reads back.
+  `KB_VERSION` 2026.10.2, `docs/knowledge/preprocessing_kb.md` regenerated.
 
 ## 0.7.0 — the ranking is not real, and neither was the test that said so (2026-09-15)
 

@@ -1,4 +1,4 @@
-# grnbench preprocessing knowledge base (v2026.09.1)
+# grnbench preprocessing knowledge base (v2026.10.2)
 
 Generated from `src/grnbench/kb.py` - edit the code, not this file.
 
@@ -8,7 +8,7 @@ Generated from `src/grnbench/kb.py` - edit the code, not this file.
 - **coexpr**: benchmarked for gene-gene association / co-expression
 - **scrna**: benchmarked for general scRNA-seq tasks (clustering, DE, integration)
 - **consensus**: best-practice guideline / expert consensus
-- **heuristic**: grnbench heuristic, validated on the grnbench bench
+- **heuristic**: grnbench heuristic, not yet confirmed by a confirmatory experiment on the grnbench bench
 
 ## Stages
 
@@ -92,10 +92,10 @@ An unfiltered droplet matrix is mostly empty droplets; treating them as cells fl
 - **Use the provided (filtered) matrix** (`as_provided`; evidence: consensus; grnbench) - Trust the cell calling already done (e.g. Cell Ranger filtered_feature_bc_matrix).
   - use when: the matrix is already filtered (typical GEO/CELLxGENE downloads)
   - refs: [amezquita2020](https://doi.org/10.1038/s41592-019-0654-x)
-- **Knee / inflection point** (`knee`; evidence: consensus; grnbench) - Rank barcodes by total counts; keep those above the knee of the log-log curve.
+- **Knee / inflection point** (`knee`; evidence: consensus; grnbench) - Rank barcodes by total counts and keep those whose total is at or above the inflection (the steepest drop of the curve after the knee). Barcodes under 100 counts are assumed empty. Stops with an error when it finds no call (fewer than 200 barcodes reach 100 counts, or under 50 or over 90% of barcodes would be called). For raw droplet matrices; on a filtered matrix it can cut real cells.
   - use when: raw droplet matrix and no R available
   - pros: fast, dependency-free
-  - cons: misses small or low-RNA cells
+  - cons: misses small or low-RNA cells; the steepest drop can be the wrong cliff (heart_10k_v3 with a floor of 10), so check how many cells it calls
   - refs: [emptydrops2019](https://doi.org/10.1186/s13059-019-1662-y)
 - **EmptyDrops** (`emptydrops`; evidence: scrna; external) - Test each barcode's profile against the ambient profile.
   - use when: raw droplet matrix
@@ -429,7 +429,7 @@ Dynamic methods (SCODE, SINCERITIES, SINGE, ...) require cells ordered in time.
 - **scrublet2019**: Wolock et al. 2019, Cell Syst - Scrublet. https://doi.org/10.1016/j.cels.2018.11.005
 - **doubletfinder2019**: McGinnis et al. 2019, Cell Syst - DoubletFinder. https://doi.org/10.1016/j.cels.2019.03.003
 - **solo2020**: Bernstein et al. 2020, Cell Syst - Solo. https://doi.org/10.1016/j.cels.2020.05.010
-- **imagedoubler2024**: ImageDoubler 2024, Nat Commun - image-based doublet ground truth. https://doi.org/10.1038/s41467-024-55434-0
+- **imagedoubler2024**: ImageDoubler 2025, Nat Commun - image-based doublet ground truth. https://doi.org/10.1038/s41467-024-55434-0
 - **seacells2023**: Persad et al. 2023, Nat Biotechnol - SEACells. https://doi.org/10.1038/s41587-023-01716-9
 - **bilous2024**: Bilous et al. 2024, Mol Syst Biol - building and analyzing metacells. https://doi.org/10.1038/s44320-024-00045-6
 - **mcrigor2025**: mcRigor 2025, Nat Commun - rigor of metacell partitioning. https://doi.org/10.1038/s41467-025-63626-5

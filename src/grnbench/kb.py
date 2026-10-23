@@ -13,7 +13,7 @@ optimizes clustering or differential expression, which is not the same task:
 * ``coexpr``    benchmarked for gene-gene association / co-expression;
 * ``scrna``     benchmarked for general scRNA-seq tasks (clustering, DE, integration);
 * ``consensus`` best-practice guideline or expert consensus;
-* ``heuristic`` grnbench rule, to be validated on the grnbench bench.
+* ``heuristic`` grnbench heuristic, not yet confirmed by a confirmatory experiment on the grnbench bench.
 
 The selector (:mod:`grnbench.selector`) reads this module; the Markdown
 document is generated from it (``render_markdown``), so code and documentation
@@ -25,14 +25,14 @@ import importlib.util
 import shutil
 from dataclasses import dataclass, field
 
-KB_VERSION = "2026.09.1"
+KB_VERSION = "2026.10.2"
 
 EVIDENCE_LEVELS = {
     "grn": "benchmarked for GRN inference",
     "coexpr": "benchmarked for gene-gene association / co-expression",
     "scrna": "benchmarked for general scRNA-seq tasks (clustering, DE, integration)",
     "consensus": "best-practice guideline / expert consensus",
-    "heuristic": "grnbench heuristic, validated on the grnbench bench",
+    "heuristic": "grnbench heuristic, not yet confirmed by a confirmatory experiment on the grnbench bench",
 }
 
 
@@ -73,7 +73,7 @@ REFERENCES = {r.key: r for r in [
     Reference("scrublet2019", "Wolock et al. 2019, Cell Syst - Scrublet", "https://doi.org/10.1016/j.cels.2018.11.005"),
     Reference("doubletfinder2019", "McGinnis et al. 2019, Cell Syst - DoubletFinder", "https://doi.org/10.1016/j.cels.2019.03.003"),
     Reference("solo2020", "Bernstein et al. 2020, Cell Syst - Solo", "https://doi.org/10.1016/j.cels.2020.05.010"),
-    Reference("imagedoubler2024", "ImageDoubler 2024, Nat Commun - image-based doublet ground truth", "https://doi.org/10.1038/s41467-024-55434-0"),
+    Reference("imagedoubler2024", "ImageDoubler 2025, Nat Commun - image-based doublet ground truth", "https://doi.org/10.1038/s41467-024-55434-0"),
     Reference("seacells2023", "Persad et al. 2023, Nat Biotechnol - SEACells", "https://doi.org/10.1038/s41587-023-01716-9"),
     Reference("bilous2024", "Bilous et al. 2024, Mol Syst Biol - building and analyzing metacells", "https://doi.org/10.1038/s44320-024-00045-6"),
     Reference("mcrigor2025", "mcRigor 2025, Nat Commun - rigor of metacell partitioning", "https://doi.org/10.1038/s41467-025-63626-5"),
@@ -259,9 +259,16 @@ DECISIONS = (
                use_when="the matrix is already filtered (typical GEO/CELLxGENE downloads)",
                evidence="consensus", refs="amezquita2020"),
             _o(id="knee", name="Knee / inflection point",
-               summary="Rank barcodes by total counts; keep those above the knee of the log-log curve.",
+               summary="Rank barcodes by total counts and keep those whose total is at or above the inflection "
+                       "(the steepest drop of the curve after the knee). Barcodes under 100 counts are assumed "
+                       "empty. Stops with an error when it finds no call (fewer than 200 barcodes reach 100 "
+                       "counts, or under 50 or over 90% of barcodes would be called). For raw droplet matrices; "
+                       "on a filtered matrix it can cut real cells.",
                use_when="raw droplet matrix and no R available", pros="fast, dependency-free",
-               cons="misses small or low-RNA cells", evidence="consensus", refs="emptydrops2019"),
+               cons=("misses small or low-RNA cells",
+                     "the steepest drop can be the wrong cliff (heart_10k_v3 with a floor of 10), "
+                     "so check how many cells it calls"),
+               evidence="consensus", refs="emptydrops2019"),
             _o(id="emptydrops", name="EmptyDrops",
                summary="Test each barcode's profile against the ambient profile.",
                use_when="raw droplet matrix", pros="keeps low-RNA cells that differ from ambient",

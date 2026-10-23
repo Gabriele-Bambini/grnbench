@@ -1,9 +1,15 @@
 """grnbench interface: clean single-cell data for GRN inference, run models, compare.
 
 Launch with ``grnbench ui`` (or ``streamlit run src/grnbench/ui/app.py``).
-Every screen is a thin layer over the library: what the interface does can be
-reproduced from the command line with the plan it saves (``plan.json``) and
-the ``grnbench prep`` commands it shows.
+Every screen is a thin layer over the library: a cleaning can be reproduced
+from the command line with the ``grnbench prep`` commands the interface shows
+(the Clean screen shows one command per context). They use the work-folder
+paths, so they reproduce on the same machine or after the paths are rewritten.
+The plan is written as ``plan.json`` in the cleaning output folder (and offered
+as a download on the pipeline screen) before any context runs: it records the
+choices, not that they succeeded; the per-context outcome and commands are in
+``contexts.json``. No grnbench command or screen reads ``plan.json`` back (the
+library can: ``PrepPlan.load``).
 """
 from __future__ import annotations
 
