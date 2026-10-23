@@ -272,7 +272,8 @@ def run_method(name: str,
         "self_loops_dropped": int(edges.attrs.get("self_loops_dropped", 0)),
         "normalization": norm_note,
         "regulators": "tf_list" if tf_list else "all_genes",
-        "params": {k: str(v) for k, v in params.items()},
+        # a runner may add settings it chose itself through raw.attrs["params"]
+        "params": {k: str(v) for k, v in {**params, **raw.attrs.get("params", {})}.items()},
     }
     info = dict(raw.attrs)                      # what a method says about its own run (WGCNA's power ...)
     if info:

@@ -197,6 +197,20 @@ def test_unit_comparison_uses_datasets_as_units_and_resolves_only_stable_gaps():
     assert blocks[('string', 'auprc_ratio')]['resolved'] == []
 
 
+def test_unit_comparison_refuses_duplicate_dataset_method_observations():
+    """Two scores for one unit are a question, not something row order may answer.
+
+    With aggfunc='first', the same rows with the repeated score placed last resolved
+    'a beats b by 0.512' on EPR, and placed first resolved nothing.
+    """
+    mod = backtest_module()
+    rows = _synthetic_rows()
+    repeated = dict(rows[0], epr=rows[0]['epr'] + 35.0)
+    for ordering in ([*rows, repeated], [repeated, *rows]):
+        with pytest.raises(ValueError, match='duplicate'):
+            mod.unit_comparison(ordering)
+
+
 def test_unit_comparison_refuses_inference_below_three_units():
     mod = backtest_module()
     res = mod.unit_comparison(_synthetic_rows(n_datasets=2))

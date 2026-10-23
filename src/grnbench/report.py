@@ -1,6 +1,7 @@
 """Markdown run report + JSON manifest generation."""
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import platform
@@ -84,6 +85,14 @@ def require_empty_output(path: str | Path, *, allow_failed_diagnostic: bool = Tr
             raise ValueError(f"Output directory must be empty; choose a new path: {out}")
     out.mkdir(parents=True, exist_ok=True)
     return out
+
+
+def thread_count(value: str) -> int:
+    """argparse type for --threads: a CPU budget of at least 1."""
+    n = int(value)
+    if n < 1:
+        raise argparse.ArgumentTypeError(f"must be at least 1, got {n}")
+    return n
 
 
 def _dist_version(name: str) -> str:

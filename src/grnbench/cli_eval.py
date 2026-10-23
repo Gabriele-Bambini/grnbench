@@ -24,6 +24,7 @@ from grnbench.eval.metrics import (
 )
 from grnbench.eval.nulls import null_metrics
 from grnbench.eval.universe import load_universe, align_rankings
+from grnbench.report import thread_count
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -68,6 +69,9 @@ def _build_parser() -> argparse.ArgumentParser:
                    help="fraction of cells kept per subsample")
     s.add_argument("--stability-top-k", type=int, default=100,
                    help="top-k edge set compared across subsamples")
+    s.add_argument("--threads", type=thread_count, default=4,
+                   help="CPU budget (>= 1) for the stability re-runs of random_forest, GENIE3, "
+                        "GRNBoost2 and ARACNe3; default 4, not every core")
     s.add_argument("--stability-methods", default=None,
                    help="comma-separated subset (default: every scored method that "
                         "is registered and available)")
@@ -224,6 +228,7 @@ def _run_stability(args, report: dict, names: list[str]) -> None:
         "top_k": int(args.stability_top_k),
         "tf_list_size": len(tf_list) if tf_list else None,
         "seed": int(args.seed),
+        "threads": int(args.threads),
     }
     for name in wanted:
         if name not in report["methods"]:
@@ -249,6 +254,7 @@ def _run_stability(args, report: dict, names: list[str]) -> None:
                 seed=int(args.seed),
                 algorithm_seed=args.algorithm_seed,
                 vary_algorithm_seed=args.vary_algorithm_seed,
+                threads=int(args.threads),
             )
         except Exception as e:  # noqa: BLE001 - one method must not sink the report
             report.setdefault('failures', []).append({'stage': 'stability', 'method': name, 'error': str(e)})

@@ -215,14 +215,15 @@ def _per_target_importance(expr, tf_names, fit_one, **kw) -> pd.DataFrame:
     return _long(regulators, expr.columns, block)
 
 
-def _fit_rf(Xr, y, n_estimators=100, max_features="sqrt", seed=42):
+def _fit_rf(Xr, y, n_estimators=100, max_features="sqrt", seed=42, threads=None):
     from sklearn.ensemble import RandomForestRegressor
 
     if y.std() == 0:
         return np.zeros(Xr.shape[1])
     m = RandomForestRegressor(n_estimators=int(n_estimators),
                               max_features=max_features,
-                              random_state=int(seed), n_jobs=-1)
+                              random_state=int(seed),
+                              n_jobs=-1 if threads is None else int(threads))
     m.fit(Xr, y)
     return m.feature_importances_
 
@@ -234,20 +235,26 @@ def _fit_lasso(Xr, y, alpha=None, seed=42):
         return np.zeros(Xr.shape[1])
     if alpha is None:
         # a single shared path is far cheaper than LassoCV per target; take the
-        # coefficient magnitude at the knee of the path
-        _, coefs, _ = lasso_path(Xr, y, n_alphas=20)
+        # coefficient magnitude at the knee of the path. lasso_path fits no
+        # intercept, so center first: otherwise column means buy coefficients,
+        # and this branch differs from the Lasso(fit_intercept=True) one below
+        _, coefs, _ = lasso_path(Xr - Xr.mean(axis=0), y - y.mean(), n_alphas=20)
         return np.abs(coefs[:, len(coefs[0]) // 2])
     from sklearn.linear_model import Lasso
     return np.abs(Lasso(alpha=float(alpha), random_state=int(seed)).fit(Xr, y).coef_)
 
 
 def random_forest(expr: pd.DataFrame, tf_names: list[str] | None = None,
-                  n_estimators: int = 100, seed: int = 42, **_) -> pd.DataFrame:
+                  n_estimators: int = 100, seed: int = 42, threads: int | None = None,
+                  **_) -> pd.DataFrame:
     return _per_target_importance(expr, tf_names, _fit_rf,
-                                  n_estimators=n_estimators, seed=seed)
+                                  n_estimators=n_estimators, seed=seed, threads=threads)
 
 
 def lasso(expr: pd.DataFrame, tf_names: list[str] | None = None,
           alpha: float | None = None, seed: int = 42, **_) -> pd.DataFrame:
-    return _per_target_importance(expr, tf_names, _fit_lasso,
-                                  alpha=alpha, seed=seed)
+    out = _per_target_importance(expr, tf_names, _fit_lasso, alpha=alpha, seed=seed)
+    if alpha is None:
+        # provenance (D-005): tells these scores from the uncentered path used before #40
+        out.attrs["params"] = {"path": "centered"}
+    return out

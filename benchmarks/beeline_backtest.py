@@ -53,7 +53,7 @@ def build_parser():
     p.add_argument('--n-var', type=int, default=500, help='Number of significant non-TF genes; add significant TFs')
     p.add_argument('--n-nulls', type=int, default=25)
     p.add_argument('--n-boot', type=int, default=200, help='Deprecated compatibility argument; no inferential label bootstrap is run')
-    p.add_argument('--threads', type=int, default=4)
+    p.add_argument('--threads', type=int, default=4, help='CPU budget for random_forest, GENIE3, GRNBoost2 and ARACNe3; default 4, not every core')
     p.add_argument('--seed', type=int, default=42)
     p.add_argument('--data-release', default='unspecified-local-input', help='Release/DOI declaration; zenodo:19009603:v4 for fetch_beeline.sh')
     p.add_argument('--alpha', type=float, default=.05, help='Family-wise level for the dataset-unit comparison')
@@ -104,6 +104,12 @@ def unit_comparison(rows, alpha=.05, metrics=INFERENCE_METRICS) -> dict:
     blocks, resolved, n_pairs = [], 0, 0
     if table.empty:
         return {'units': 'datasets', 'alpha': alpha, 'blocks': blocks, 'n_resolved': 0, 'n_pairs': 0}
+    # one score per unit and method, or the pivot below keeps whichever row came first
+    key = ['ground_truth', 'dataset', 'method']
+    if table.duplicated(key).any():
+        clashes = table.loc[table.duplicated(key, keep=False), key].drop_duplicates()
+        raise ValueError(f'duplicate ground_truth/dataset/method observations ({len(clashes)} keys); '
+                         'aggregate repeated seeds or settings under a declared rule first')
     for gt, sub in table.groupby('ground_truth', sort=True):
         for metric in metrics:
             wide = sub.pivot_table(index='dataset', columns='method', values=metric, aggfunc='first')

@@ -3,6 +3,15 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- Issue #39 (#40): the default `lasso` branch centers X and y before `lasso_path` (no intercept), so
+  lasso scores change; its provenance records `params.path = centered`. EXP-20260917-PRE-1's lasso
+  rows (and so claim C2's comparison family) came from the uncentered path. `--threads` (>= 1, default
+  4) now bounds random_forest, GENIE3 and GRNBoost2 in primary inference (`grnbench infer`/`run`,
+  `beeline_backtest.py`), not only in the stability re-runs: they used every core before, so wall
+  time changes on machines with more than 4 cores; scores do not. A dask Client that cannot start now
+  raises with its cause. The BEELINE backtest refuses duplicate dataset/method scores;
+  `grnbench.sbatch` and `beeline_backtest.sbatch` take the checkout from `SLURM_SUBMIT_DIR` and refuse
+  one without `pyproject.toml`.
 - `grnbench report --paper` builds again: the record's `report input` path is the first quoted span
   (EXP-20261002-LM-1 ends it with a full stop); a run with no per-model scores (a candidate study) gets a
   note instead of an empty table that stopped LaTeX; `compile_tex` reads engine output as UTF-8 and says

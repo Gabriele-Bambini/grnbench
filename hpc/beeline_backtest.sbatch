@@ -23,7 +23,13 @@ set -uo pipefail
 export PYTHONUTF8=1
 export OMP_NUM_THREADS="${SLURM_CPUS_PER_TASK:-4}"
 
-REPO_DIR="${REPO_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+# sbatch runs a copy of this file from the spool dir, so BASH_SOURCE is only a fallback
+# for a direct `bash hpc/...` run; under Slurm the checkout is where sbatch was called
+REPO_DIR="${REPO_DIR:-${SLURM_SUBMIT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}}"
+if [ ! -f "$REPO_DIR/pyproject.toml" ]; then
+  echo "REPO_DIR=$REPO_DIR has no pyproject.toml: submit from the grnbench checkout (bash hpc/hpc.sh submit) or set REPO_DIR" >&2
+  exit 1
+fi
 ENV_NAME="${ENV_NAME:-grnbench}"
 CONDA_SH="${CONDA_SH:-/software/miniconda3/etc/profile.d/conda.sh}"
 BEELINE="${BEELINE:-$HOME/beeline}"

@@ -52,6 +52,41 @@ def test_sbatch_passes_models_artifacts_and_records_the_commit(tmp_path):
     assert f"PYTHONPATH={repo.as_posix()}/src" in call
 
 
+@pytest.mark.parametrize("script", ["grnbench.sbatch", "beeline_backtest.sbatch", "engine_bench.sbatch"])
+def test_spooled_sbatch_resolves_the_submit_dir_checkout(tmp_path, script):
+    """sbatch runs a copy of the script from the node's spool directory, so a REPO_DIR derived
+    from BASH_SOURCE points at /var/spool/slurmd, not at the checkout `hpc.sh submit` cd'ed into."""
+    bash = _bash()
+    line = next(x for x in (ROOT / "hpc" / script).read_text(encoding="utf-8").splitlines()
+                if x.startswith("REPO_DIR="))
+    spool = tmp_path / "var" / "spool" / "slurmd" / "job4242"
+    spool.mkdir(parents=True)
+    (spool / "slurm_script").write_text(line + '\necho "$REPO_DIR"\n', encoding="utf-8")
+    checkout = (tmp_path / "checkout").as_posix()
+    env = {k: v for k, v in os.environ.items() if k != "REPO_DIR"}
+    env["SLURM_SUBMIT_DIR"] = checkout
+    r = subprocess.run([bash, str(spool / "slurm_script")], env=env, capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    assert r.stdout.strip() == checkout
+
+
+@pytest.mark.parametrize("script", ["grnbench.sbatch", "beeline_backtest.sbatch"])
+@pytest.mark.parametrize("is_checkout", [False, True])
+def test_sbatch_refuses_a_repo_dir_without_pyproject(tmp_path, script, is_checkout):
+    """A submit from the wrong directory used to fail late, after conda and data checks."""
+    bash = _bash()
+    checkout = tmp_path / "checkout"
+    checkout.mkdir()
+    if is_checkout:
+        (checkout / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
+    env = {**os.environ, "REPO_DIR": checkout.as_posix(), "CONDA_SH": _stubs(tmp_path).as_posix(),
+           "BEELINE": (tmp_path / "beeline").as_posix()}
+    env.pop("DATA", None)
+    r = subprocess.run([bash, str(ROOT / "hpc" / script)], env=env, capture_output=True, text=True)
+    assert r.returncode != 0  # with a checkout it stops later, at the missing DATA/BEELINE input
+    assert ("no pyproject.toml" in r.stderr) is not is_checkout, r.stderr
+
+
 def test_setup_env_with_torch_runs_the_lock_header_line(tmp_path):
     bash = _bash()
     env = {**os.environ, "CONDA_SH": _stubs(tmp_path).as_posix(), "WITH_TORCH": "1"}

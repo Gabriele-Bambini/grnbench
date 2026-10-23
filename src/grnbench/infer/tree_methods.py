@@ -32,12 +32,16 @@ def _load():
     return core, dict(RF_KWARGS), dict(SGBM_KWARGS)
 
 
-def _quiet_client():
+def _quiet_client(threads: int | None = None):
+    # an unsized client takes every core on the machine, not the --threads budget
+    sized = {} if threads is None else {"n_workers": 1, "threads_per_worker": int(threads)}
+    # no quiet fallback: _run_arboreto needs a client, and returning None turned
+    # a startup failure into an unrelated AttributeError on None.compute
     try:
         from dask.distributed import Client
-        return Client(processes=False, dashboard_address=None)
-    except Exception:  # pragma: no cover - fall back to arboreto's own cluster
-        return None
+        return Client(processes=False, dashboard_address=None, **sized)
+    except Exception as e:
+        raise RuntimeError(f"could not start a dask Client for arboreto (threads={threads})") from e
 
 
 def _run_arboreto(expr: pd.DataFrame,
@@ -47,7 +51,8 @@ def _run_arboreto(expr: pd.DataFrame,
                   regressor_type: str,
                   early_stop_window_length: int,
                   n_estimators: int | None = None,
-                  limit: int | None = None) -> pd.DataFrame:
+                  limit: int | None = None,
+                  threads: int | None = None) -> pd.DataFrame:
     core, rf_kwargs, sgbm_kwargs = _load()
     kwargs = dict(rf_kwargs if regressor_type.upper() == "RF" else sgbm_kwargs)
     if n_estimators is not None:
@@ -57,7 +62,7 @@ def _run_arboreto(expr: pd.DataFrame,
     gene_names = [str(g) for g in expr.columns]
     tf_list = [str(t) for t in tf_names] if tf_names else gene_names
 
-    client = _quiet_client()
+    client = _quiet_client(threads)
     try:
         links_graph, _meta_graph = core.create_graph(
             expression_matrix=matrix,
@@ -73,8 +78,7 @@ def _run_arboreto(expr: pd.DataFrame,
         )
         links = client.compute(links_graph, sync=True)
     finally:
-        if client is not None:
-            client.close()
+        client.close()
     return links.sort_values("importance", ascending=False).reset_index(drop=True)
 
 
@@ -86,6 +90,7 @@ def genie3_runner(expr: pd.DataFrame, tf_names: list[str] | None = None,
         early_stop_window_length=0,   # unused by RF profile (no OOB heuristic)
         n_estimators=params.pop("n_estimators", None),
         limit=params.pop("limit", None),
+        threads=params.pop("threads", None),
     )
 
 
@@ -97,4 +102,5 @@ def grnboost2_runner(expr: pd.DataFrame, tf_names: list[str] | None = None,
         early_stop_window_length=25,
         n_estimators=params.pop("n_estimators", None),
         limit=params.pop("limit", None),
+        threads=params.pop("threads", None),
     )

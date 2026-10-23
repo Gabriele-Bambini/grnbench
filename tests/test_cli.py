@@ -114,7 +114,8 @@ def test_run_full_loop_with_gold_and_stability(tmp_path, dataset):
     rc = run_main(["--data", str(src), "--out", str(out), "--tf-list", str(tfs),
                    "--n-hvg", "120", "--methods", "spearman_signed",
                    "--gold", str(gold), "--n-nulls", "10",
-                   "--stability", "--stability-n", "3", "--stability-top-k", "50"])
+                   "--stability", "--stability-n", "3", "--stability-top-k", "50",
+                   "--threads", "2"])
     assert rc == 0
 
     for artifact in ("prep/manifest.json", "prep/report.md",
@@ -128,6 +129,7 @@ def test_run_full_loop_with_gold_and_stability(tmp_path, dataset):
     assert m["n_gold_in_list"] > 0, "gold built from real edges must be reachable"
     assert m["auprc"] > 0 and m["null"]["n_nulls_used"] >= 1
     assert m["stability"]["n_subsamples"] == 3
+    assert report["stability_config"]["threads"] == 2  # --threads reaches the stability re-runs
     assert 0.0 <= m["stability"]["jaccard_mean"] <= 1.0
     assert report["overlap"]["k"] == 1000
     assert "pr_curve" in m and m["pr_curve"]["recall"]
@@ -307,6 +309,39 @@ def test_eval_reports_a_bad_plugin_instead_of_crashing(tmp_path, capsys):
     assert "[PLUGIN ERROR]" in capsys.readouterr().err
 
 
+@pytest.mark.parametrize("module, required", [
+    ("grnbench.cli_infer", []),
+    ("grnbench.cli_run", ["--data", "d.h5ad", "--out", "out"]),
+    ("grnbench.cli_eval", ["--gold", "gold.tsv"]),
+])
+@pytest.mark.parametrize("value", ["0", "-2"])
+def test_threads_below_one_is_an_argument_error(module, required, value, capsys):
+    """0 or a negative --threads used to reach sklearn/dask and fail there."""
+    import importlib
+
+    parser = importlib.import_module(module)._build_parser()
+    with pytest.raises(SystemExit) as exit_:
+        parser.parse_args([*required, "--threads", value])
+    assert exit_.value.code == 2
+    assert "--threads" in capsys.readouterr().err
+
+
+def test_eval_stability_forwards_threads_to_subsample_stability(tmp_path, dataset, monkeypatch):
+    """stability_config records --threads; this pins that the re-runs also receive it."""
+    import grnbench.eval.stability as stability
+    from grnbench.cli_eval import _build_parser, _run_stability
+
+    seen = {}
+    monkeypatch.setattr(stability, "subsample_stability",
+                        lambda adata, name, **kwargs: seen.update(kwargs) or {})
+    src, _ = dataset
+    args = _build_parser().parse_args(["--gold", "gold.tsv", "--stability-data", str(src),
+                                       "--threads", "3"])
+    report = {"methods": {"spearman_signed": {}}}
+
+    _run_stability(args, report, ["spearman_signed"])
+
+    assert seen["threads"] == 3
 # --------------------------------------------------------------------------- #
 # defects found by the end-to-end test of 2026-10-09 (issue #74)
 # --------------------------------------------------------------------------- #

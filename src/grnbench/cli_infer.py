@@ -22,7 +22,7 @@ from grnbench.infer import (
     run_method,
     save_edges,
 )
-from grnbench.report import (environment_block, file_fingerprint, write_json,
+from grnbench.report import (environment_block, file_fingerprint, thread_count, write_json,
                              sequence_identity, require_empty_output)
 
 
@@ -51,7 +51,8 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--assume-normalized", action="store_true",
                    help="skip internal cpm_log1p even if X looks like counts")
     p.add_argument("--seed", type=int, default=42)
-    p.add_argument("--threads", type=int, default=4)
+    p.add_argument("--threads", type=thread_count, default=4,
+                   help="CPU budget (>= 1) for random_forest, GENIE3, GRNBoost2 and ARACNe3; default 4, not every core")
     p.add_argument("--plugin", action="append", default=None, metavar="SPEC",
                    help="custom model: spec file (.json/.yaml) describing a command/"
                         "Docker adapter, or 'package.module:Attribute' for a Python "

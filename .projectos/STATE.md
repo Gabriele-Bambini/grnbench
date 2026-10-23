@@ -11,6 +11,14 @@ comparison, published as a tool with a paper. Headline claims from real data (D-
 pre-registered experiments (D-017).
 
 ## In progress
+- Issue #39, PR #40: until #40 the default lasso path ran on uncentered data (no intercept), so
+  earlier lasso scores are a different model (demo data AUPRC 0.517 -> 0.790 centered); centered runs
+  record `params.path = centered`. EXP-20260917-PRE-1's 22 lasso rows (kept, dated note) feed 24 of
+  the 108 pairs per metric behind claim C2, so C2 stays `draft` until a rerun under a new EXP ID.
+  `--threads` (>= 1, default 4) now bounds RF, GENIE3 and GRNBoost2 in primary inference and
+  stability; the backtest refuses duplicate unit scores; two sbatch scripts take REPO_DIR from
+  SLURM_SUBMIT_DIR. Statistical-method change: GB is the required qualified reviewer (AGENTS.md
+  section 5); LD's review is technical. Follow-up: issue #46.
 - More models (GB, `gb/more-models`): eleven literature methods registered as *extra* (`bicor`,
   `wgcna_tom`, `propr_rho`, `aracne_dpi`, `mrnet`, `tigress`, `bbsr`, `pcnet`, `extra_trees`,
   `gradient_boosting`, `community`); `--methods available` still runs exactly the 17 older ones.

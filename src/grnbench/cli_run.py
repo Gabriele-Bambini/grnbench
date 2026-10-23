@@ -22,6 +22,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+from grnbench.report import thread_count
+
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
@@ -59,7 +61,8 @@ def _build_parser() -> argparse.ArgumentParser:
                      help="comma-separated names, 'available' (default set) or 'all'")
     inf.add_argument("--plugin", action="append", default=None, metavar="SPEC",
                      help="custom model spec file or 'module:Attribute' (repeatable)")
-    inf.add_argument("--threads", type=int, default=4)
+    inf.add_argument("--threads", type=thread_count, default=4,
+                     help="CPU budget (>= 1) for random_forest, GENIE3, GRNBoost2 and ARACNe3; default 4, not every core; also used by the stability re-runs")
 
     ev = p.add_argument_group("evaluation")
     ev.add_argument("--gold", default=None,
@@ -195,6 +198,7 @@ def main(argv: list[str] | None = None) -> int:
             "--stability-n", str(args.stability_n),
             "--stability-frac", str(args.stability_frac),
             "--stability-top-k", str(args.stability_top_k),
+            "--threads", str(args.threads),
             *_opt("--stability-tf-list", args.tf_list),
         ]
     rc = eval_main(eval_argv)

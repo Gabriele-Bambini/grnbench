@@ -1,6 +1,9 @@
 """Regressions for audited inference and TF-identifier failures."""
 from __future__ import annotations
 
+import sys
+import types
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -8,8 +11,9 @@ from anndata import AnnData
 from sklearn.linear_model import Ridge
 
 from examples.plugins.ridge_model import RidgeGRN
+from grnbench.infer import tree_methods
 from grnbench.infer.base import run_method
-from grnbench.infer.classical import clr, mutual_info
+from grnbench.infer.classical import _fit_lasso, clr, mutual_info
 from grnbench import tfs
 
 
@@ -53,6 +57,141 @@ def test_clr_zero_variance_background_is_finite_zero():
 
     assert np.isfinite(edges["weight"]).all()
     assert np.count_nonzero(edges["weight"].to_numpy()) == 0
+
+
+def test_lasso_default_path_scores_an_orthogonal_regulator_zero():
+    """An exactly uncorrelated pair is no evidence of regulation, at any offset.
+
+    ``lasso_path`` fits no intercept, so uncentered columns let the means buy a
+    coefficient: this orthogonal pair scored 0.487, and 0.971 once 10 was added
+    to both genes.
+    """
+    x = np.array([[0.0], [0.0], [1.0], [1.0]])
+    y = np.array([0.0, 1.0, 0.0, 1.0])
+
+    assert _fit_lasso(x, y) == pytest.approx([0.0], abs=1e-12)
+    assert _fit_lasso(x + 10, y + 10) == pytest.approx([0.0], abs=1e-12)
+
+
+def test_lasso_provenance_marks_the_centered_default_path():
+    """Old (uncentered) and new default-path lasso runs must be told apart (D-005)."""
+    expr = pd.DataFrame(np.random.default_rng(0).normal(size=(30, 3)), columns=["A", "B", "C"])
+    adata = AnnData(expr.to_numpy(np.float32), var=pd.DataFrame(index=expr.columns))
+
+    _, default = run_method("lasso", adata, tf_list=["A", "B"], assume_normalized=True)
+    _, explicit = run_method("lasso", adata, tf_list=["A", "B"], assume_normalized=True, alpha=0.1)
+
+    assert default["params"]["path"] == "centered"
+    assert "path" not in explicit["params"]  # the explicit-alpha branch did not change
+
+
+def test_random_forest_uses_the_requested_thread_budget(monkeypatch):
+    """n_jobs=-1 takes every core on the node, whatever --threads said."""
+    import sklearn.ensemble
+
+    seen = []
+
+    class _RecordingForest:
+        def __init__(self, **kwargs):
+            seen.append(kwargs)
+
+        def fit(self, X, y):
+            self.feature_importances_ = np.zeros(X.shape[1])
+            return self
+
+    monkeypatch.setattr(sklearn.ensemble, "RandomForestRegressor", _RecordingForest)
+    expr = pd.DataFrame(np.random.default_rng(0).normal(size=(20, 3)), columns=["A", "B", "C"])
+
+    run_method("random_forest", AnnData(expr.to_numpy(np.float32), var=pd.DataFrame(index=expr.columns)),
+               tf_list=["A"], assume_normalized=True, threads=3)
+
+    assert seen and all(kwargs["n_jobs"] == 3 for kwargs in seen)
+
+
+def test_arboreto_client_gets_the_requested_thread_budget(monkeypatch):
+    """A dask client with no budget sizes itself from the machine, not from --threads."""
+    seen = {}
+
+    class _RecordingClient:
+        def __init__(self, **kwargs):
+            seen.update(kwargs)
+
+    fake = types.ModuleType("dask.distributed")
+    fake.Client = _RecordingClient
+    monkeypatch.setitem(sys.modules, "dask", types.ModuleType("dask"))
+    monkeypatch.setitem(sys.modules, "dask.distributed", fake)
+
+    assert tree_methods._quiet_client(threads=3) is not None
+    assert seen["n_workers"] == 1 and seen["threads_per_worker"] == 3
+
+
+@pytest.mark.parametrize("runner", ["genie3_runner", "grnboost2_runner"])
+def test_arboreto_runners_forward_the_thread_budget(monkeypatch, runner):
+    captured = {}
+
+    def _fake(expr, tf_names, seed, **kwargs):
+        captured.update(kwargs)
+        return pd.DataFrame(columns=["TF", "target", "importance"])
+
+    monkeypatch.setattr(tree_methods, "_run_arboreto", _fake)
+    expr = pd.DataFrame(np.zeros((4, 2)), columns=["A", "B"])
+
+    getattr(tree_methods, runner)(expr, tf_names=["A"], seed=1, threads=3)
+
+    assert captured["threads"] == 3
+
+
+def _fake_arboreto(monkeypatch):
+    """Stand-in for arboreto's core: records create_graph's kwargs, returns no edges."""
+    seen = {}
+
+    def create_graph(**kwargs):
+        seen.update(kwargs)
+        return "graph", None
+
+    core = types.SimpleNamespace(create_graph=create_graph, DEMON_SEED=666)
+    monkeypatch.setattr(tree_methods, "_load", lambda: (core, {}, {}))
+    return seen
+
+
+def test_run_arboreto_passes_the_thread_budget_to_its_client(monkeypatch):
+    seen = _fake_arboreto(monkeypatch)
+    budgets = []
+
+    class _Client:
+        def compute(self, graph, sync):
+            return pd.DataFrame({"TF": [], "target": [], "importance": []})
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(tree_methods, "_quiet_client", lambda threads=None: budgets.append(threads) or _Client())
+    expr = pd.DataFrame(np.zeros((4, 2)), columns=["A", "B"])
+
+    tree_methods._run_arboreto(expr, ["A"], 1, regressor_type="RF",
+                               early_stop_window_length=0, threads=3)
+
+    assert budgets == [3] and isinstance(seen["client"], _Client)
+
+
+@pytest.mark.parametrize("threads", [3, None])
+def test_arboreto_client_construction_failure_is_raised_with_its_cause(monkeypatch, threads):
+    """A Client that cannot start used to become None, then `None.compute` (AttributeError)."""
+    _fake_arboreto(monkeypatch)
+
+    def _refuse(**kwargs):
+        raise OSError("no free port")
+
+    fake = types.ModuleType("dask.distributed")
+    fake.Client = _refuse
+    monkeypatch.setitem(sys.modules, "dask", types.ModuleType("dask"))
+    monkeypatch.setitem(sys.modules, "dask.distributed", fake)
+    expr = pd.DataFrame(np.zeros((4, 2)), columns=["A", "B"])
+
+    with pytest.raises(RuntimeError, match="dask Client") as err:
+        tree_methods._run_arboreto(expr, ["A"], 1, regressor_type="RF",
+                                   early_stop_window_length=0, threads=threads)
+    assert isinstance(err.value.__cause__, OSError)
 
 
 def test_ridge_excludes_each_target_and_matches_independent_fits():
