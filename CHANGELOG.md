@@ -3,6 +3,18 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- `grnbench.seeds` (#126, step 1a): `DEFAULT_SEED = 42`, `derive` (named child seeds from `SeedSequence`,
+  31 bits), `SeedPlan` (`legacy` / `master` / `derived`; `seed_for` = the seed a component really uses,
+  `kwargs` = what its call passes, under the real parameter name; knobs per entry point follow the call site)
+  and `LEGACY`, the seed each component gets today per entry point (prep, infer, eval and run CLIs, interface,
+  real_bench with and without a reference, engine_bench, candidate_study). `tests/test_seeds_legacy.py` reads
+  every value back from its default, constant or call-site literal, follows the call path that hands it on,
+  and checks that every RNG constructor and known RNG consumer in the functions holding it uses it (model
+  internals, simulator and task enumerations included); it does not see a random call through an object
+  outside its consumer list, nor arithmetic on a seed inside a callee it does not trace. Not covered
+  (`seeds.NOT_COVERED`, their registered values pinned): `beeline_backtest.py`, `motif_sensitivity.py`,
+  `calibration.py`, `demo.py`, and Python and entry-point plugin runners. Nothing calls it yet: no seed,
+  default or output changes.
 - A user override keeps what the engine chose (#113): a typed value or a knowledge-base choice other than the
   selector's carries `auto_value`, `auto_reason` and `auto_source`, the executable value the engine's own plan
   would use (e.g. the MAD bound when `fixed` is chosen), its reason and source, written to `plan.json` only on

@@ -1,7 +1,7 @@
 # Map - grnbench (where things are)
 
 Keep this short and current: update it in any PR that adds, moves or removes a module, script or folder.
-Updated: 2026-10-15.
+Updated: 2026-10-20.
 
 ## Run it
 - Tests: `python -m pytest -q -p no:cacheprovider` (floor in AGENTS.md section 4).
@@ -36,6 +36,7 @@ Updated: 2026-10-15.
 | cleaning engine | `kb` (stages, options, evidence, references), `context` (what the data are), `profile`, `selector` (rules), `autoprep` (plan, execute), `screen` (candidate pipelines on the data, reference split) |
 | inference | `infer/` (`base` contract + registry, `correlation`, `classical`, `tree_methods` GENIE3/GRNBoost2, `aracne3`, `regdiffusion_adapter`, `cistarget` motif prior / pruning, `association` bicor/WGCNA/propr/ARACNe-style/MRNET, `regression` TIGRESS/BBSR/pcNet/extra-trees/boosting, `community` rank aggregation), `plugins` (bring your own model); what is built in and what is not: `docs/models_catalog.md` |
 | evaluation + statistics | `eval/` (`metrics`, `gold`, `universe`, `nulls`, `stability`, `comparison` = `compare_units` paired t + Holm) |
+| seeds | `seeds` (`DEFAULT_SEED`, `derive` named child seeds, `SeedPlan`, `LEGACY` = the seeds each entry point uses today, read back from the code by `tests/test_seeds_legacy.py`; nothing calls it yet, #126) |
 | reporting | `report` + `html_report` (per run), `viz` + `viz.mplstyle` (figures), `explore` (exploratory TF atlas, figures and evidence cards from run artifacts), `texreport` (LaTeX), `board` (team board) |
 | interface | `ui/app.py` (Streamlit), `ui/logic.py` (tested logic), CLIs `cli_*.py` dispatched by `cli_main.py` |
 | reporting | `diagnostics` (portable schema shared by prep/screen/models), `report` + `html_report` (per run), `viz` + `viz.mplstyle` (figures), `texreport` (LaTeX), `board` (team board) |
