@@ -34,7 +34,8 @@ def select_features(adata: ad.AnnData, n_hvg: int = 3000,
             "tfs_matched": len(matched),
             "tfs_added_by_union": 0,
             "n_features_kept": int(adata.n_vars),
-            "note": "n_hvg >= n_vars; kept all features",
+            "note": (f"requested {n_hvg:,} HVGs but the matrix has {adata.n_vars:,} genes; "
+                     f"kept all {adata.n_vars:,} genes"),
         }
         return adata.copy(), report
 

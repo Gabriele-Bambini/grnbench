@@ -2,7 +2,7 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-10-26 (retention ledger, GB's agent); 2026-10-23 (ARACNe3 branch: main merged in, relative binary path fixed, GB's agent); 2026-10-22 (#132 plan/runtime truth, LD);
+Updated: 2026-10-26 (retention ledger, GB's agent); 2026-10-25 (#164 context/batch and HVG guards, LD); 2026-10-23 (ARACNe3 branch: main merged in, relative binary path fixed, GB's agent); 2026-10-22 (#132 plan/runtime truth, LD);
 2026-10-18 (ARACNe3 HPC build and smoke run, EXP-20261018-GB-1, issue #109, GB's agent); 2026-10-17 (ARACNe3 adapter, issue #105, GB's agent);
 2026-10-15 (#87, #71, #69 merged at GB's request, GB's agent); 2026-10-10
 (issue #59, LD; interface branch merged with main after #55, GB's agent); 2026-10-09
@@ -54,9 +54,10 @@ pre-registered experiments (D-017).
   `GRNBENCH_R_BRIDGE=1`; off (default) plans are unchanged and R is never started. No R option has an
   executor yet, so no plan changes either way. Next: the first R executor, with the step that needs it
   (4b EmptyDrops, 7b scDblFinder).
-- Issue #132 (LD, `ld/plan-runtime-truth`): six silent mismatches between requested preprocessing
-  choices and actual execution are fixed with explicit fallback reasons, an auditable subsampling
-  mode and strict decision-key validation; awaiting review.
+- Issue #164 (LD, `ld/planner-context-guards`): per-cell-type plans no longer run an impossible
+  batch correction when the batch key is the context key, and an oversized `--n-hvg` request says
+  explicitly that every available gene is kept; implementation and regression tests complete,
+  awaiting review. Issue #132's plan/runtime truth fixes were merged in PR #143.
 - More models (GB, `gb/more-models`): eleven literature methods registered as *extra* (`bicor`,
   `wgcna_tom`, `propr_rho`, `aracne_dpi`, `mrnet`, `tigress`, `bbsr`, `pcnet`, `extra_trees`,
   `gradient_boosting`, `community`); `--methods available` still runs exactly the 17 older ones.

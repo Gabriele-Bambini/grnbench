@@ -232,6 +232,29 @@ def test_hvg_reason_explains_when_small_matrix_keeps_all_genes(demo):
     assert "900 genes" in reason and "all genes are kept instead" in reason
 
 
+def test_batch_correction_is_not_planned_inside_its_own_cell_type_context(demo, tmp_path, ran):
+    """#164: subsetting on the batch column leaves one batch, so centring used to fail every context."""
+    paths, tfs, diag = demo
+    same_key = copy.copy(diag)
+    same_key.adata = diag.adata.copy()
+    same_key.context = copy.deepcopy(diag.context)
+    same_key.context.facts = [f for f in same_key.context.facts if f.key != "batch_key"]
+    same_key.context.add("batch_key", "cell_type", "test", "cell type is the reported batch", 99)
+
+    plan = plan_preprocessing(
+        same_key, tf_list=tfs, choices={"context_scope": "per_cell_type"})
+
+    assert len(plan.contexts) >= 2
+    assert plan.choices["batch"] == "center_per_batch"  # requested choice remains provenance
+    assert plan.value("strategy") == "cpm_log1p"
+    assert "also the cell-type context key" in plan.decisions["strategy"].reason
+    assert any("every context contains only one batch" in warning for warning in plan.warnings)
+
+    records = execute_plan(plan, paths["counts"], tmp_path / "run", tf_list=tfs)
+    assert all(call["strategy"] == "cpm_log1p" for call in ran)
+    assert all(record["error"] is None for record in records)
+
+
 def test_context_fallback_without_cell_type_is_explicit(demo):
     _, tfs, diag = demo
     no_cell_type = _without_context_fields(

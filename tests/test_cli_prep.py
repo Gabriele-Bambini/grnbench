@@ -206,6 +206,24 @@ def test_valid_option_combinations_are_still_accepted(tmp_path):
                  "--mito-fail", "5", "--max-doublet-rate", "0", "--n-hvg", "100"]) == 0
 
 
+def test_hvg_request_above_gene_count_says_all_genes_are_kept(tmp_path, capsys):
+    """#164: --n-hvg 99999 was recorded, but the effective all-gene fallback was silent in the CLI."""
+    src = tmp_path / "in.h5ad"
+    _write_adata(src, n_genes=400)
+    out = tmp_path / "run"
+
+    assert main([str(src), "--out", str(out), "--n-hvg", "99999"]) == 0
+
+    terminal = capsys.readouterr().out
+    manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+    warning = next(w for w in manifest["warnings"] if w.startswith("Feature selection:"))
+    assert manifest["args"]["n_hvg"] == 99999  # requested value remains provenance
+    assert "requested 99,999 HVGs" in warning
+    assert "kept all 400 genes" in warning
+    assert f"  ! {warning}" in terminal
+    assert warning in (out / "report.md").read_text(encoding="utf-8")
+
+
 def test_explicit_random_subsample_mode_reaches_the_manifest(tmp_path):
     src = tmp_path / "in.h5ad"
     _write_adata(src, n_cells=100)

@@ -23,6 +23,7 @@ Agents are tools, not contributors: log the person who directed the agent.
 | 2026-10-09 | LM | Visualization, Software | main figures for C4-C7 (`paper/figures/fig_motif_lift`, `fig_reference_free`, `paper/make_figures.py`); PR #62 |
 | 2026-10-22 | LD | Software, Validation | preprocessing plan/runtime truthfulness and regression coverage; issue #132 |
 | 2026-10-18 | GB | Software, Investigation | ARACNe3 build on the HPC and smoke run of the `aracne3` adapter against the real program (`benchmarks/aracne3_smoke.py`, `hpc/aracne3_build.sbatch`, `hpc/aracne3_smoke.sbatch`); EXP-20261018-GB-1, issue #109 |
+| 2026-10-25 | LD | Software, Validation | context/batch compatibility and loud all-gene HVG fallback; issue #164 |
 | 2026-10-20 | GB | Formal analysis, Methodology, Software | power of the paired t over datasets (`grnbench.eval.power`) and C4's EPR comparison re-read from its committed rows (`benchmarks/epr_power.py`); EXP-20261020-GB-1, issue #127 |
 | 2026-10-22 | GB | Software | the knowledge base sees R packages through the R bridge when `GRNBENCH_R_BRIDGE=1` (step 2c; off by default, R never started by planning); issue #135 |
 | 2026-10-21 | GB | Software | optional R bridge (`grnbench.rbridge`, `grnbench env`, R env in `requirements/`); issue #135 |

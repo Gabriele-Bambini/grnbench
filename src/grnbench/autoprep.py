@@ -589,6 +589,30 @@ def _build_plan(diag: Diagnosis, profile, selection, choices: dict | None, *,
 
     # -- strategy (normalization x batch x sparsity) ------------------------------- #
     strategy, s_reason, notes = resolve_strategy(chosen)
+    scope = chosen["context_scope"]
+    separates_batch_into_contexts = (
+        scope in ("per_cell_type", "selected_type")
+        and profile.cell_type_key is not None
+        and profile.batch_key == profile.cell_type_key
+        and bool((obs[profile.cell_type_key].dropna().astype(str).value_counts()
+                  >= MIN_CELLS_PER_CONTEXT).any())
+    )
+    if separates_batch_into_contexts and strategy in _BATCH_STRATEGY.values():
+        # Each context contains exactly one value of this column, so ComBat or
+        # per-batch centring cannot be defined after context subsetting.  Keep
+        # the requested KB choice in ``plan.choices`` for provenance, but make
+        # the executable strategy truthful and explain the compatibility
+        # fallback in the plan and its warnings.
+        requested_batch = chosen["batch"]
+        effective = {**chosen, "batch": "none"}
+        strategy, s_reason, fallback_notes = resolve_strategy(effective)
+        fallback = (
+            f"batch option '{requested_batch}' is not applied: batch key "
+            f"'{profile.batch_key}' is also the cell-type context key, so every "
+            "context contains only one batch"
+        )
+        s_reason += f"; {fallback}"
+        notes = [*fallback_notes, fallback]
     plan.add("strategy", "Normalization / aggregation", strategy,
              f"{s_reason}. " + " ".join(why(k)[0] for k in ("normalization", "batch", "sparsity")),
              "knowledge base", _available_strategies())
@@ -650,7 +674,6 @@ def _build_plan(diag: Diagnosis, profile, selection, choices: dict | None, *,
              ["file", "dorothea:human", "dorothea:mouse", "none"])
 
     # -- cellular context -------------------------------------------------------------- #
-    scope = chosen["context_scope"]
     plan.contexts = [{"name": "all_cells", "subset_key": None, "subset_value": None}]
     context_note = ""
     if scope in ("per_cell_type", "selected_type") and profile.cell_type_key:

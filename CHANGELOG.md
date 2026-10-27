@@ -29,6 +29,11 @@
   placeholder (`--out path` no longer nests `<path>`), and the schema's own field names (an explicit
   list) are not compared with the local user/host names, every other key still is (#177 re-review).
 - AGENTS.md section 5: two review tiers (tier 1 = no change to any registered number, default, claim, decision, record or `paper/` beyond a CONTRIBUTIONS row, one approval from a team member other than the author, an independent agent review from another member's side counts; tier 2 = everything else in `paper/`, result wording, records, `eval/` and statistics, output-changing defaults, decisions, with a reviewer from the "reviews" column and the 2-working-day fallback), a challenge route for any agent-reviewed or misclassified merge, any team member may merge an approved PR, and a daily merge train that runs the suite once per batch and checks each PR against the train before its squash (MAP and STATE resolved by reading, not by keeping both sides).
+- Per-cell-type plans no longer apply ComBat or per-batch centring when the batch column is the
+  cell-type context column: every resulting context has one batch, so the executable plan now
+  keeps the requested choice as provenance, runs the selected normalization without the impossible
+  correction and explains the fallback. A CLI `--n-hvg` request above the available gene count now
+  says in the terminal, manifest and report that every remaining gene was kept (#164).
 - Preprocessing plans now tell the truth when a requested option falls back: pseudobulk names the
   ignored batch/normalization choices, per-batch MAD names its global fallback, small matrices name
   the all-gene HVG fallback, and context plans name pooled/largest-type behaviour. Random and

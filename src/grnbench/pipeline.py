@@ -535,6 +535,8 @@ def run_prep(
         before = processed
         processed, feature_report = select_features(processed, n_hvg=int(n_hvg),
                                                     tf_list=tf_list)
+        if feature_report.get("note"):
+            warnings_list.append(f"Feature selection: {feature_report['note']}")
         steps.append({"step": "feature_selection",
                       "n_cells_after": int(processed.n_obs),
                       "n_genes_after": int(processed.n_vars),
