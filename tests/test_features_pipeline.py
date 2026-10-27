@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 import collections
+import json
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -169,6 +172,33 @@ def test_dropped_strata_are_surfaced_as_a_warning(tmp_path):
     step = [s for s in res.manifest["steps"] if s["step"] == "subsample_cells"][0]
     assert step["mode"] == "stratified"
     assert step["stratification"]["classes_dropped"] > 0
+
+
+def test_all_missing_stratification_labels_fail_one_context_not_the_dataset(tmp_path):
+    """A bad context is recorded as a PrepError; later contexts still run (#169)."""
+    from grnbench.autoprep import PrepPlan, execute_plan
+
+    src = tmp_path / "in.h5ad"
+    _labelled_adata(["unknown"] * 120 + ["beta"] * 120).write_h5ad(src)
+    plan = PrepPlan(contexts=[
+        {"name": "ct=unknown", "subset_key": "ct", "subset_value": "unknown"},
+        {"name": "ct=beta", "subset_key": "ct", "subset_value": "beta"},
+    ])
+    plan.add("strategy", "Normalization", "cpm_log1p", "test")
+    plan.add("stratify_key", "Stratification column", "ct", "test")
+    plan.add("subsample_cells", "Subsample cells", 50, "test")
+    plan.add("subsample_mode", "Subsample mode", "stratified", "test")
+
+    records = execute_plan(plan, src, tmp_path / "run")
+
+    assert records[0]["error"] == (
+        "PrepError: cannot stratify a subsample by 'ct': all 120 cells in this context "
+        "have missing labels; use random subsampling or a different stratification column"
+    )
+    assert records[0]["processed"] is None
+    assert records[1]["error"] is None and Path(records[1]["processed"]).exists()
+    saved = json.loads((tmp_path / "run" / "contexts.json").read_text(encoding="utf-8"))
+    assert saved == records
 
 
 def test_explicit_random_subsample_does_not_silently_stratify(tmp_path):

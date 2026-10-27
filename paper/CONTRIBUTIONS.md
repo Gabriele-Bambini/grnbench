@@ -40,3 +40,4 @@ Agents are tools, not contributors: log the person who directed the agent.
 | 2026-10-15 | GB | Validation, Investigation | second-person rerun of EXP-20261002-LM-1 on the Bocconi HPC (record section 4b; primaries MATCH, one warning counter differs); issue #94 |
 | 2026-10-15 | GB | Validation, Investigation | second-person rerun of EXP-20260926-LM-1 on the Bocconi HPC (record section 4b; verdict MATCH); issue #93 |
 | 2026-10-10 | GB | Investigation, Formal analysis, Data curation | EXP-20261003-GB-1 run on the HPC, results and record section 3; issue #52 |
+| 2026-10-25 | LD | Software, Validation | all-missing stratification pools fail per context without aborting the remaining contexts; issue #169 |

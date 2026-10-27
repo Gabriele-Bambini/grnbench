@@ -474,6 +474,11 @@ def run_prep(
             unlabelled = hyg.missing_label_mask(adata.obs[strat_col])
             n_unlabelled = int(unlabelled.sum())
             pool = np.flatnonzero(~unlabelled)
+            if not len(pool):
+                raise PrepError(
+                    f"cannot stratify a subsample by '{strat_col}': all {adata.n_obs} cells "
+                    "in this context have missing labels; use random subsampling or a "
+                    "different stratification column")
             if n_unlabelled:
                 warnings_list.append(
                     f"{n_unlabelled} cells with missing '{strat_col}' were excluded from "

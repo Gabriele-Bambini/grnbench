@@ -55,6 +55,8 @@
   a user model cannot make a later plugin test fail only because of collection order (#183).
 - Recorded per-context preprocessing commands now use ``--subset-value=<label>`` so labels that
   begin with ``-`` replay as data rather than being misread as command-line options (#172).
+- A stratified subsample whose context contains only missing labels now fails that context with an
+  actionable `PrepError` instead of dividing by zero and aborting the remaining contexts (#169).
 - Preprocessing plans now tell the truth when a requested option falls back: pseudobulk names the
   ignored batch/normalization choices, per-batch MAD names its global fallback, small matrices name
   the all-gene HVG fallback, and context plans name pooled/largest-type behaviour. Random and
