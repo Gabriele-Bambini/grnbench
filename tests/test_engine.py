@@ -579,6 +579,21 @@ def test_replaying_the_recorded_command_rebuilds_the_same_matrix(demo, tmp_path)
     _replay_gives_the_same_matrix(rec, tmp_path / "replay")
 
 
+def test_replaying_context_label_that_starts_with_dash(demo, tmp_path):
+    """A recorded value such as ``-alpha`` must not be parsed as another CLI option (#172)."""
+    paths, tfs, _ = demo
+    adata = ad.read_h5ad(paths["counts"])
+    adata.obs["cell_type"] = adata.obs["cell_type"].astype(str).replace({"alpha": "-alpha"})
+    counts = tmp_path / "leading-dash.h5ad"
+    adata.write_h5ad(counts)
+
+    plan = plan_preprocessing(diagnose(counts), tf_list=tfs,
+                              choices={"context_scope": "per_cell_type"})
+    records = execute_plan(plan, counts, tmp_path / "run", tf_list=tfs)
+    rec = next(r for r in records if r["context"] == "cell_type=-alpha")
+    _replay_gives_the_same_matrix(rec, tmp_path / "replay")
+
+
 def test_replaying_a_forced_run_passes_the_gate_it_passed(demo, tmp_path):
     paths, tfs, diag = demo
     plan = plan_preprocessing(diag, tf_list=tfs, choices={"context_scope": "pooled"})

@@ -36,15 +36,15 @@ def test_reproduce_commands_give_one_shell_safe_line_per_context_with_its_seed()
     import shlex
     from grnbench.autoprep import PrepPlan, unique_folder_names
     # real labels carry spaces, ':' and '|' (AGENTS.md section 13); "CD4 T" and "CD4:T" share one safe folder name
-    names = ["CD4 T", "CD4:T", "T|reg", "NK(bright)", 'x"y', "a$b"]
+    names = ["CD4 T", "CD4:T", "T|reg", "NK(bright)", 'x"y', "a$b", "-control"]
     plan = PrepPlan(contexts=[{"name": n, "subset_key": "cell_type", "subset_value": n} for n in names])
     cmds = logic.reproduce_commands(plan, "data.h5ad", tf_list=["TF1"], seed=0)
-    assert len(cmds) == len(names) and "'CD4 T'" in cmds[0]
+    assert len(cmds) == len(names) and "'--subset-value=CD4 T'" in cmds[0]
     for cmd, ctx, folder in zip(cmds, plan.contexts, unique_folder_names(names)):
         argv = shlex.split(cmd)
         assert argv == ["grnbench", "prep", *plan.cli_args("data.h5ad", "OUT/" + folder, "tf_list.txt", context=ctx,
                                                            bounds_path="per_batch_bounds.json", seed=0)]
-        assert argv[argv.index("--subset-value") + 1] == ctx["subset_value"] and argv[-2:] == ["--seed", "0"]
+        assert f"--subset-value={ctx['subset_value']}" in argv and argv[-2:] == ["--seed", "0"]
 
 
 def test_shell_command_pastes_back_to_the_same_argv():

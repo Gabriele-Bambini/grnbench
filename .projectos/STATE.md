@@ -2,7 +2,7 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-10-26 (retention ledger, GB's agent); 2026-10-26 (#183 test registry isolation, LD); 2026-10-24 (#149/#116 silent behaviours made loud, GB's agent); 2026-10-25 (#164 context/batch and HVG guards, LD); 2026-10-23 (ARACNe3 branch: main merged in, relative binary path fixed, GB's agent); 2026-10-22 (#132 plan/runtime truth, LD);
+Updated: 2026-10-26 (retention ledger, GB's agent); 2026-10-25 (#172 leading-dash context replay, LD); 2026-10-26 (#183 test registry isolation, LD); 2026-10-24 (#149/#116 silent behaviours made loud, GB's agent); 2026-10-25 (#164 context/batch and HVG guards, LD); 2026-10-23 (ARACNe3 branch: main merged in, relative binary path fixed, GB's agent); 2026-10-22 (#132 plan/runtime truth, LD);
 2026-10-18 (ARACNe3 HPC build and smoke run, EXP-20261018-GB-1, issue #109, GB's agent); 2026-10-17 (ARACNe3 adapter, issue #105, GB's agent);
 2026-10-15 (#87, #71, #69 merged at GB's request, GB's agent); 2026-10-10
 (issue #59, LD; interface branch merged with main after #55, GB's agent); 2026-10-09
@@ -37,6 +37,8 @@ pre-registered experiments (D-017).
   `aracne3` on real data (consider more subnetworks, `-x`).
 - Issue #183 (LD, `ld/isolate-method-registry-tests`): every test restores the method registry and
   plugin-loader state, removing the UI/plugin test-order failure; awaiting review.
+- Issue #172 (LD, `ld/leading-dash-context`): recorded per-context commands bind the subset value
+  with ``=`` so a label beginning with ``-`` can be replayed; awaiting review.
 - Block 6 of the Phase 0 plan (points 13-17: motif-prior sources, multiplicity, C4's EPR, C7, GB-1
   stage 2; GB, separate track, reviewer LM). Step 15-1 done on `gb/epr-power-diagnosis` (#127):
   `grnbench.eval.power` (power of the paired t, G*Power matched-pairs model) and

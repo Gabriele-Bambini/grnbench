@@ -53,6 +53,8 @@
   of a plan writes the manifest steps and warnings `execute_plan` wrote, not only the same matrix.
 - Tests now restore the method and plugin registries after every case, so a UI test that registers
   a user model cannot make a later plugin test fail only because of collection order (#183).
+- Recorded per-context preprocessing commands now use ``--subset-value=<label>`` so labels that
+  begin with ``-`` replay as data rather than being misread as command-line options (#172).
 - Preprocessing plans now tell the truth when a requested option falls back: pseudobulk names the
   ignored batch/normalization choices, per-batch MAD names its global fallback, small matrices name
   the all-gene HVG fallback, and context plans name pooled/largest-type behaviour. Random and

@@ -226,7 +226,7 @@ class PrepPlan:
             argv += ["--per-batch-bounds", str(bounds_path)]
         if context and context.get("subset_key"):
             argv += ["--subset-key", str(context["subset_key"]),
-                     "--subset-value", str(context["subset_value"])]
+                     f"--subset-value={context['subset_value']}"]
         if tf_list_path is not None:
             argv += ["--tf-list", str(tf_list_path)]
         return argv + ["--seed", str(seed)]

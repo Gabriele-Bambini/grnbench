@@ -26,6 +26,7 @@ Agents are tools, not contributors: log the person who directed the agent.
 | 2026-10-25 | LD | Software, Validation | context/batch compatibility and loud all-gene HVG fallback; issue #164 |
 | 2026-10-24 | GB | Software, Validation | silent preprocessing behaviours made loud (Ensembl mito QC, missing-label contexts, small contexts after QC, no --n-hvg, organism from casing, knee without a cliff) with an A/B against main; issues #149, #116 |
 | 2026-10-26 | LD | Software, Validation | method/plugin registry isolation across the test suite; issue #183 |
+| 2026-10-25 | LD | Software, Validation | replay-safe per-context commands for labels beginning with a dash; issue #172 |
 | 2026-10-20 | GB | Formal analysis, Methodology, Software | power of the paired t over datasets (`grnbench.eval.power`) and C4's EPR comparison re-read from its committed rows (`benchmarks/epr_power.py`); EXP-20261020-GB-1, issue #127 |
 | 2026-10-22 | GB | Software | the knowledge base sees R packages through the R bridge when `GRNBENCH_R_BRIDGE=1` (step 2c; off by default, R never started by planning); issue #135 |
 | 2026-10-21 | GB | Software | optional R bridge (`grnbench.rbridge`, `grnbench env`, R env in `requirements/`); issue #135 |
