@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from grnbench.context import (build_context, discover_text_files, extract_from_text,
+from grnbench.context import (DatasetContext, build_context, discover_text_files, extract_from_text,
                               geo_text_url, html_to_text)
 
 GEO_TEXT = """!Series_title = Single-cell atlas of human bone marrow
@@ -39,6 +39,21 @@ def test_passing_mention_does_not_outvote_the_species_name():
     ctx = extract_from_text("Mus musculus samples; relevant to human disease.", "readme")
     assert ctx.get("organism") == "mouse"
     assert "organism" in ctx.conflicts()
+
+
+@pytest.mark.parametrize("seen, kept", [
+    ([("skeletalmuscle", 2), ("SkeletalMuscle", 3)], "SkeletalMuscle"),        # stronger later evidence wins
+    ([("SkeletalMuscle", 2), ("skeletalmuscle", 2)], "SkeletalMuscle"),        # equal weight: first seen
+    ([("skeletalmuscle", 2), ("SkeletalMuscle", 2)], "skeletalmuscle"),
+    ([("Skeletalmuscle", 1), ("SkeletalMuscle", 3), ("Skeletalmuscle", 3)], "Skeletalmuscle"),  # max per spelling
+    ([("SkeletalMuscle", 3), ("skeletalmuscle", 2), ("skeletalmuscle", 2)], "SkeletalMuscle")])  # max, not sum
+def test_the_spelling_kept_is_that_of_the_strongest_evidence(seen, kept):
+    """Review of #161: a spelling seen first no longer hides one with more weight behind it."""
+    ctx = DatasetContext()
+    for label, weight in seen:
+        ctx.add_lower("tissue", label, "src", weight=weight)
+    assert ctx.get("tissue") == "skeletalmuscle"
+    assert ctx.spelling("tissue", "skeletalmuscle") == kept
 
 
 def _adata(var_names, obs=None, uns=None):

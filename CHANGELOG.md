@@ -367,6 +367,29 @@
   Windows ssh-agent: `StartupType Automatic` once, no per-reboot step.
 
 ### Fixed
+- High-mitochondrial tissues are matched by whole words (#149 item 2; audit 2026-09-27): the fragments
+  `renal`, `atri`, `ventric`, `septum`, `cardi`, `hepat` matched inside other words, so adrenal gland,
+  "pediatric"/"psychiatric", brain ventricles, the lateral septum, the cardia of the stomach and the
+  hepatic flexure of the colon relaxed the mito gate to 60% with a false reason. The tissue text is
+  normalised first (`autoprep.tissue_words`: words split at a lower -> Upper boundary followed by a lower-case
+  letter, so "iPSC" stays one word, and at letter/digit boundaries; lower case; `_` and `-` read as spaces; runs
+  of white space as one). Only the matcher splits: the context stores and shows the label in lower case as on
+  main, and the planner hands the matcher the label as written (`DatasetContext.spelling`). Plurals match (hearts, livers, endocardiums), so snake_case, hyphenated, camelCase, digit-suffixed and
+  plural spellings (`skeletal_muscle_tissue`, `left-ventricle`, `SkeletalMuscle`, `heart1`, `hearts`) relax as
+  on main. Of the 732 CELLxGENE tissue labels, 9 lose the relaxation (all of them non-cardiac, non-renal or
+  non-hepatic) and none gains it. Over the labels and their spellings (6,981 strings: upper case, trailing
+  space, hyphens, underscores, plural, camelCase, digit suffixes, lower-case concatenation), 103 lose it on
+  purpose (those 9 in every spelling, plus adrenal, suprarenal gland, lateral septum, the lateral ventricle,
+  pararenal fat, psychiatric, the hepatic flexure in any spacing or run together, liverwort, deliver, heartwood), bare
+  "ventricle" loses it (heart or brain), the brown adipose tissue spellings main missed gain it (4), and no
+  high-mito spelling regresses except one trade-off kept on purpose: a label written as one lower-case word
+  (`skeletalmuscletissue`, `heartleftventricle`) is not split, because finding a word inside a run of
+  letters is what relaxed liverwort, deliver and heartwood. Of the 53 multi-word high-mito labels written that
+  way, main relaxed 52 and this rule 5 (the `hepat`/`nephr` words), so 47 lose it. The tissues of every
+  committed row and registered dataset table match as before. The label as written that the matcher reads is the
+  one with the strongest evidence (highest weight; the first seen on a tie), no longer the first seen: uns
+  "tissue: skeletalmuscle" (weight 2) hid the curated `obs['tissue']` "SkeletalMuscle" (weight 3), read after it,
+  and kept the 25% gate (review of #161).
 - Candidate screening now carries the diagnosis' raw-droplet flag into its rebuilt profile. Raw
   10x inputs therefore keep knee cell calling instead of reclassifying called cells as already
   filtered and then applying QC to hundreds of thousands of empty barcodes (issue #30).

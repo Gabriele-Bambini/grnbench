@@ -869,6 +869,184 @@ def test_high_mito_tissue_relaxes_the_dataset_gate_only(demo):
     assert "mito_fail" not in plain.decisions
 
 
+def _with_tissue_and_high_mito(diag, tissue):
+    from copy import deepcopy
+    from grnbench.qc import Gate
+    d = deepcopy(diag)
+    d.context.add("tissue", tissue, "test", f"tissue: {tissue}", 99)
+    d.qc.metrics["median_pct_mito"] = 30.0
+    d.qc.gates.append(Gate("mito_fraction", "fail", "median % mitochondrial counts per cell: 30.0%", 30.0))
+    return d
+
+
+@pytest.mark.parametrize("tissue", ["liver", "caudate lobe of liver", "hepatic lobule", "heart",
+                                    "heart left ventricle", "left ventricle", "interventricular septum",
+                                    "left cardiac atrium", "right atrium auricular region",
+                                    "atrioventricular node", "sinoatrial node", "myocardium", "kidney",
+                                    "renal medulla", "cortex of kidney", "nephron tubule", "mesonephros",
+                                    "endocardium", "intrahepatic bile duct",
+                                    "skeletal muscle tissue", "brown adipose tissue"])
+def test_high_mito_tissues_are_matched_by_whole_words(demo, tissue):
+    paths, tfs, diag = demo
+    plan = plan_preprocessing(_with_tissue_and_high_mito(diag, tissue), tf_list=tfs)
+    assert plan.value("mito_fail") == 60.0, tissue
+
+
+@pytest.mark.parametrize("tissue", ["adrenal gland", "suprarenal gland", "pediatric bone marrow",
+                                    "psychiatric cohort brain", "lateral ventricle", "subventricular zone",
+                                    "choroid plexus of fourth ventricle", "lateral septum", "cardia of stomach",
+                                    "extracellular matrix", "hepatic flexure of colon", "interrenal primordium"])
+def test_a_tissue_that_only_contains_a_high_mito_fragment_keeps_the_mito_gate(demo, tissue):
+    """The fragments 'renal', 'atri', 'ventric', 'septum', 'cardi' used to match inside other words, which
+    relaxed the gate to 60% and wrote a false reason ("naturally rich in mitochondrial RNA")."""
+    paths, tfs, diag = demo
+    plan = plan_preprocessing(_with_tissue_and_high_mito(diag, tissue), tf_list=tfs)
+    assert "mito_fail" not in plan.decisions, tissue
+    assert any("mito_fraction" in w for w in plan.warnings), tissue
+
+
+# Spellings of high-mito tissues that the substring rule of main relaxed and the first whole-word rule did not
+# (stress test of #161): every snake_case, hyphenated or plural spelling of the CELLxGENE listing's tissue labels.
+HIGH_MITO_SPELLINGS = [
+    "left-ventricle", "anterior-wall-of-left-ventricle", "apical-region-of-left-ventricle",
+    "apex of hearts", "basal zone of hearts", "capsule of livers", "caudate lobe of livers", "endocardiums", "hearts",
+    "left lobe of livers", "livers", "outflow tract myocardiums", "proepicardiums", "right lobe of livers",
+    "anterior_wall_of_left_ventricle", "apex_of_heart", "apical_region_of_left_ventricle", "atrioventricular_node",
+    "basal_zone_of_heart", "capsule_of_liver", "cardiac_atrium", "cardiac_muscle_tissue", "cardiac_ventricle",
+    "caudate_lobe_of_liver", "cortex_of_kidney", "craniocervical_muscle", "fast_muscle_tissue", "heart_left_ventricle",
+    "heart_primordium", "heart_right_ventricle", "hindlimb_muscle", "inner_medulla_of_kidney", "intercostal_muscle",
+    "interventricular_septum", "kidney_blood_vessel", "left_atrium_auricular_region", "left_cardiac_atrium",
+    "left_lobe_of_liver", "limb_muscle", "liver_primordium", "muscle_of_abdomen", "muscle_of_pelvic_diaphragm",
+    "muscle_of_posterior_compartment_of_hindlimb_stylopod", "muscle_organ", "muscle_tissue", "outer_medulla_of_kidney",
+    "rectus_abdominis_muscle", "renal_glomerulus", "renal_medulla", "renal_papilla", "renal_pelvis",
+    "right_atrium_auricular_region", "right_cardiac_atrium", "right_lobe_of_liver", "sinoatrial_node",
+    "skeletal_muscle_organ,_vertebrate", "skeletal_muscle_tissue", "skeletal_muscle_tissue_of_tibialis_anterior",
+    "slow_muscle_tissue", "stomach_smooth_muscle", "tongue_muscle"]
+
+
+@pytest.mark.parametrize("tissue", HIGH_MITO_SPELLINGS)
+def test_snake_case_hyphenated_and_plural_high_mito_tissues_are_matched(tissue):
+    from grnbench.autoprep import is_high_mito_tissue
+    assert is_high_mito_tissue(tissue), tissue
+    assert is_high_mito_tissue(tissue.upper() + " "), tissue
+
+
+@pytest.mark.parametrize("tissue", ["skeletal_muscle_tissue", "cortex_of_kidney", "heart_left_ventricle", "hearts",
+                                    "left-ventricle", "endocardiums"])
+def test_the_planner_relaxes_the_gate_for_those_spellings(demo, tissue):
+    paths, tfs, diag = demo
+    plan = plan_preprocessing(_with_tissue_and_high_mito(diag, tissue), tf_list=tfs)
+    assert plan.value("mito_fail") == 60.0, tissue
+
+
+@pytest.mark.parametrize("tissue", ["hepatic  flexure of colon", "hepatic\tflexure of colon", "hepatic-flexure",
+                                    "Hepatic_Flexure_Of_Colon"])
+def test_the_hepatic_flexure_exclusion_holds_for_any_spacing(demo, tissue):
+    """The flexure of the colon is not liver: two spaces, a tab, a hyphen or an underscore used to skip the
+    exclusion (the look-ahead expected one space)."""
+    paths, tfs, diag = demo
+    plan = plan_preprocessing(_with_tissue_and_high_mito(diag, tissue), tf_list=tfs)
+    assert "mito_fail" not in plan.decisions, tissue
+    from grnbench.autoprep import is_high_mito_tissue
+    assert not is_high_mito_tissue(tissue), tissue
+
+
+@pytest.mark.parametrize("tissue", ["SkeletalMuscle", "HeartLeftVentricle", "LiverTissue", "KidneyCortex", "heart1",
+                                    "liver2", "Kidney2Cortex", "LIVER3"])
+def test_camel_case_and_digit_suffixed_high_mito_tissues_are_matched(demo, tissue):
+    """Stress test round 2: main's substring rule relaxed these; the words are split at lower/upper and
+    letter/digit boundaries before lower-casing."""
+    paths, tfs, diag = demo
+    plan = plan_preprocessing(_with_tissue_and_high_mito(diag, tissue), tf_list=tfs)
+    assert plan.value("mito_fail") == 60.0, tissue
+    from grnbench.autoprep import is_high_mito_tissue
+    assert is_high_mito_tissue(tissue), tissue
+
+
+@pytest.mark.parametrize("tissue", ["skeletalmuscle", "heartleftventricle", "kidneycortex", "liverwort", "deliver",
+                                    "heartwood", "CA1 field of hippocampus"])
+def test_run_together_lower_case_words_are_not_matched(tissue):
+    """On purpose: finding a word inside a lower-case run of letters is what relaxed liverwort, deliver and heartwood."""
+    from grnbench.autoprep import is_high_mito_tissue
+    assert not is_high_mito_tissue(tissue), tissue
+
+
+def _obs_tissue_diag(paths, tmp_path, label, uns=None):
+    from copy import deepcopy
+
+    from grnbench.qc import Gate
+    a = ad.read_h5ad(paths["counts"])
+    a.obs["tissue"] = pd.Categorical([label] * a.n_obs)
+    a.uns.update(uns or {})
+    a.write_h5ad(tmp_path / "tissue.h5ad")
+    diag = deepcopy(diagnose(tmp_path / "tissue.h5ad"))
+    diag.qc.metrics["median_pct_mito"] = 30.0
+    diag.qc.gates.append(Gate("mito_fraction", "fail", "median % mitochondrial counts per cell: 30.0%", 30.0))
+    return diag
+
+
+def test_a_camel_case_obs_tissue_reaches_the_matcher_through_the_context(demo, tmp_path):
+    """Stress test round 2: obs['tissue'] = 'SkeletalMuscle' reached the planner as 'skeletalmuscle'. Round 3: the
+    context still stores and shows the label in lower case, as main does; the planner gives the matcher the label
+    as written (``DatasetContext.spelling``), and only the matcher splits its words."""
+    from grnbench.context import extract_from_text
+    paths, tfs, _ = demo
+    diag = _obs_tissue_diag(paths, tmp_path, "SkeletalMuscle")
+    assert diag.context.get("tissue") == "skeletalmuscle"
+    assert [f.value for f in diag.context.evidence("tissue")] == ["skeletalmuscle", "skeletalmuscle"]
+    plan = plan_preprocessing(diag, tf_list=tfs)
+    assert plan.value("mito_fail") == 60.0
+    assert "tissue 'skeletalmuscle' is naturally rich in mitochondrial RNA" in plan.decisions["mito_warn"].reason
+    readme = extract_from_text("tissue: KidneyCortex\n", "readme:x")
+    assert readme.get("tissue") == "kidneycortex" and readme.spelling("tissue", "kidneycortex") == "KidneyCortex"
+    assert extract_from_text("tissue: heart left ventricle\n", "readme:x").get("tissue") == "heart left ventricle"
+
+
+def test_an_earlier_uns_spelling_does_not_hide_the_curated_obs_spelling(demo, tmp_path):
+    """Review of #161 (LD): uns is read before obs, and the first spelling used to be kept whatever its weight, so
+    'tissue: skeletalmuscle' in uns (weight 2) hid obs['tissue'] = 'SkeletalMuscle' (weight 3) and kept the 25%
+    gate. The spelling kept is now the one with the strongest evidence."""
+    paths, tfs, _ = demo
+    diag = _obs_tissue_diag(paths, tmp_path, "SkeletalMuscle", uns={"description": "tissue: skeletalmuscle"})
+    ctx = diag.context
+    assert [(f.source, f.weight) for f in ctx.evidence("tissue")] == [
+        ("metadata:uns", 2), ("metadata:obs['tissue']", 2), ("metadata:obs['tissue']", 3)]
+    assert ctx.get("tissue") == "skeletalmuscle"
+    assert ctx.spelling("tissue", "skeletalmuscle") == "SkeletalMuscle"
+    plan = plan_preprocessing(diag, tf_list=tfs)
+    assert plan.value("mito_fail") == 60.0
+    assert "tissue 'skeletalmuscle' is naturally rich in mitochondrial RNA" in plan.decisions["mito_warn"].reason
+
+
+def test_the_context_shows_a_tissue_label_as_main_does(demo, tmp_path):
+    """Round 3: 'iPSC-derived cardiomyocytes' was stored as 'i psc-derived cardiomyocytes'."""
+    paths, _, _ = demo
+    diag = _obs_tissue_diag(paths, tmp_path, "iPSC-derived cardiomyocytes")
+    assert diag.context.get("tissue") == "ipsc-derived cardiomyocytes"
+    assert diag.context.to_dict()["summary"]["tissue"] == "ipsc-derived cardiomyocytes"
+
+
+@pytest.mark.parametrize("text, words", [("SkeletalMuscle", "skeletal muscle"), ("Liver2Kidney", "liver 2 kidney"),
+                                         ("iPSC-derived cardiomyocytes", "ipsc derived cardiomyocytes"),
+                                         ("HEK293", "hek 293"), ("heart_Left-Ventricle", "heart left ventricle"),
+                                         ("MuscleInvasiveBladderCancer", "muscle invasive bladder cancer")])
+def test_the_matcher_splits_camel_case_only_before_a_lower_case_letter(text, words):
+    """A lower->Upper boundary followed by a lower-case letter is a word break; 'iPSC' stays one word."""
+    from grnbench.autoprep import tissue_words
+    assert tissue_words(text) == words
+
+
+@pytest.mark.parametrize("tissue", ["hepaticflexure", "hepaticflexureofcolon", "HepaticFlexure",
+                                    "HepaticFlexureOfColon", "hepatic-flexure", "hepatic_flexure_2"])
+def test_the_hepatic_flexure_is_not_liver_in_any_spelling(demo, tissue):
+    paths, tfs, diag = demo
+    plan = plan_preprocessing(_with_tissue_and_high_mito(diag, tissue), tf_list=tfs)
+    assert "mito_fail" not in plan.decisions, tissue
+    from grnbench.autoprep import is_high_mito_tissue
+    assert not is_high_mito_tissue(tissue)
+    assert is_high_mito_tissue("intrahepaticbileduct") and is_high_mito_tissue("hepatocyte")
+
+
 def test_real_bench_records_which_doublet_caller_ran(tmp_path):
     import json
     import sys

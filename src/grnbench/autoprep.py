@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 from typing import Any
@@ -44,8 +45,33 @@ THRESHOLD_KEYS = ("min_genes_per_cell", "min_cells_per_gene", "max_genes_per_cel
                   "max_counts_per_cell", "max_pct_mito_cell", "mito_warn", "mito_fail")
 # Tissues whose cells are naturally rich in mitochondrial RNA (Osorio & Cai 2021): a
 # dataset-wide median above the default 25 % gate is biology there, not a failed sample.
-HIGH_MITO_TISSUES = ("liver", "hepat", "heart", "cardi", "myocard", "atri", "ventric", "septum",
-                     "kidney", "renal", "nephr", "muscle", "brown adipose")
+# Whole words only: as substrings, 'renal', 'atri', 'ventric', 'septum' and 'cardi' also matched adrenal
+# gland, pediatric/psychiatric, brain ventricles, the lateral septum and the cardia of the stomach.
+# Matched on the normalised text (`is_high_mito_tissue`), so snake_case, hyphenated, camelCase, digit-suffixed and
+# plural spellings (skeletal_muscle_tissue, left-ventricle, SkeletalMuscle, heart1, hearts, endocardiums) match like
+# the spaced labels. A lower-case run of words (skeletalmuscle) does not, on purpose: finding a word inside a run of
+# letters is what relaxed liverwort, deliver and heartwood. The hepatic flexure of the colon is not liver, in any
+# spelling ('hepatic flexure', 'hepaticflexure').
+HIGH_MITO_TISSUES = re.compile(
+    r"\b(?:livers?|\w*hepat(?!\w*flexure)\w*(?! flexure)|hearts?|cardiac|cardiomyocytes?|\w*cardi(?:ums?|al)"
+    r"|atri(?:ums?|a|al)|atrioventricular|sinoatrial|interventricular|(?:left|right) ventricles?|kidneys?|renal"
+    r"|\w*nephr\w*|muscles?|brown adipose)\b")
+# Word breaks inside a label: lower -> Upper followed by a lower-case letter ('SkeletalMuscle'; 'iPSC' stays one
+# word), and letter <-> digit ('heart1', 'Liver2Kidney').
+_WORD_BREAKS = re.compile(r"(?<=[a-z])(?=[A-Z][a-z])|(?<=[A-Za-z])(?=\d)|(?<=\d)(?=[A-Za-z])")
+
+
+def tissue_words(tissue) -> str:
+    """The tissue text the high-mito matcher reads: words split at ``_WORD_BREAKS``, lower case, '_' and '-' read
+    as spaces, runs of white space as one space. Only the matcher reads it: the context stores and shows the
+    label in lower case, as written otherwise."""
+    text = _WORD_BREAKS.sub(" ", str(tissue or ""))
+    return " ".join(re.sub(r"[_-]", " ", text.lower()).split())
+
+
+def is_high_mito_tissue(tissue) -> bool:
+    """Whether a tissue text names a high-mitochondrial tissue: ``HIGH_MITO_TISSUES`` on ``tissue_words``."""
+    return bool(HIGH_MITO_TISSUES.search(tissue_words(tissue)))
 RUN_PREP_KEYS = ("strategy", "n_hvg", "batch_key", "group_key", "stratify_key",
                  "subsample_cells", "subsample_mode", "drop_doublets", "orientation", "exclude_qc_genes",
                  "per_batch_bounds", "cells_per_metacell", "cell_calling", "force")
@@ -506,7 +532,7 @@ def _build_plan(diag: Diagnosis, profile, selection, choices: dict | None, *,
 
     # -- high-mitochondrial tissues: relax the dataset-level gate, keep per-cell bounds -- #
     tissue = (ctx.get("tissue") or "").lower()
-    if any(k in tissue for k in HIGH_MITO_TISSUES):
+    if is_high_mito_tissue(ctx.spelling("tissue", ctx.get("tissue"))):   # as written: camelCase breaks are words
         med = qc.metrics.get("median_pct_mito", 0.0)
         plan.add("mito_warn", "Dataset mito gate: warn above median %", 35.0,
                  f"tissue '{tissue}' is naturally rich in mitochondrial RNA (Osorio & Cai 2021); "

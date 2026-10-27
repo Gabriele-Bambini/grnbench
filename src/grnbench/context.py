@@ -95,6 +95,13 @@ class DatasetContext:
     facts: list[Fact] = field(default_factory=list)
     sources_read: list[str] = field(default_factory=list)
     sources_failed: list[dict] = field(default_factory=list)
+    # The label as written for a value stored in lower case ({(key, value): label}), for a reader that needs the
+    # case: the high-mito tissue matcher splits camelCase words (#161). The label kept is the one seen with the
+    # highest weight (its strongest evidence), the first seen on a tie, so uns read before obs cannot hide the
+    # curated obs label. Not in ``to_dict``.
+    spellings: dict = field(default_factory=dict)
+    # {(key, value): {label: highest weight it was seen with}}, labels in the order first seen.
+    spelling_weights: dict = field(default_factory=dict)
 
     def add(self, key, value, source, snippet="", weight=1) -> None:
         self.facts.append(Fact(key, str(value), source, snippet.strip(), int(weight)))
@@ -120,6 +127,19 @@ class DatasetContext:
     def conflicts(self) -> dict[str, dict[str, int]]:
         single = {"organism", "technology", "value_type"}
         return {k: v for k in single if len(v := self.votes(k)) > 1}
+
+    def spelling(self, key: str, value: str | None) -> str:
+        """The label as written behind a value stored in lower case, else the value itself ("" for None)."""
+        return self.spellings.get((key, value), value or "")
+
+    def add_lower(self, key, label, source, snippet="", weight=1) -> None:
+        """``add`` the label in lower case (as stored and shown) and remember how it was written: the spelling with
+        the highest weight, the first seen on a tie."""
+        label, weight = str(label), int(weight)
+        self.add(key, label.lower(), source, snippet, weight)
+        seen = self.spelling_weights.setdefault((key, label.lower()), {})
+        seen[label] = max(seen.get(label, weight), weight)
+        self.spellings[(key, label.lower())] = max(seen, key=seen.get)   # max keeps the first of equal weights
 
     def summary(self) -> dict:
         keys = ("organism", "technology", "platform", "value_type", "tissue",
@@ -174,7 +194,7 @@ def extract_from_text(text: str, source: str, ctx: DatasetContext | None = None)
         if m:
             ctx.add(key, "yes", source, _snippet(text, m))
     for m in _TISSUE_RE.finditer(text):
-        ctx.add("tissue", m.group(1).strip().lower(), source, _snippet(text, m), 2)
+        ctx.add_lower("tissue", m.group(1).strip(), source, _snippet(text, m), 2)
     for m in _N_CELLS_RE.finditer(text):
         ctx.add("n_cells_declared", m.group(1).replace(",", ""), source, _snippet(text, m))
     return ctx
@@ -230,7 +250,7 @@ def extract_from_adata(adata, ctx: DatasetContext | None = None) -> DatasetConte
                 continue
             extract_from_text(f"{col}: {value}", f"metadata:obs['{col}']", ctx)
             if col == "tissue":
-                ctx.add("tissue", value.lower(), f"metadata:obs['{col}']",
+                ctx.add_lower("tissue", value, f"metadata:obs['{col}']",
                         f"majority value of obs['{col}']", 3)
     batch, how = detect_batch_column(adata)
     if batch is not None:
