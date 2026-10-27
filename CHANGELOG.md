@@ -3,6 +3,10 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- C5 and C6: GB signed both section 4b reruns in his own hand (comments on #99 and #100, 2026-10-23), replacing
+  the lines the agent typed on his instruction; the CLAIMS cells say the commands were typed by an agent under
+  his direction. C6's one differing field (`n_warnings` 4 -> 3) is confirmed to come from the dataset README
+  written by the fetch route (#156). No number or status changes.
 - `fetch_cellxgene.py --from-manifest` (#156) now writes the same `README.md` as the listing route: it takes
   the collection name and citation from the CELLxGENE listing by dataset id, and warns on stderr, per dataset,
   when it cannot (the download goes on). The empty README it wrote before was the cause of C6's
