@@ -2,7 +2,7 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-10-22 (#132 plan/runtime truth, LD); 2026-10-15 (#87, #71, #69 merged at GB's request, GB's agent); 2026-10-10
+Updated: 2026-10-26 (retention ledger, GB's agent); 2026-10-22 (#132 plan/runtime truth, LD); 2026-10-15 (#87, #71, #69 merged at GB's request, GB's agent); 2026-10-10
 (issue #59, LD; interface branch merged with main after #55, GB's agent); 2026-10-09
 (interface redesign; tool end to end, GB's agent); 2026-10-07 (interface explorer, GB's agent);
 2026-10-06 (EXP-20261003-GB-1: review fixes and record note 2.1 on PR #55, agent);
@@ -16,6 +16,15 @@ comparison, published as a tool with a paper. Headline claims from real data (D-
 pre-registered experiments (D-017).
 
 ## In progress
+- Retention ledger (#176, GB, `gb/retention-ledger`): `grnbench.retention`; every cell- or
+  gene-removing step of `run_prep` records cells, genes and the named TFs it removed (manifest
+  `retention`, portable diagnostics, report table), and a gene filter that drops a TF detected in the
+  context warns (`TF protection:`). Accounting only: main vs branch A/B identical on every simulator
+  preset, the demo and C6. On C6 the gene filters drop 28-44 of the bench's 150 TFs per context,
+  10-22 of them detected there, in 1-4 of the context's cells (the plan sets `min_cells_per_gene`
+  to 5 on C6; 29 of the 60 in a single cell); no preset loses a TF. Open decision for GB: protect
+  detected TFs from the gene filters (a default change; not in this PR). `safe_message` is now
+  idempotent (#177 review): every diagnostics writer output passes the reader.
 - Block 6 of the Phase 0 plan (points 13-17: motif-prior sources, multiplicity, C4's EPR, C7, GB-1
   stage 2; GB, separate track, reviewer LM). Step 15-1 done on `gb/epr-power-diagnosis` (#127):
   `grnbench.eval.power` (power of the paired t, G*Power matched-pairs model) and

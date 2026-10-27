@@ -70,6 +70,35 @@ UNAVAILABLE_NOTE = (
     "Portable diagnostics unavailable: no valid diagnostics.json was supplied "
     "(the run may predate schema v1 or diagnostics generation may have failed)."
 )
+# Retention ledger rows (``grnbench.retention``): an optional, additive list per prep entry.
+# Older documents simply have no ``retention`` field.
+_RETENTION_COUNTS = ("cells_before", "cells_after", "genes_before", "genes_after", "genes_removed",
+                     "tfs_before", "tfs_after", "tfs_removed", "tfs_removed_detected")
+_RETENTION_NAMES = ("tfs_removed_names", "tfs_removed_detected_names")
+_RETENTION_FIELDS = frozenset(("stage", "cells_removed", "aggregated",
+                               *_RETENTION_COUNTS, *_RETENTION_NAMES))
+_GENE_NAME_CHARS = 80
+# The schema's own field names, one list per object; the reader uses the same lists.
+_REQUIRED_TOP_FIELDS = ("outcome", "status", "prep", "screen", "models",
+                        "usable_candidates", "selected_candidate")
+_ENVELOPE_FIELDS = ("schema", "schema_version")
+_ENTRY_FIELDS = ("outcome", "failure", "choices", "dimensions", "steps", "retention")
+_FAILURE_FIELDS = ("category", "message")
+_DIMENSION_SIDES = ("before", "after")
+_DIMENSION_FIELDS = frozenset(("cells", "genes"))
+_STEP_FIELDS = ("stage", "after", "message")
+# Field names are code, not data: only these are exempt from the local user/host comparison of
+# validate_portable. Any other key, at whatever position, is compared like a value.
+_SCHEMA_FIELD_NAMES = frozenset((
+    *_ENVELOPE_FIELDS, *_REQUIRED_TOP_FIELDS, *_ENTRY_FIELDS, *_FAILURE_FIELDS,
+    *_DIMENSION_SIDES, *_DIMENSION_FIELDS, *_STEP_FIELDS,
+    *_PORTABLE_CHOICE_KEYS, *_THRESHOLD_KEYS, *_RETENTION_FIELDS))
+RETENTION_NOTE = (
+    "What each cleaning step removed: cells, genes and, when a TF list was given, the TFs of that "
+    "list. A removed TF counts as detected when it was non-zero in at least one cell of the "
+    "context before the step; feature selection keeps every TF in the data (D-003), the gene "
+    "filters before it do not.")
+RETENTION_COLUMNS = ("step", "cells", "genes", "TFs", "detected TFs removed", "removed TFs")
 
 
 class DiagnosticPrivacyError(ValueError):
@@ -98,24 +127,49 @@ def _replace_literal(text: str, value: Any, replacement: str, *, boundary: bool)
     return re.sub(pattern, replacement, text, flags=re.IGNORECASE)
 
 
-def safe_message(message: Any, limit: int = MAX_MESSAGE_CHARS,
-                 *, sensitive_values: tuple[Any, ...] | list[Any] = ()) -> str:
-    """Collapse, redact and bound an exception or diagnostic message."""
-    text = _RATIO_SLASH.sub(_RATIO_SENTINEL, str(message))
-    path_values = [str(value).strip() for value in sensitive_values
-                   if value is not None and str(value).strip()]
-    try:
-        home = str(Path.home()).strip()
-        if home:
-            path_values.append(home)
-    except Exception:  # noqa: BLE001 - redaction must not become a run failure
-        pass
+_MAX_REDACTION_PASSES = 8
+_WITHHELD = "<message withheld>"
+# The placeholders redaction writes. A sensitive value or a local identity that is one of their words
+# ('path', 'identity', 'barcode', 'values', 'message', 'withheld') must not be found inside them:
+# '<path>' would become '<<path>>' on every pass until the message is withheld.
+_PLACEHOLDERS = re.compile(r"(<(?:path|identity|barcode|values|message withheld)>)")
 
+
+# Each placeholder as one private-use character (not a regex word character), for _replace_value.
+_PLACEHOLDER_MASK = {"<path>": "", "<identity>": "", "<barcode>": "",
+                     "<values>": "", "<message withheld>": ""}
+_PLACEHOLDER_UNMASK = {mask: placeholder for placeholder, mask in _PLACEHOLDER_MASK.items()}
+
+
+def _mask_placeholders(text: str) -> str:
+    return _PLACEHOLDERS.sub(lambda match: _PLACEHOLDER_MASK[match.group(1)], text)
+
+
+def _replace_value(text: str, value: Any, replacement: str) -> str:
+    """``_replace_literal`` (word boundaries) outside the placeholders already in ``text``."""
+    raw = str(value or "").strip()
+    if "<" not in raw and ">" not in raw:
+        parts = _PLACEHOLDERS.split(text)      # odd indices are placeholders, kept as they are
+        return "".join(part if i % 2 else _replace_literal(part, raw, replacement, boundary=True)
+                       for i, part in enumerate(parts))
+    # A value with markup (a Linux path may hold '<' and '>') can itself contain a placeholder,
+    # e.g. 'a<path>b'. Match it against the whole text with every placeholder masked to one
+    # character, in the text and in the value alike: it is found where it occurs, never inside a
+    # placeholder ('<path' or 'path>' cannot grow '<path>' into '<path>>').
+    masked = _mask_placeholders(text)
+    for candidate in dict.fromkeys((_mask_placeholders(raw), raw)):
+        masked = _replace_literal(masked, candidate, replacement, boundary=True)
+    return re.sub("[-]", lambda match: _PLACEHOLDER_UNMASK[match.group(0)], masked)
+
+
+def _redact_once(text: str, limit: int, path_values: list[str], identities: tuple[str, ...]) -> str:
+    """One redaction pass and the length cut (see :func:`safe_message`)."""
+    text = _RATIO_SLASH.sub(_RATIO_SENTINEL, text)
     # Replace exact run-specific values before generic path regexes.  Otherwise
     # an unquoted Windows path containing spaces is shortened at its first space
     # and the remaining private suffix can no longer match the original value.
-    for value in sorted(set(path_values), key=len, reverse=True):
-        text = _replace_literal(text, value, "<path>", boundary=True)
+    for value in path_values:
+        text = _replace_value(text, value, "<path>")
     text = re.sub(r"(['\"])<path>\1", "<path>", text)
     # A sensitive relative directory can be followed by a filename in an
     # exception (``<path>/matrix.mtx.gz``); keep the whole location redacted
@@ -124,8 +178,8 @@ def safe_message(message: Any, limit: int = MAX_MESSAGE_CHARS,
     text = _QUOTED_PATH.sub("<path>", text)
     text = _PATH_TOKEN.sub("<path>", text)
     text = re.sub(r"(?:<path>){2,}", "<path>", text)
-    for value in _known_identities():
-        text = _replace_literal(text, value, "<identity>", boundary=True)
+    for value in identities:
+        text = _replace_value(text, value, "<identity>")
     text = _IDENTITY_TOKEN.sub("<identity>", text)
     text = _BARCODE_TOKEN.sub("<barcode>", text)
     text = _NUMERIC_VECTOR.sub("<values>", text)
@@ -134,6 +188,39 @@ def safe_message(message: Any, limit: int = MAX_MESSAGE_CHARS,
     if len(text) > limit:
         text = text[: max(0, limit - 1)].rstrip() + "…"
     return text
+
+
+def safe_message(message: Any, limit: int = MAX_MESSAGE_CHARS,
+                 *, sensitive_values: tuple[Any, ...] | list[Any] = ()) -> str:
+    """Collapse, redact and bound an exception or diagnostic message.
+
+    Idempotent: ``safe_message(safe_message(x, n), n) == safe_message(x, n)``, so every value a
+    writer stores passes the readers' round-trip check (``safe_message(s) == s``). One pass is not:
+    the length cut can end inside a token (an A/C/G/T run followed by the '…' then reads as a
+    barcode), and one replacement can expose another (a path right after a redacted identity). The
+    pass therefore repeats until the text no longer changes, at most ``_MAX_REDACTION_PASSES``
+    times; a text still changing then is withheld (``<message withheld>``, which passes the reader)
+    rather than stored unsettled. That cap is reachable: a ' /N' is a ratio, not a path, only while
+    its left neighbour is 'digit space', so in 'x /1 /2 /3' each pass undoes one link and a chain
+    of n links needs n + 1 passes; 7 links settle, 8 or more are withheld.
+    """
+    path_values = [str(value).strip() for value in sensitive_values
+                   if value is not None and str(value).strip()]
+    try:
+        home = str(Path.home()).strip()
+        if home:
+            path_values.append(home)
+    except Exception:  # noqa: BLE001 - redaction must not become a run failure
+        pass
+    path_values = sorted(set(path_values), key=len, reverse=True)
+    identities = _known_identities()
+    text = str(message)
+    for _ in range(_MAX_REDACTION_PASSES):
+        again = _redact_once(text, limit, path_values, identities)
+        if again == text:
+            return text
+        text = again
+    return _redact_once(_WITHHELD, limit, [], ())
 
 
 def _outcome(status: Any) -> str:
@@ -255,13 +342,38 @@ def prep_entry_from_manifest(manifest: dict) -> dict:
         if "strategy" in choices:
             choices["requested_strategy"] = choices["strategy"]
         choices["strategy"] = safe_message(chosen_strategy)
-    return {
+    entry = {
         "outcome": "ok",
         "failure": None,
         "choices": choices,
         "dimensions": {"before": before, "after": after},
         "steps": steps,
     }
+    if isinstance(manifest.get("retention"), list):
+        entry["retention"] = _portable_retention(manifest["retention"])
+    return entry
+
+
+def _portable_retention(rows: list) -> list[dict]:
+    """Ledger rows of a prep manifest as portable rows: counts, flags and sanitised gene names."""
+    from grnbench.retention import TF_NAMES_CAP
+
+    out = []
+    for raw in rows:
+        if not isinstance(raw, Mapping):
+            continue
+        item: dict = {"stage": _label(raw.get("step", "unknown"))}
+        for key in (*_RETENTION_COUNTS, "cells_removed"):
+            if key in raw:
+                item[key] = None if raw[key] is None else int(raw[key])
+        if "aggregated" in raw:
+            item["aggregated"] = bool(raw["aggregated"])
+        for key in _RETENTION_NAMES:
+            if key in raw:
+                item[key] = [safe_message(name, limit=_GENE_NAME_CHARS)
+                             for name in list(raw[key] or [])[:TF_NAMES_CAP]]
+        out.append(item)
+    return out
 
 
 def failed_entry(message: Any, *, stage: str, choices: dict | None = None,
@@ -431,13 +543,20 @@ def _json_safe(value: Any) -> Any:
     raise TypeError(f"unsupported diagnostics value type: {type(value).__name__}")
 
 
-def validate_portable(value: Any, *, _where: str = "$", _check_keys: bool = True) -> None:
-    """Recursively reject fields or values forbidden in the portable artifact."""
+def validate_portable(value: Any, *, _where: str = "$", _check_keys: bool = True,
+                      _field_name: bool = False) -> None:
+    """Recursively reject fields or values forbidden in the portable artifact.
+
+    The schema's own field names (``_SCHEMA_FIELD_NAMES``: ``message``, ``stage``, ...) are code,
+    not data: as keys at a fixed position they are not compared with the local user and host names,
+    so a machine called 'message' can still write a document. Every other key (candidate, context
+    and model names, or any key at a fixed position that is not a schema field) is compared like a
+    value.
+    """
     if _where == "$" and isinstance(value, dict) and "schema" in value:
         if value.get("schema") != SCHEMA or value.get("schema_version") != SCHEMA_VERSION:
             raise ValueError("unsupported diagnostics schema or version")
-        for required in ("outcome", "status", "prep", "screen", "models",
-                         "usable_candidates", "selected_candidate"):
+        for required in _REQUIRED_TOP_FIELDS:
             if required not in value:
                 raise ValueError(f"diagnostics schema missing required field {required!r}")
         if value.get("outcome") not in _OUTCOMES:
@@ -450,7 +569,8 @@ def validate_portable(value: Any, *, _where: str = "$", _check_keys: bool = True
             if (_check_keys and not dynamic_container and
                     (name in _FORBIDDEN_KEYS or name.endswith("_path") or name.endswith("_paths"))):
                 raise DiagnosticPrivacyError(f"{_where}.{key}: forbidden field in portable diagnostics")
-            validate_portable(str(key), _where=f"{_where}.<key>", _check_keys=True)
+            validate_portable(str(key), _where=f"{_where}.<key>", _check_keys=True,
+                              _field_name=not dynamic_key and str(key) in _SCHEMA_FIELD_NAMES)
             validate_portable(item, _where=f"{_where}.{key}",
                               _check_keys=(True if not dynamic_key else not _check_keys))
         return
@@ -464,8 +584,8 @@ def validate_portable(value: Any, *, _where: str = "$", _check_keys: bool = True
             raise DiagnosticPrivacyError(f"{_where}: embedded absolute path in portable diagnostics")
         if _IDENTITY_TOKEN.search(value):
             raise DiagnosticPrivacyError(f"{_where}: identity token in portable diagnostics")
-        for identity in _known_identities():
-            if _replace_literal(value, identity, "<identity>", boundary=True) != value:
+        for identity in () if _field_name else _known_identities():
+            if _replace_value(value, identity, "<identity>") != value:   # not inside a placeholder
                 raise DiagnosticPrivacyError(f"{_where}: local identity in portable diagnostics")
 
 
@@ -473,14 +593,12 @@ def _validate_document_schema(document: Any) -> None:
     """Require the complete schema envelope before a document is rendered."""
     if not isinstance(document, Mapping):
         raise ValueError("diagnostics root must be a JSON object")
-    for field in ("schema", "schema_version"):
+    for field in _ENVELOPE_FIELDS:
         if field not in document:
             raise ValueError(f"diagnostics schema missing required field {field!r}")
     if document.get("schema") != SCHEMA or document.get("schema_version") != SCHEMA_VERSION:
         raise ValueError("unsupported diagnostics schema or version")
-    for field in (
-            "outcome", "status", "prep", "screen", "models",
-            "usable_candidates", "selected_candidate"):
+    for field in _REQUIRED_TOP_FIELDS:
         if field not in document:
             raise ValueError(f"diagnostics schema missing required field {field!r}")
     if document.get("outcome") not in _OUTCOMES:
@@ -547,11 +665,11 @@ def _entry_mapping(value: Any, where: str) -> Mapping:
 def _entry_dimensions(value: Any, where: str) -> tuple[dict | None, dict | None]:
     dims = _entry_mapping(value, where)
     out = []
-    for side in ("before", "after"):
+    for side in _DIMENSION_SIDES:
         item = dims.get(side)
         if item is not None:
             item = dict(_entry_mapping(item, f"{where}.{side}"))
-            unknown = set(item) - {"cells", "genes"}
+            unknown = set(item) - _DIMENSION_FIELDS
             if unknown:
                 raise ValueError(f"{where}.{side} has unsupported fields: {sorted(unknown)}")
             for key, number in item.items():
@@ -559,6 +677,45 @@ def _entry_dimensions(value: Any, where: str) -> tuple[dict | None, dict | None]
                     raise ValueError(f"{where}.{side}.{key} must be a non-negative integer")
         out.append(item)
     return out[0], out[1]
+
+
+def _entry_retention(value: Any, where: str) -> list[dict]:
+    """Validate the optional ledger rows of one entry as strictly as its dimensions."""
+    from grnbench.retention import TF_NAMES_CAP
+
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        raise ValueError(f"{where} must be an array")
+    rows = []
+    for idx, raw in enumerate(value):
+        here = f"{where}[{idx}]"
+        row = dict(_entry_mapping(raw, here))
+        unknown = set(row) - _RETENTION_FIELDS
+        if unknown:
+            raise ValueError(f"{here} has unsupported fields: {sorted(unknown)}")
+        stage = row.get("stage")
+        if not isinstance(stage, str) or len(stage) > MAX_MESSAGE_CHARS or safe_message(stage) != stage:
+            raise DiagnosticPrivacyError(f"{here}.stage must be a bounded, sanitised message")
+        for key in (*_RETENTION_COUNTS, "cells_removed"):
+            if key not in row or (key == "cells_removed" and row[key] is None):
+                continue
+            number = row[key]
+            if isinstance(number, bool) or not isinstance(number, numbers.Integral) or number < 0:
+                raise ValueError(f"{here}.{key} must be a non-negative integer")
+        if "aggregated" in row and not isinstance(row["aggregated"], bool):
+            raise ValueError(f"{here}.aggregated must be a boolean")
+        for key in _RETENTION_NAMES:
+            if key not in row:
+                continue
+            names = row[key]
+            if not isinstance(names, list) or len(names) > TF_NAMES_CAP:
+                raise ValueError(f"{here}.{key} must list at most {TF_NAMES_CAP} names")
+            for name in names:
+                if not isinstance(name, str) or safe_message(name, limit=_GENE_NAME_CHARS) != name:
+                    raise DiagnosticPrivacyError(f"{here}.{key} must hold sanitised gene names")
+        rows.append(row)
+    return rows
 
 
 def diagnostics_view(document: dict | None) -> dict:
@@ -628,6 +785,7 @@ def diagnostics_view(document: dict | None) -> dict:
                             or safe_message(message) != message):
                         raise DiagnosticPrivacyError(
                             f"{where}.steps[{idx}].message must be a bounded, sanitised message")
+                retention = _entry_retention(entry.get("retention"), f"{where}.retention")
                 entries.append({
                     "stage": stage,
                     "name": str(subject),
@@ -639,6 +797,7 @@ def diagnostics_view(document: dict | None) -> dict:
                     "before": before,
                     "after": after,
                     "steps": [dict(step) for step in steps],
+                    "retention": retention,
                 })
     usable = document.get("usable_candidates")
     if not isinstance(usable, list) or not all(isinstance(item, str) for item in usable):
@@ -682,6 +841,48 @@ def format_choices(value: Mapping) -> str:
     )
 
 
+def _change(before: Any, after: Any, removed: Any, *, aggregated: bool = False) -> str:
+    if before is None or after is None:
+        return "-"
+    text = f"{before:,} -> {after:,}"
+    if aggregated:
+        return text + " (aggregated)"
+    return text + (f" (-{removed:,})" if removed else "")      # a zero removal reads '300 -> 300'
+
+
+def _names(names: list, total: Any) -> str:
+    text = ", ".join(names)
+    more = (total or 0) - len(names)
+    if more > 0:
+        text += f" (+{more:,} more)"
+    return text or "-"
+
+
+def retention_display_rows(rows: list[dict]) -> list[tuple[str, ...]]:
+    """One tuple per ledger row, in :data:`RETENTION_COLUMNS` order; every format renders these."""
+    out = []
+    for row in rows:
+        cells = _change(row.get("cells_before"), row.get("cells_after"), row.get("cells_removed"),
+                        aggregated=bool(row.get("aggregated")))
+        genes = _change(row.get("genes_before"), row.get("genes_after"), row.get("genes_removed"))
+        if "tfs_before" in row:
+            tfs = _change(row.get("tfs_before"), row.get("tfs_after"), row.get("tfs_removed"))
+            detected = f"{row.get('tfs_removed_detected', 0):,}"
+            if row.get("tfs_removed_detected_names"):
+                detected += ": " + _names(row["tfs_removed_detected_names"], row.get("tfs_removed_detected"))
+            removed = _names(row.get("tfs_removed_names") or [], row.get("tfs_removed"))
+        else:
+            tfs = detected = removed = "no TF list"
+        out.append((row["stage"], cells, genes, tfs, detected, removed))
+    return out
+
+
+def retention_sections(view: dict) -> list[tuple[dict, list[tuple[str, ...]]]]:
+    """``(entry, display rows)`` for every entry of ``view`` that carries a ledger."""
+    return [(entry, retention_display_rows(entry["retention"]))
+            for entry in view["entries"] if entry.get("retention")]
+
+
 def render_diagnostics_markdown(document: dict | None) -> str:
     """Render the shared diagnostic view as a Markdown report section."""
     view = diagnostics_view(document)
@@ -691,6 +892,11 @@ def render_diagnostics_markdown(document: dict | None) -> str:
 
     def cell(value: Any) -> str:
         return html.escape(str(value), quote=False).replace("|", "\\|").replace("\n", " ")
+
+    def ledger_cell(value: Any) -> str:
+        # '>' stays readable in '302 -> 301'; '<' and '&' cannot open markup once escaped
+        return (str(value).replace("&", "&amp;").replace("<", "&lt;")
+                .replace("|", "\\|").replace("\n", " "))
 
     lines += [
         f"- Overall outcome: **{cell(view['outcome'])}**",
@@ -712,6 +918,16 @@ def render_diagnostics_markdown(document: dict | None) -> str:
             )) + " |"
         )
     lines.append("")
+    sections = retention_sections(view)
+    if sections:
+        lines += ["### Retention ledger", "", RETENTION_NOTE, ""]
+        for entry, rows in sections:
+            lines += [f"{cell(entry['stage'])} `{cell(entry['name'])}`, context `{cell(entry['context'])}`:",
+                      "",
+                      "| " + " | ".join(RETENTION_COLUMNS) + " |",
+                      "|" + "---|" * len(RETENTION_COLUMNS)]
+            lines += ["| " + " | ".join(ledger_cell(value) for value in row) + " |" for row in rows]
+            lines.append("")
     return "\n".join(lines)
 
 

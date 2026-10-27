@@ -24,7 +24,14 @@ Each candidate/context/model entry records:
 - applied choices; for preprocessing, `strategy` is the effective strategy and the optional
   `requested_strategy` preserves the original request (`auto`, for example);
 - cells and genes before and after the relevant stage, when known;
-- compact stage records for preprocessing.
+- compact stage records for preprocessing;
+- for preprocessing, an optional `retention` list (the retention ledger of `grnbench.retention`):
+  one row per cell- or gene-removing step that ran, in step order, with `stage`, `cells_before`,
+  `cells_after`, `cells_removed` (`null` when the step aggregates cells into pseudobulk samples or
+  metacells, then `aggregated` is `true`), `genes_before`, `genes_after`, `genes_removed`,
+  `aggregated` and, when a TF list was given, `tfs_before`, `tfs_after`, `tfs_removed`,
+  `tfs_removed_detected` and up to 20 sanitised names in `tfs_removed_names` and
+  `tfs_removed_detected_names` (counts are always complete). Documents without it read as before.
 
 The reader requires the complete schema envelope and accepts only the choice fields emitted by
 the writer. Threshold choices are limited to the named QC thresholds and all other choice values
@@ -46,7 +53,21 @@ The strict writer recursively refuses:
 
 Exception messages are whitespace-normalized, known input/output paths, POSIX/Windows/UNC/file-URI
 paths and local identity tokens are redacted, and the result is truncated to 300 characters before
-validation. Candidate, context and model names are data, not schema field names, but their values
+validation. Redaction repeats until the text no longer changes, so a stored message always passes
+the reader's round-trip check: a cut that ends inside a token, or a replacement that exposes
+another one, is settled by the writer, never left for the reader to refuse. The repetition is capped
+at 8 passes; a text still changing then is stored as `<message withheld>` (which also passes the
+reader). The cap is reachable: a ` /N` counts as a ratio, not a path, only while its left neighbour
+is "digit space", so in `x /1 /2 /3 ...` each pass undoes one link and a chain of 8 or more links is
+withheld. Values replaced literally (the known input/output locations, the local user and host
+names) are never matched inside a placeholder, so `--out path` or a host called `identity` cannot
+turn `<path>` into `<<path>>`; a value that itself contains `<` or `>` (e.g. a folder `a<path>b`)
+is matched with every placeholder masked, so it is still found and redacted. The schema's own field names (an explicit list in `diagnostics.py`:
+the envelope, entry, failure, step and dimension fields and the choice, threshold and retention
+allowlists) are not compared with the local user and host names, so a machine called `message` can
+still write a document; every other key, including any key derived from data, is compared like a
+value. Gene names in the retention ledger go through
+the same redaction with an 80-character bound. Candidate, context and model names are data, not schema field names, but their values
 pass through the same path/identity validation. Raw data and detailed provenance remain in their
 existing controlled artifacts; they are never copied into `diagnostics.json`.
 
@@ -62,7 +83,11 @@ the command writes anything.
 ## Compatibility
 
 Consumers must check both `schema` and `schema_version`. New optional entry fields are additive
-within schema v1, so consumers must ignore fields they do not recognise. A future incompatible
+within schema v1, so consumers must ignore fields they do not recognise. The exception is the
+inside of the objects whose shape the canonical reader validates: `dimensions`, `choices` (and its
+`thresholds`) and each `retention` row accept only their listed fields, and an unknown field there
+is an error. Adding a field inside one of them therefore needs the reader's allowlist updated in the
+same change; documents written before it still read. A future incompatible
 shape increments the integer version; existing v1 documents remain readable. Registered experiment
 outputs are not rewritten retroactively.
 

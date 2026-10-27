@@ -23,6 +23,7 @@ from grnbench.qc import QCReport, Thresholds, run_qc
 from grnbench.recommend import recommend_strategy
 from grnbench.report import (build_manifest, file_fingerprint, render_report, write_json,
                              sequence_identity, require_empty_output)
+from grnbench.retention import RetentionLedger
 from grnbench.strategies import REGISTRY, apply_strategy, get_strategy
 from grnbench.tfs import match_tfs_in_data, resolve_tf_names
 
@@ -162,6 +163,10 @@ def run_prep(
     rng = np.random.default_rng(seed)
     steps: list[dict] = []
     warnings_list: list[str] = []
+    # Accounting only: one row per cell- or gene-removing step, in step order, plus a warning when
+    # a gene filter drops a detected TF of the list. ``before`` is released right after each row,
+    # so no matrix outlives its step.
+    ledger = RetentionLedger(tf_list or None, subset_key=subset_key, subset_value=subset_value)
 
     # -- 1. ingest (counts-verified) ---------------------------------------- #
     adata, ingest_rep = load_any(input_path, orientation=orientation)
@@ -179,11 +184,14 @@ def run_prep(
         if call is None:
             raise PrepError("knee cell calling found no clear cell/empty-droplet cliff in the "
                             "barcode-rank curve; is this an unfiltered droplet matrix?")
+        before = adata
         adata = adata[totals >= call["threshold"]].copy()
         steps.append({"step": "cell_calling", "n_cells_after": int(adata.n_obs),
                       "n_genes_after": int(adata.n_vars), **call,
                       "detail": f"knee: kept {call['n_called']} of {call['n_barcodes']} barcodes with "
                                 f">= {call['threshold']:.0f} counts"})
+        warnings_list.extend(ledger.record("cell_calling", before, adata))
+        del before
 
     # -- 1b. memory hygiene + metadata context ------------------------------- #
     from grnbench import hygiene as hyg
@@ -234,12 +242,15 @@ def run_prep(
         adata.obs[group_key], _grp_rep = hyg.normalize_labels(adata.obs[group_key])
         missing = adata.obs[group_key].isna()
         if missing.any():
+            before = adata
             adata = adata[~missing].copy()
             steps.append({"step": "drop_unlabelled_groups",
                           "n_cells_after": int(adata.n_obs),
                           "n_genes_after": int(adata.n_vars),
                           "detail": f"removed {int(missing.sum())} cells with "
                                     f"missing '{group_key}'"})
+            warnings_list.extend(ledger.record("drop_unlabelled_groups", before, adata))
+            del before
 
     # -- 2. QC on the (hygiene-passed) matrix -------------------------------- #
     qc_report: QCReport = run_qc(adata, t, group_key=group_key, label_key=label_key,
@@ -311,6 +322,7 @@ def run_prep(
     mask_cells = ~(low_genes | zero_total)
     for hit in upper.values():
         mask_cells &= ~hit
+    before = adata
     if not mask_cells.all():
         adata = adata[mask_cells].copy()
     # A zero-count cell is necessarily also a low-gene cell, so reporting both
@@ -326,14 +338,19 @@ def run_prep(
                             f"(of which {int(zero_total.sum())} had zero counts)"
                             + "".join(f"; {int(hit.sum())} flagged {label}"
                                       for label, hit in upper.items())})
+    warnings_list.extend(ledger.record("filter_cells", before, adata))
+    del before
 
     mask_genes = _nnz_per_gene(adata.X) >= t.min_cells_per_gene
+    before = adata
     if not mask_genes.all():
         adata = adata[:, mask_genes].copy()
     steps.append({"step": "filter_genes",
                   "n_cells_after": int(adata.n_obs), "n_genes_after": int(adata.n_vars),
                   "detail": f"removed {int((~mask_genes).sum())} genes "
                             f"detected in < {t.min_cells_per_gene} cells"})
+    warnings_list.extend(ledger.record("filter_genes", before, adata))
+    del before
     if adata.n_vars == 0 and adata.n_obs > 0:       # with no cells left, the empty-matrix refusal below says why
         raise PrepError(f"every gene was filtered out: none is detected in {t.min_cells_per_gene} or more of the "
                         f"{adata.n_obs} cells that passed cell QC (--min-cells-per-gene)")
@@ -343,12 +360,15 @@ def run_prep(
         qc_genes = np.zeros(adata.n_vars, dtype=bool)
         for pref in tuple(MITO_PREFIXES) + tuple(RIBO_PREFIXES):
             qc_genes |= upper_names.str.startswith(pref)
+        before = adata
         if qc_genes.any():
             adata = adata[:, ~qc_genes].copy()
         steps.append({"step": "exclude_qc_genes",
                       "n_cells_after": int(adata.n_obs), "n_genes_after": int(adata.n_vars),
                       "detail": f"removed {int(qc_genes.sum())} mitochondrial/ribosomal genes "
                                 "from the features (they track cell quality, not regulation)"})
+        warnings_list.extend(ledger.record("exclude_qc_genes", before, adata))
+        del before
 
     if drop_doublets:
         method, is_dbl, dbl_warning, dbl_groups = hyg.detect_doublets(
@@ -368,6 +388,7 @@ def run_prep(
                 "rate like this means the threshold failed (no cluster structure, or batches "
                 "too small), not that most cells are doublets. Nothing was dropped. Inspect "
                 "the scores without --drop-doublets, or raise --max-doublet-rate deliberately.")
+        before = adata
         if n_dbl:
             adata = adata[~is_dbl].copy()
         steps.append({"step": "drop_doublets", "method": method,
@@ -379,6 +400,8 @@ def run_prep(
                                 + (f", per batch '{batch_col}'" if batch_col and method == "scrublet" else "")
                                 + "); scores kept in obs['doublet_score']"
                                 + (f"; {dbl_warning}" if dbl_warning and method == "scrublet" else "")})
+        warnings_list.extend(ledger.record("drop_doublets", before, adata))
+        del before
 
     # Context subsetting comes after cell QC and doublet calling on ALL cells:
     # inside one cell type there is no cluster structure, and doublet callers
@@ -388,17 +411,23 @@ def run_prep(
         keep = adata.obs[subset_key].astype(str).to_numpy() == str(subset_value)
         if not keep.any():
             raise PrepError(f"no cells with {subset_key} == {subset_value!r} after QC")
+        before = adata
         adata = adata[keep].copy()
         steps.append({"step": "subset_context", "n_cells_after": int(adata.n_obs),
                       "n_genes_after": int(adata.n_vars),
                       "detail": f"kept {int(keep.sum())} cells with {subset_key} == {subset_value!r}"})
+        warnings_list.extend(ledger.record("subset_context", before, adata))
+        del before
         mask_ctx = _nnz_per_gene(adata.X) >= t.min_cells_per_gene
+        before = adata
         if not mask_ctx.all():
             adata = adata[:, mask_ctx].copy()
         steps.append({"step": "filter_genes_in_context",
                       "n_cells_after": int(adata.n_obs), "n_genes_after": int(adata.n_vars),
                       "detail": f"removed {int((~mask_ctx).sum())} genes detected in < "
                                 f"{t.min_cells_per_gene} cells of this context"})
+        warnings_list.extend(ledger.record("filter_genes_in_context", before, adata))
+        del before
         if adata.n_vars == 0 and adata.n_obs > 0:
             raise PrepError(f"every gene was filtered out of {subset_key} == {subset_value!r}: none is detected in "
                             f"{t.min_cells_per_gene} or more of its {adata.n_obs} cells (--min-cells-per-gene)")
@@ -444,12 +473,15 @@ def run_prep(
                                      replace=False))
             kind = ("random (requested)" if subsample_mode == "random"
                     else "random (no stratify key)")
+        before = adata
         adata = adata[idx].copy()
         steps.append({"step": "subsample_cells",
                       "n_cells_after": int(adata.n_obs), "n_genes_after": int(adata.n_vars),
                       "mode": effective_subsample_mode,
                       "stratification": strat_info, "n_unlabelled_excluded": n_unlabelled,
                       "detail": f"{kind}, to {int(subsample_cells)} cells (seed={seed})"})
+        warnings_list.extend(ledger.record("subsample_cells", before, adata))
+        del before
 
     # -- 6. normalization strategy ------------------------------------------- #
     params: dict = {}
@@ -492,16 +524,23 @@ def run_prep(
                         f"the processed matrix; refusing to write it, inference cannot use it")
     steps.append({"step": "strategy", **prov,
                   "n_cells_after": int(processed.n_obs), "n_genes_after": int(processed.n_vars)})
+    # pseudobulk and metacells return aggregates, not a subset of the cells they were given
+    warnings_list.extend(ledger.record(
+        "strategy", adata, processed,
+        aggregated=not bool(processed.obs_names.isin(adata.obs_names).all())))
 
     # -- 7. optional feature selection (HVG union TFs) ------------------------ #
     feature_report = None
     if n_hvg is not None:
+        before = processed
         processed, feature_report = select_features(processed, n_hvg=int(n_hvg),
                                                     tf_list=tf_list)
         steps.append({"step": "feature_selection",
                       "n_cells_after": int(processed.n_obs),
                       "n_genes_after": int(processed.n_vars),
                       "detail": ", ".join(f"{k}={v}" for k, v in feature_report.items())})
+        warnings_list.extend(ledger.record("feature_selection", before, processed))
+        del before
     tf_coverage = None
     if tf_list:
         matched, requested = match_tfs_in_data(tf_list, processed.var_names)
@@ -550,6 +589,7 @@ def run_prep(
             "label_audit": label_report,
             "gene_id_type": id_verdict,
             "organism_hint": organism,
+            "retention": ledger.rows,
         },
     )
     write_json(manifest_path, manifest)

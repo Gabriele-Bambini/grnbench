@@ -242,3 +242,16 @@ def test_the_terminal_summary_repeats_the_manifest_warnings(tmp_path, capsys):
     coverage = [w for w in manifest["warnings"] if "TF coverage low" in w]
     assert coverage and "\nWarnings:\n" in text and f"  ! {coverage[0]}" in text
     assert text.index("Warnings:") < text.index("Recommendations:")
+
+
+def test_an_output_folder_named_like_a_placeholder_keeps_the_failure_message(tmp_path, monkeypatch):
+    """`--out path` is passed to the redaction as a sensitive value; '<path>' used to nest into
+    '<<path>>' until the whole message was withheld (#177 re-review)."""
+    from grnbench.diagnostics import read_diagnostics
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["missing.h5ad", "--out", "path"]) == 1
+    failure = read_diagnostics(tmp_path / "path" / "diagnostics.json")["prep"]["default"]["all_cells"]["failure"]
+    assert failure["category"] == "prep_error"
+    assert "<path>" in failure["message"] and "<<" not in failure["message"]
+    assert failure["message"] != "<message withheld>"

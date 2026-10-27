@@ -599,7 +599,25 @@ def _diagnostics_section(document: dict | None) -> str:
         '<div class="scroll"><table><thead><tr><th>stage</th><th>candidate/model</th>'
         '<th>context</th><th>outcome</th><th>before</th><th>after</th><th>choices</th>'
         '<th>failure</th></tr></thead><tbody>' + "".join(rows) + "</tbody></table></div>"
+        + _retention_section(view)
     )
+
+
+def _retention_section(view: dict) -> str:
+    from grnbench.diagnostics import RETENTION_COLUMNS, RETENTION_NOTE, retention_sections
+
+    sections = retention_sections(view)
+    if not sections:
+        return ""
+    head = "".join(f"<th>{_e(c)}</th>" for c in RETENTION_COLUMNS)
+    blocks = [f'<h3>Retention ledger</h3><p class="sub">{_e(RETENTION_NOTE)}</p>']
+    for entry, rows in sections:
+        body = "".join("<tr>" + "".join(f"<td>{_e(v)}</td>" for v in row) + "</tr>" for row in rows)
+        blocks.append(
+            f'<p class="sub">{_e(entry["stage"])} <code>{_e(entry["name"])}</code>, '
+            f'context <code>{_e(entry["context"])}</code></p>'
+            f'<div class="scroll"><table><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></div>')
+    return "".join(blocks)
 
 def render_html(report: dict, prep_manifest: dict | None = None,
                 diagnostics: dict | None = None) -> str:

@@ -40,7 +40,7 @@ Updated: 2026-10-20.
 ## Code (`src/grnbench/`)
 | area | modules |
 |---|---|
-| ingest + preprocessing | `ingest` (formats -> counts AnnData), `pipeline` (`run_prep`, every step in `manifest.json`), `qc` (loud gates), `hygiene` (doublets, metadata), `features` (HVG with TF union), `strategies` (pseudobulk, metacells, ...) |
+| ingest + preprocessing | `ingest` (formats -> counts AnnData), `pipeline` (`run_prep`, every step in `manifest.json`), `retention` (ledger: cells, genes and named TFs each step removed; warns when a gene filter drops a detected TF), `qc` (loud gates), `hygiene` (doublets, metadata), `features` (HVG with TF union), `strategies` (pseudobulk, metacells, ...) |
 | cleaning engine | `kb` (stages, options, evidence, references), `context` (what the data are), `profile`, `selector` (rules), `autoprep` (plan, execute), `screen` (candidate pipelines on the data, reference split) |
 | R bridge (optional) | `rbridge` (find an Rscript, cached probe, `run_r` / `run_external`, `requirement_status`, `environment_report` / `environment_status`), `r/_wrapper.R` (seed, RNG kind, `session.json`), `r/_probe.R` (versions as one JSON line); not wired into `kb` availability yet |
 | cleaning engine | `kb` (stages, options, evidence, references), `executors` (`PLAN_STEPS`: which options grnbench can run, which are recorded only; refuses imputation, D-002), `context` (what the data are), `profile`, `selector` (rules), `autoprep` (plan, execute), `screen` (candidate pipelines on the data, reference split) |

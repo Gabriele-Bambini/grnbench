@@ -433,7 +433,28 @@ def _diagnostics_tex(document: dict | None) -> str:
         r"\toprule stage & candidate/model & context & outcome & before & after & choices & failure \\ \midrule" + "\n"
         + "\n".join(rows) + "\n" + r"\bottomrule\end{tabular}\end{small}" + "\n"
     )
-    return summary + table
+    return summary + table + _retention_tex(view)
+
+
+def _retention_tex(view: dict) -> str:
+    """The retention ledger rows of the same view (one small table per prep entry)."""
+    from grnbench.diagnostics import RETENTION_COLUMNS, RETENTION_NOTE, retention_sections
+
+    sections = retention_sections(view)
+    if not sections:
+        return ""
+    out = ["\n\\paragraph{Retention ledger} " + tex_escape(RETENTION_NOTE) + "\n"]
+    head = " & ".join(tex_escape(c) for c in RETENTION_COLUMNS) + r" \\ \midrule"
+    for entry, rows in sections:
+        # '>' is not a text glyph in the default (OT1) font encoding: draw the arrow in math mode
+        body = "\n".join(" & ".join(tex_escape(v).replace(" -> ", r" $\to$ ") for v in row) + r" \\"
+                         for row in rows)
+        out.append(
+            tex_escape(f"{entry['stage']} {entry['name']}, context {entry['context']}:") + "\n"
+            # both TF name columns hold up to 20 names: they wrap instead of widening the table
+            r"\begin{small}\begin{tabular}{llllp{0.22\linewidth}p{0.22\linewidth}}" + "\n"
+            r"\toprule " + head + "\n" + body + "\n" + r"\bottomrule\end{tabular}\end{small}" + "\n")
+    return "\n".join(out)
 
 
 def build_report(target: str, exp: str | None = None, out: Path | None = None,

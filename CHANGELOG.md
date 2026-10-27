@@ -7,6 +7,23 @@
   the collection name and citation from the CELLxGENE listing by dataset id, and warns on stderr, per dataset,
   when it cannot (the download goes on). The empty README it wrote before was the cause of C6's
   `n_warnings` 4 -> 3 on rerun (EXP-20261002-LM-1, section 4b); no score was affected.
+- Retention ledger (#176): every cell- or gene-removing step of `run_prep` (cell calling, unlabelled
+  groups, cell and gene filters, QC-gene exclusion, doublets, context subset and its gene filter,
+  subsampling, strategy, feature selection) records cells and genes before/after and, with a TF list,
+  the TFs of that list before/after and the ones it removed, named (first 20, sorted, full counts),
+  in `manifest.json` (`retention`) and in the portable diagnostics; `report.md`, the HTML and the LaTeX
+  reports show it as a generated table. A gene filter that drops a TF detected in the context (non-zero
+  in at least one of its cells) adds one `TF protection:` warning naming the TFs with the number of
+  context cells each was detected in. Accounting only: the kept cells and
+  genes are unchanged (A/B on every simulator preset, the demo and C6). Whether the gene filters should
+  keep detected TFs is an open default decision. Portable diagnostics: `safe_message` is now
+  idempotent (redaction repeats until the text is stable, at most 8 passes; a text still changing,
+  such as a chain of 8 or more ` /N` ratio links, is stored as `<message withheld>`), so every message
+  or gene name a writer stores passes the reader; before, a length cut inside an A/C/G/T run could
+  make the reader refuse a document the writer had just written, and `run_prep` fail after writing
+  its outputs (#177 review). Sensitive values and local user/host names are never matched inside a
+  placeholder (`--out path` no longer nests `<path>`), and the schema's own field names (an explicit
+  list) are not compared with the local user/host names, every other key still is (#177 re-review).
 - Preprocessing plans now tell the truth when a requested option falls back: pseudobulk names the
   ignored batch/normalization choices, per-batch MAD names its global fallback, small matrices name
   the all-gene HVG fallback, and context plans name pooled/largest-type behaviour. Random and
