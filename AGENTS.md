@@ -80,19 +80,48 @@ models need `GRNBENCH_CISTARGET_DIR` pointing at the cisTarget files (`experimen
 - Small commits. **No force-push**, ever, on any shared branch.
 - Every PR: fill `.github/pull_request_template.md` (what, why, experiment IDs, tests with real
   output, risks, handoff). Add a line under `## Unreleased` in `CHANGELOG.md`.
-- Review: one approval from a person other than the author (a team rule: the free plan has no
-  branch protection for private repos, so GitHub does not enforce it; only squash-merge is enabled). Changes to `paper/`, to
-  `src/grnbench/eval/` or to statistical code need a reviewer from the "reviews" column above.
-- **The other human is unavailable** (exam, leave; they said so, or no answer in 2 working days):
-  the owner may merge after an **independent agent review** is posted on the PR. That means a fresh
-  agent session that did not write the PR reads the diff, runs the full suite in a fresh venv from
-  the lock and, for an experiment, reproduces it from the record (section 7). It posts the result as
-  a PR review with the real output (`gh pr review N --comment`, because an account cannot approve
-  its own PR). Merge only when the review leaves no blocking finding open (fixed on the branch, or
-  waived in the PR text with the reason). The review and the squash commit both say "independent
-  agent review, not a second-human review". The other human can reopen or challenge it later: they open
-  an issue citing the PR, and any claim the PR touched goes back to its previous status until the
-  issue is resolved. An agent review never makes a claim `reproduced` (section 8).
+- Review has two tiers (a team rule: the free plan has no branch protection for private repos, so
+  GitHub does not enforce it; only squash-merge is enabled). The PR text says which tier and why.
+  - **Tier 1**: the PR changes no registered number, default, claim, decision or experiment record,
+    and nothing under `paper/` except a new row in `paper/CONTRIBUTIONS.md` naming who did the PR's
+    work (tests, docs, tooling, interface, fixes whose output on registered runs stays identical). One
+    approval from a team member other than the author; an independent agent review run from another
+    team member's side counts as that approval.
+  - **Tier 2**: every other change under `paper/` (claim status, manuscript, tables, figures,
+    reporting text), text anywhere else that states or interprets a scientific result (README, docs),
+    experiment records and results, `src/grnbench/eval/` or statistical code, a default that changes
+    output, a new or changed `D-xxx`. One approval from a person in the "reviews" column other than
+    the author. If review was requested and no such person answers within 2 working days, the author
+    may merge after an **independent agent review** leaves no blocking finding open (fixed on the
+    branch, or waived in the PR text with the reason).
+  - When in doubt, tier 2.
+- An independent agent review is a fresh agent session that did not write the PR: it reads the diff,
+  runs the full suite in a fresh venv from the lock and, for an experiment, reproduces it from the
+  record (section 7). It is posted as a PR review with the real output (`gh pr review N --comment`,
+  because an account cannot approve its own PR), and the review and the squash commit both say
+  "independent agent review, not a second-human review". An agent review never makes a claim
+  `reproduced` (section 8).
+- **Challenge.** Any team member can challenge a merge that rested on an independent agent review, or
+  a PR they believe was merged under the wrong tier: they open an issue citing the PR. Any claim the
+  PR touched goes back to its previous status until the issue is resolved; a misclassified PR then
+  gets the tier-2 review it should have had, and is reverted if that review finds a blocking problem.
+- **Who merges.** Any team member may merge a PR whose approvals are in and that has no open
+  change request, whoever wrote it. They say so on the PR, and the author is not asked first.
+- **Merge train**: approved PRs are merged in one batch, at most once a day, by whoever is around.
+  1. Declare the order on the PRs. Build a train branch from `main` and merge the PRs into it one at a
+     time in that order, one merge commit per PR (`T1` ... `Tn`).
+  2. Conflicts: `CHANGELOG.md` and the rows of `paper/CONTRIBUTIONS.md` are append-only, so both sides
+     are kept. `.projectos/MAP.md` and `.projectos/STATE.md` describe the current state: resolve them
+     by reading, keeping each side's current entries and dropping stale or duplicate ones (never keep
+     both sides blindly, never drop another person's "In progress" entry). Any other conflict, or a
+     resolution that changes what a reviewer approved, stops the train for that PR until its reviewer
+     has looked again.
+  3. Run the full suite once on `Tn`.
+  4. For each PR in order: merge the current `origin/main` into the PR branch (a merge commit, no
+     rebase, no force-push), resolve exactly as on the train, check that `git diff Ti HEAD` is empty,
+     push, then squash-merge. Stop at the first PR where the diff is not empty.
+  5. At the end `git diff Tn origin/main` is empty. Post the order, the suite output and the final
+     `main` commit on the PRs.
 - Merge: **squash-merge** (one commit per PR on `main`; the PR text is the record). Delete the branch.
 - Avoid stacked PRs (B based on A's branch). If you must stack: when A is squash-merged, GitHub
   retargets B to `main` but reports conflicts, because B still carries A's original commits. On B,
