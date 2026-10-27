@@ -259,11 +259,12 @@ def test_kwargs_mirror_what_is_passed_today_under_the_real_parameter_name():
     assert SeedPlan(master=7, policy="master", entry_point="cli_eval").kwargs("stability.model") == \
         {"algorithm_seed": 7}
     assert SeedPlan(entry_point="interface").kwargs("viz") == {"seed": 0}      # the ui/logic figure functions
-    # aracne3 has no seed parameter: nothing to return, but the CLIs pass one (it is dropped)
+    # aracne3 takes a seed (the program's --seed): the interface passes none, so its own 42 applies
     assert SeedPlan(entry_point="interface").kwargs("model.aracne3") == {}
-    assert SeedPlan(entry_point="cli_infer").kwargs("model.aracne3") == {"seed": 42}
-    with pytest.raises(ValueError, match="aracne3"):
-        SeedPlan(entry_point="cli_infer").seed_for("model.aracne3")
+    assert SeedPlan(entry_point="interface").seed_for("model.aracne3") == 42
+    assert SeedPlan(master=7, entry_point="cli_infer").kwargs("model.aracne3") == {"seed": 7}
+    with pytest.raises(ValueError, match="pearson_signed"):
+        SeedPlan(entry_point="cli_infer").seed_for("model.pearson_signed")    # no seed parameter
     with pytest.raises(ValueError, match="community"):
         SeedPlan(entry_point="interface").seed_for("model.community")     # default None: no seed
 

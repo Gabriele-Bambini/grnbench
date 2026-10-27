@@ -1,0 +1,171 @@
+cmake: cmake version 3.31.8
+c++:   c++ (GCC) 11.5.0 20240719 (Red Hat 11.5.0-14)
+ARACNe3 source: 3d8791a23e3bd8fd0d74f3b8d48f912e81d00f14
+ 214af4e592998876dd3e28d24ac9ab022038d338 deps/boost (boost-1.71.0.beta1-2880-g214af4e592)
+ 455fcb7773dedc70ab489109fb12d8abc7fd59b6 deps/gtest (release-1.8.0-3338-g455fcb77)
+-- The CXX compiler identification is GNU 11.5.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- CMake version 3.31.8
+-- Boost: Release build, static libraries, MPI OFF, Python OFF, testing OFF
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Performing Test BOOST_ATOMIC_TARGET_X86
+-- Performing Test BOOST_ATOMIC_TARGET_X86 - Success
+-- Performing Test BOOST_ATOMIC_COMPILER_HAS_SSE2
+-- Performing Test BOOST_ATOMIC_COMPILER_HAS_SSE2 - Success
+-- Performing Test BOOST_ATOMIC_COMPILER_HAS_SSE41
+-- Performing Test BOOST_ATOMIC_COMPILER_HAS_SSE41 - Success
+-- The C compiler identification is GNU 11.5.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Boost.Context: architecture x86_64, binary format elf, ABI sysv, assembler gas, suffix .S, implementation fcontext
+-- The ASM compiler identification is GNU
+-- Found assembler: /usr/bin/cc
+-- Boost.Fiber: NUMA target OS is linux
+CMake Deprecation Warning at deps/boost/libs/filesystem/CMakeLists.txt:10 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+-- Performing Test BOOST_FILESYSTEM_HAS_INIT_PRIORITY
+-- Performing Test BOOST_FILESYSTEM_HAS_INIT_PRIORITY - Success
+-- Performing Test BOOST_FILESYSTEM_HAS_CXX20_ATOMIC_REF
+-- Performing Test BOOST_FILESYSTEM_HAS_CXX20_ATOMIC_REF - Failed
+-- Performing Test BOOST_FILESYSTEM_HAS_STAT_ST_BLKSIZE
+-- Performing Test BOOST_FILESYSTEM_HAS_STAT_ST_BLKSIZE - Success
+-- Performing Test BOOST_FILESYSTEM_HAS_STAT_ST_MTIM
+-- Performing Test BOOST_FILESYSTEM_HAS_STAT_ST_MTIM - Success
+-- Performing Test BOOST_FILESYSTEM_HAS_STAT_ST_MTIMENSEC
+-- Performing Test BOOST_FILESYSTEM_HAS_STAT_ST_MTIMENSEC - Failed
+-- Performing Test BOOST_FILESYSTEM_HAS_STAT_ST_MTIMESPEC
+-- Performing Test BOOST_FILESYSTEM_HAS_STAT_ST_MTIMESPEC - Failed
+-- Performing Test BOOST_FILESYSTEM_HAS_STAT_ST_BIRTHTIMENSEC
+-- Performing Test BOOST_FILESYSTEM_HAS_STAT_ST_BIRTHTIMENSEC - Failed
+-- Performing Test BOOST_FILESYSTEM_HAS_STAT_ST_BIRTHTIMESPEC
+-- Performing Test BOOST_FILESYSTEM_HAS_STAT_ST_BIRTHTIMESPEC - Failed
+-- Performing Test BOOST_FILESYSTEM_HAS_STATX
+-- Performing Test BOOST_FILESYSTEM_HAS_STATX - Success
+-- Performing Test BOOST_FILESYSTEM_HAS_FDOPENDIR_NOFOLLOW
+-- Performing Test BOOST_FILESYSTEM_HAS_FDOPENDIR_NOFOLLOW - Success
+-- Performing Test BOOST_FILESYSTEM_HAS_DIRENT_D_TYPE
+-- Performing Test BOOST_FILESYSTEM_HAS_DIRENT_D_TYPE - Success
+-- Performing Test BOOST_FILESYSTEM_HAS_POSIX_AT_APIS
+-- Performing Test BOOST_FILESYSTEM_HAS_POSIX_AT_APIS - Success
+-- Found ZLIB: /usr/lib64/libz.so (found version "1.2.11")
+-- Found BZip2: /usr/lib64/libbz2.so (found version "1.0.8")
+-- Found LibLZMA: /usr/lib64/liblzma.so (found version "5.2.5")
+-- Performing Test BOOST_IOSTREAMS_HAS_LZMA_CPUTHREADS
+-- Performing Test BOOST_IOSTREAMS_HAS_LZMA_CPUTHREADS - Success
+-- Boost.Iostreams: ZLIB ON, BZip2 ON, LZMA ON (multithreaded), Zstd OFF
+-- Performing Test Iconv_IS_BUILT_IN
+-- Performing Test Iconv_IS_BUILT_IN - Success
+-- Found Iconv: built in to C library
+-- Found ICU: /usr/include (found version "67.1") found components: data i18n uc
+-- Boost.Locale: iconv ON, ICU ON, POSIX ON, std ON, winapi OFF
+CMake Deprecation Warning at deps/boost/libs/log/CMakeLists.txt:6 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+-- Performing Test BOOST_LOG_TARGET_X86
+-- Performing Test BOOST_LOG_TARGET_X86 - Success
+-- Performing Test BOOST_LOG_HAS_LOCK_FREE_ATOMIC_INT32
+-- Performing Test BOOST_LOG_HAS_LOCK_FREE_ATOMIC_INT32 - Success
+-- Performing Test BOOST_LOG_COMPILER_HAS_SSSE3
+-- Performing Test BOOST_LOG_COMPILER_HAS_SSSE3 - Success
+-- Performing Test BOOST_LOG_COMPILER_HAS_AVX2
+-- Performing Test BOOST_LOG_COMPILER_HAS_AVX2 - Success
+-- Performing Test BOOST_LOG_HAS_NATIVE_SYSLOG
+-- Performing Test BOOST_LOG_HAS_NATIVE_SYSLOG - Success
+-- Boost.Math: standalone mode OFF
+-- Boost.Multiprecision: standalone mode OFF
+-- Found OpenSSL: /usr/lib64/libcrypto.so (found version "3.5.5")
+CMake Deprecation Warning at deps/boost/libs/nowide/CMakeLists.txt:16 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+-- Performing Test BOOST_NOWIDE_HAS_LFS
+-- Performing Test BOOST_NOWIDE_HAS_LFS - Success
+-- Performing Test BOOST_NOWIDE_HAS_INIT_PRIORITY
+-- Performing Test BOOST_NOWIDE_HAS_INIT_PRIORITY - Success
+CMake Deprecation Warning at deps/boost/libs/predef/CMakeLists.txt:23 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+-- Performing Test BOOST_STACKTRACE_HAS_BACKTRACE
+-- Performing Test BOOST_STACKTRACE_HAS_BACKTRACE - Failed
+-- Performing Test BOOST_STACKTRACE_HAS_WINDBG
+-- Performing Test BOOST_STACKTRACE_HAS_WINDBG - Failed
+-- Performing Test BOOST_STACKTRACE_HAS_WINDBG_CACHED
+-- Performing Test BOOST_STACKTRACE_HAS_WINDBG_CACHED - Failed
+-- Boost.Stacktrace: noop ON, backtrace OFF, addr2line ON, basic ON, windbg OFF, windbg_cached OFF
+-- Boost.Thread: threading API is pthread
+CMake Deprecation Warning at deps/boost/libs/url/CMakeLists.txt:17 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+-- Found OpenMP_CXX: -fopenmp (found version "4.5")
+-- Found OpenMP: TRUE (found version "4.5")
+-- OpenMP package found by include(FindOpenMP)
+-- Configuring done (1116.9s)
+-- Generating done (42.1s)
+-- Build files have been written to: ~/tools/ARACNe3/build
+[  0%] Building CXX object deps/boost/libs/random/CMakeFiles/boost_random.dir/src/random_device.cpp.o
+[  0%] Building C object deps/boost/libs/container/CMakeFiles/boost_container.dir/src/alloc_lib.c.o
+[ 25%] Building CXX object deps/boost/libs/container/CMakeFiles/boost_container.dir/src/dlmalloc.cpp.o
+[ 25%] Building CXX object deps/boost/libs/container/CMakeFiles/boost_container.dir/src/global_resource.cpp.o
+[ 25%] Building CXX object deps/boost/libs/container/CMakeFiles/boost_container.dir/src/monotonic_buffer_resource.cpp.o
+[ 25%] Building CXX object deps/boost/libs/container/CMakeFiles/boost_container.dir/src/pool_resource.cpp.o
+[ 50%] Building CXX object deps/boost/libs/container/CMakeFiles/boost_container.dir/src/synchronized_pool_resource.cpp.o
+[ 50%] Building CXX object deps/boost/libs/container/CMakeFiles/boost_container.dir/src/unsynchronized_pool_resource.cpp.o
+[ 50%] Linking CXX static library libboost_container.a
+[ 50%] Built target boost_container
+[ 50%] Linking CXX static library libboost_random.a
+[ 50%] Built target boost_random
+[ 75%] Building CXX object src/app/CMakeFiles/ARACNe3_lib.dir/cmdline_parser.cpp.o
+[ 75%] Building CXX object src/app/CMakeFiles/ARACNe3_lib.dir/stopwatch.cpp.o
+[ 75%] Building CXX object src/app/CMakeFiles/ARACNe3_lib.dir/io.cpp.o
+[ 75%] Building CXX object src/app/CMakeFiles/ARACNe3_lib.dir/algorithms.cpp.o
+[ 75%] Building CXX object src/app/CMakeFiles/ARACNe3_lib.dir/apmi_nullmodel.cpp.o
+[100%] Building CXX object src/app/CMakeFiles/ARACNe3_lib.dir/subnet_operations.cpp.o
+[100%] Linking CXX static library libARACNe3_lib.a
+[100%] Built target ARACNe3_lib
+[100%] Building CXX object src/app/CMakeFiles/ARACNe3_app.dir/ARACNe3.cpp.o
+[100%] Linking CXX executable ARACNe3_app_release
+[100%] Built target ARACNe3_app
+program sha256: 29e6e77d09137dcaed428d24021c1f88708f986c7c9f606a0906873b7f3fca03
+	libgomp.so.1 => /lib64/libgomp.so.1 (0x00007f9a3b014000)
+	libstdc++.so.6 => /lib64/libstdc++.so.6 (0x00007f9a3ac00000)
+called without arguments: exit status 1
+usage: ~/tools/ARACNe3/build/src/app/ARACNe3_app_release -e path/to/matrix.txt -r path/to/regulators.txt -o path/to/output/directory

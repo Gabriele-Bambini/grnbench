@@ -2,7 +2,9 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-10-26 (retention ledger, GB's agent); 2026-10-22 (#132 plan/runtime truth, LD); 2026-10-15 (#87, #71, #69 merged at GB's request, GB's agent); 2026-10-10
+Updated: 2026-10-26 (retention ledger, GB's agent); 2026-10-23 (ARACNe3 branch: main merged in, relative binary path fixed, GB's agent); 2026-10-22 (#132 plan/runtime truth, LD);
+2026-10-18 (ARACNe3 HPC build and smoke run, EXP-20261018-GB-1, issue #109, GB's agent); 2026-10-17 (ARACNe3 adapter, issue #105, GB's agent);
+2026-10-15 (#87, #71, #69 merged at GB's request, GB's agent); 2026-10-10
 (issue #59, LD; interface branch merged with main after #55, GB's agent); 2026-10-09
 (interface redesign; tool end to end, GB's agent); 2026-10-07 (interface explorer, GB's agent);
 2026-10-06 (EXP-20261003-GB-1: review fixes and record note 2.1 on PR #55, agent);
@@ -25,6 +27,14 @@ pre-registered experiments (D-017).
   to 5 on C6; 29 of the 60 in a single cell); no preset loses a TF. Open decision for GB: protect
   detected TFs from the gene filters (a default change; not in this PR). `safe_message` is now
   idempotent (#177 review): every diagnostics writer output passes the reader.
+- ARACNe3 adapter (GB, `gb/aracne3-cli`, issue #105): `aracne3` now drives the real native ARACNe3
+  program (califano-lab/ARACNe3 at `3d8791a`; `GRNBENCH_ARACNE3_BIN` or on PATH) instead of a jar
+  command that no tool accepts. Command, input files and output parser are tested with a stand-in, and
+  the first HPC build and smoke run against the real program (EXP-20261018-GB-1, issue #109) found it
+  works as written: same-seed runs repeat exactly with `threads=1`; with 4 threads the null model
+  differs between runs (the network did not, on that subset), so the default stays 1. ARACNe3 is built
+  in `~/tools/ARACNe3` on GB's account (`hpc/README.md`). Next: an exploratory record that scores
+  `aracne3` on real data (consider more subnetworks, `-x`).
 - Block 6 of the Phase 0 plan (points 13-17: motif-prior sources, multiplicity, C4's EPR, C7, GB-1
   stage 2; GB, separate track, reviewer LM). Step 15-1 done on `gb/epr-power-diagnosis` (#127):
   `grnbench.eval.power` (power of the paired t, G*Power matched-pairs model) and

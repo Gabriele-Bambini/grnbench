@@ -74,7 +74,7 @@ def test_methods_list_reports_unavailable_reasons(capsys):
     # availability is data: either it runs here, or the exact missing piece is named
     assert "available" in aracne.lower()
     if "UNAVAILABLE" in aracne:
-        assert "java" in aracne or "ARACNE3_JAR" in aracne
+        assert "GRNBENCH_ARACNE3_BIN" in aracne
 
 
 # --------------------------------------------------------------------------- #
@@ -483,8 +483,10 @@ def test_python_dash_m_grnbench_works():
     assert out.returncode == 0 and "grnbench" in out.stdout
 
 
-def test_an_unavailable_method_is_skipped_loudly_and_the_others_still_run_and_are_scored(tmp_path, dataset, capsys):
-    """Naming a method that cannot run here (aracne3 needs java) used to abort `run` before evaluation."""
+def test_an_unavailable_method_is_skipped_loudly_and_the_others_still_run_and_are_scored(tmp_path, dataset, capsys,
+                                                                                         monkeypatch):
+    """Naming a method that cannot run here (aracne3 needs the ARACNe3 program) used to abort `run` before evaluation."""
+    monkeypatch.setenv("GRNBENCH_ARACNE3_BIN", str(tmp_path / "no-aracne3"))   # unavailable on every machine
     src, tfs = dataset
     stage = tmp_path / "stage"
     assert run_main(["--data", str(src), "--out", str(stage), "--tf-list", str(tfs), "--n-hvg", "120",
@@ -500,7 +502,8 @@ def test_an_unavailable_method_is_skipped_loudly_and_the_others_still_run_and_ar
     assert (out / "eval" / "eval_report.json").exists(), "the methods that ran are evaluated"
 
 
-def test_nothing_runnable_is_still_an_error(tmp_path, dataset):
+def test_nothing_runnable_is_still_an_error(tmp_path, dataset, monkeypatch):
+    monkeypatch.setenv("GRNBENCH_ARACNE3_BIN", str(tmp_path / "no-aracne3"))   # unavailable on every machine
     src, tfs = dataset
     assert infer_main([str(src), "--out", str(tmp_path / "o"), "--methods", "aracne3"]) == 2
 

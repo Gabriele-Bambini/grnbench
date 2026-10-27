@@ -1,0 +1,19 @@
+exit status: 0
+--- stdout ---
+Directory Created: "<tmp>/out/".
+Directory Created: "./.ARACNe3_cached/".
+Directory Created: "<tmp>/out/subnets/".
+Directory Created: "<tmp>/out/subnets_log/".
+
+---------Sun Oct 18 03:40:36 2026 CEST---------
+Beginning ARACNe3 instance.  See logs and progress reports in "<tmp>/out/log_grnbench.txt".
+
+Total N Samples: 500
+Subsampled N Samples: 317
+...subnetwork 1 completed = 478 edges returned...
+SUCCESS!
+
+--- stderr ---
+
+--- adapter ---
+ok

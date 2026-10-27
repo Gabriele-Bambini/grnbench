@@ -13,7 +13,7 @@ through an object outside that list, nor arithmetic on a seed inside a callee it
 A LEGACY cell is an int (that seed is passed), ``MASTER`` (the user's ``--seed``: ``SeedPlan.master``),
 ``TASK`` (the benchmark task's seed) or ``UNSEEDED`` (no seed is passed, so the callee's own default
 applies). The ``library`` row holds those defaults; ``None`` there means the default is None (nothing is
-passed on). A model without a seed parameter (aracne3, the correlation methods) has no library row.
+passed on). A model without a seed parameter (the correlation methods) has no library row.
 ``model.*`` is the row for every registered model at that entry point.
 
 :data:`KNOBS` follow the call site: components fed by one ``seed=`` int share a knob, and so one seed under
@@ -22,7 +22,7 @@ every policy. :data:`PARAMS` give the parameter name each component's seed goes 
 One run can span two entry points: ``quick_run(screen=True)`` in the interface is
 ``interface_screening`` (the screening) and then ``interface`` (the cleaning, the models, the figures).
 
-Not covered (their seeds are not in LEGACY, see :data:`NOT_COVERED`): beeline_backtest.py,
+Not covered (their seeds are not in LEGACY, see :data:`NOT_COVERED`): aracne3_smoke.py, beeline_backtest.py,
 motif_sensitivity.py, calibration.py, demo.py, plugins.py (Python and entry-point plugin runners),
 explore.py, rbridge.py, epr_power.py.
 """
@@ -61,6 +61,8 @@ Cell = Union[int, None, Literal[Marker.TASK, Marker.MASTER, Marker.UNSEEDED]]
 
 # Seeds this module does not record, with where they live (paths from the repository root).
 NOT_COVERED: tuple[tuple[str, str], ...] = (
+    ("benchmarks/aracne3_smoke.py", "EXP-20261018-GB-1: --seed 42 to the adapter, --subset-seed 0 for the "
+                                    "cell subset"),
     ("benchmarks/beeline_backtest.py", "BEELINE back-test: --seed 42 to the runners and the nulls"),
     ("benchmarks/motif_sensitivity.py", "EXP-20261003-GB-1: its permutation seeds range(n_perm) and "
                                         "bootstrap seed 0 stay in the script"),
@@ -119,8 +121,7 @@ def derive(master: int, component: str, replicate: int | None = None) -> int:
 # src/grnbench/, except real_bench.py, engine_bench.py and candidate_study.py, which are in benchmarks/.
 _LEGACY: dict[str, dict[str, Cell]] = {
     # Each function's own default when called with no seed: src/grnbench, plus viz.SEED,
-    # simulate.Scenario.seed and benchmarks/candidate_study.degrade. model.aracne3 has no row:
-    # run_aracne3 (infer/aracne3.py:33) has no seed parameter and the jar gets none.
+    # simulate.Scenario.seed and benchmarks/candidate_study.degrade.
     "library": {
         "prep.sampling": 42,                  # pipeline.py:128, its one rng at :153
         "prep.doublets": 0,                   # hygiene.py:259, scrublet random_state at :288
@@ -144,6 +145,7 @@ _LEGACY: dict[str, dict[str, Cell]] = {
         "model.grnboost2_motif": 42,          # infer/cistarget.py:330-332 hands **params to grnboost2
         "model.regdiffusion_motif": 0,        # infer/cistarget.py:330-332 -> regdiffusion
         "model.grnboost2_cistarget": 42,      # infer/cistarget.py:255-257 -> grnboost2
+        "model.aracne3": 42,                  # infer/aracne3.py:142, the program's --seed (:184)
         "plugin.command": 42,                 # plugins.py:374, the runner of every command plugin
         "eval.null": 42,                      # eval/nulls.py:82, SeedSequence(seed).spawn at :119
         "eval.stability": 42,                 # eval/stability.py:27, rng :37
@@ -160,8 +162,7 @@ _LEGACY: dict[str, dict[str, Cell]] = {
         "prep.doublets": MASTER,              # run_prep passes its seed on: pipeline.py:346
         "prep.metacells": MASTER,             # pipeline.py:447
     },
-    # grnbench infer: run_method(seed=args.seed) for every runner, so regdiffusion gets 42, not its 0,
-    # and aracne3 gets a seed that it drops (**_)
+    # grnbench infer: run_method(seed=args.seed) for every runner, so regdiffusion gets 42, not its 0
     "cli_infer": {
         "model.*": MASTER,                    # cli_infer.py:53 --seed (default 42), passed at :179
     },
@@ -359,7 +360,7 @@ def _runner_seed(name: str) -> tuple[bool, object]:
 
 
 def _has_seed(component: str) -> bool:
-    """False for a model whose runner takes no seed (aracne3, the correlation methods)."""
+    """False for a model whose runner takes no seed (the correlation methods)."""
     return not component.startswith("model.") or _runner_seed(component[len("model."):])[0]
 
 
@@ -427,7 +428,7 @@ class SeedPlan:
         """The effective seed of ``component``: what its random calls really use.
 
         A cell that passes no seed gives the callee's default (grnboost2 42, regdiffusion 0). A model
-        whose runner takes no seed (aracne3) raises: it has no effective seed. A loop that fans out
+        whose runner takes no seed (pearson_signed) raises: it has no effective seed. A loop that fans out
         (replicates) asks here with ``replicate=``; :meth:`kwargs` takes none.
         """
         cell = self._cell(component)

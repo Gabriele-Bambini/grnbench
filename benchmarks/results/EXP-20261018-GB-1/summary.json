@@ -1,0 +1,808 @@
+{
+  "experiment": "EXP-20261018-GB-1",
+  "code_commit": "6927b9fd353541f1a9e006f7438f84bec63f0de5",
+  "grnbench_imported_from": "src/grnbench",
+  "aracne3": {
+    "binary": "~/tools/ARACNe3/build/src/app/ARACNe3_app_release",
+    "unavailable_reason": "",
+    "binary_sha256": "29e6e77d09137dcaed428d24021c1f88708f986c7c9f606a0906873b7f3fca03",
+    "source_commit": "3d8791a23e3bd8fd0d74f3b8d48f912e81d00f14",
+    "submodules": [
+      "214af4e592998876dd3e28d24ac9ab022038d338 deps/boost (boost-1.71.0.beta1-2880-g214af4e592)",
+      " 455fcb7773dedc70ab489109fb12d8abc7fd59b6 deps/gtest (release-1.8.0-3338-g455fcb77)"
+    ]
+  },
+  "environment": {
+    "python": "3.11.17",
+    "numpy": "2.4.6",
+    "pandas": "2.3.3",
+    "anndata": "0.12.19",
+    "scanpy": "1.11.5",
+    "slurm_job_id": "705969",
+    "slurm_cpus_per_task": "4",
+    "omp_num_threads": null
+  },
+  "inputs": [
+    {
+      "path": "10x_pbmc3k/filtered/filtered_gene_bc_matrices/hg19/matrix.mtx",
+      "bytes": 28179564,
+      "sha256": "7d92358b9d29128a225c50f2a662d6ccca9c71bc665e0af82692ed1361eb94e4",
+      "registered_sha256": "7d92358b9d29128a225c50f2a662d6ccca9c71bc665e0af82692ed1361eb94e4",
+      "matches_registry": true
+    },
+    {
+      "path": "10x_pbmc3k/filtered/filtered_gene_bc_matrices/hg19/genes.tsv",
+      "bytes": 816952,
+      "sha256": "8778dd78085086be6dcafa8334f95f7cf76b25526e8ef2b63186db5127a1492c",
+      "registered_sha256": "8778dd78085086be6dcafa8334f95f7cf76b25526e8ef2b63186db5127a1492c",
+      "matches_registry": true
+    },
+    {
+      "path": "10x_pbmc3k/filtered/filtered_gene_bc_matrices/hg19/barcodes.tsv",
+      "bytes": 45900,
+      "sha256": "58c2a224a2b4258f7e8799a18890bda6d23824b247b80db2b08a0dcc36a4c660",
+      "registered_sha256": "58c2a224a2b4258f7e8799a18890bda6d23824b247b80db2b08a0dcc36a4c660",
+      "matches_registry": true
+    },
+    {
+      "path": "references/collectri_human.tsv",
+      "bytes": 478410,
+      "sha256": "ecd3aee0da83bfaa5df95e93e3e130612cc614e2695fc8f699902893ad3262e9",
+      "registered_sha256": "4e5597b16a0e795804e1ee0d47bbb420e144e9c0878f8b2ea05cac34be7e303f",
+      "matches_registry": false
+    }
+  ],
+  "subset": {
+    "cells_in_dataset": 2700,
+    "genes_in_dataset": 32639,
+    "cells": 500,
+    "genes_detected": 2138,
+    "regulators_detected": 105,
+    "genes": 300,
+    "regulators": 30,
+    "subset_seed": 0,
+    "min_detected": 0.1,
+    "requested": {
+      "cells": 500,
+      "genes": 300,
+      "tfs": 30
+    }
+  },
+  "seed": 42,
+  "relaxed": false,
+  "runs": [
+    {
+      "label": "t1_a",
+      "threads": 1,
+      "seed": 42,
+      "extra_args": [],
+      "status": "ok",
+      "error": null,
+      "n_edges": 478,
+      "provenance": {
+        "method": "aracne3",
+        "origin": "builtin",
+        "n_edges": 478,
+        "self_loops_dropped": 0,
+        "normalization": "assume_normalized=True; used X as-is",
+        "regulators": "tf_list",
+        "params": {
+          "threads": "1",
+          "seed": "42"
+        }
+      },
+      "top_edges": [
+        {
+          "source": "SPI1",
+          "target": "CST3",
+          "weight": 0.226802,
+          "direction": 1
+        },
+        {
+          "source": "SPI1",
+          "target": "LST1",
+          "weight": 0.225438,
+          "direction": 1
+        },
+        {
+          "source": "SPI1",
+          "target": "FTL",
+          "weight": 0.21451,
+          "direction": 1
+        },
+        {
+          "source": "GTF3A",
+          "target": "ARL6IP5",
+          "weight": 0.206605,
+          "direction": -1
+        },
+        {
+          "source": "SPI1",
+          "target": "TYROBP",
+          "weight": 0.201013,
+          "direction": 1
+        }
+      ],
+      "seconds": 5.901,
+      "program_calls": 1,
+      "aracne3": {
+        "argv": [
+          "~/tools/ARACNe3/build/src/app/ARACNe3_app_release",
+          "-e",
+          "<tmp>/expr.tsv",
+          "-r",
+          "<tmp>/regulators.txt",
+          "-o",
+          "<tmp>/out",
+          "--seed",
+          "42",
+          "--threads",
+          "1",
+          "--runid",
+          "grnbench"
+        ],
+        "returncode": 0,
+        "seconds": 5.405,
+        "inputs": {
+          "-e": {
+            "sha256": "43ea49d4fe6bbc9922cb9ea177201af35066043aaec55fa8d90c681a3696a164",
+            "lines": 301,
+            "first_line_tabs": 500
+          },
+          "-r": {
+            "sha256": "c152c5b36669c5390c2133539d9c5ea57cd705ea885eca2c32aa1bb551841071",
+            "lines": 30,
+            "first_line_tabs": 0
+          }
+        },
+        "null_model_sha256": {
+          "Nssamp-317_Nnull-1000000.txt": "5a1048b4f1e97418286a54a96ff69d3f6d073a1b2812169ac3ee32a0a9a21b50",
+          "Nssamp-317_Nnull-1000000_OLS.txt": "6c3a7c896714828fbc106a8d70badb9f190236b0e08df885de9dadbef01c91c4"
+        }
+      },
+      "consolidated": {
+        "file": "consolidated-net_grnbench.tsv",
+        "present": true,
+        "sha256": "6fd63449b15de9d2d97470bf4c444e8b87e402bbcfcecfbd02f838d97f0e9a8e",
+        "header": [
+          "regulator.values",
+          "target.values",
+          "mi.values",
+          "scc.values",
+          "count.values",
+          "log.p.values"
+        ],
+        "rows": 478,
+        "first_rows": [
+          [
+            "KLF6",
+            "GLTSCR2",
+            "0.0020494",
+            "1.008e-05",
+            "1",
+            "-5.86842"
+          ],
+          [
+            "KLF6",
+            "GIMAP4",
+            "0.100064",
+            "-0.0357319",
+            "1",
+            "-5.86842"
+          ],
+          [
+            "KLF6",
+            "PRELID1",
+            "0.0316517",
+            "0.16964",
+            "1",
+            "-5.86842"
+          ],
+          [
+            "KLF6",
+            "SRSF7",
+            "0.0710388",
+            "0.0307703",
+            "1",
+            "-5.86842"
+          ],
+          [
+            "KLF6",
+            "ARPC2",
+            "0.0645673",
+            "0.0523629",
+            "1",
+            "-5.86842"
+          ]
+        ],
+        "columns": {
+          "regulators_with_edges": 30,
+          "mi_min": 0.0,
+          "mi_median": 0.056187249999999994,
+          "mi_max": 0.226802,
+          "mi_zero_rows": 6,
+          "scc_positive": 279,
+          "scc_negative": 199,
+          "scc_zero": 0,
+          "count_values": [
+            1
+          ],
+          "distinct_log_p_values": 1
+        }
+      },
+      "log_times_s": {
+        "Gene expression matrix & regulators list read": 0.0,
+        "Mutual Information null model calculation": 5.0,
+        "Creating subnetwork(s)": 0.0,
+        "Consolidating subnetwork(s)": 0.0
+      },
+      "log_says_success": true,
+      "total_samples": 500,
+      "subsampled_samples": 317,
+      "parsed": true
+    },
+    {
+      "label": "t1_b",
+      "threads": 1,
+      "seed": 42,
+      "extra_args": [],
+      "status": "ok",
+      "error": null,
+      "n_edges": 478,
+      "provenance": {
+        "method": "aracne3",
+        "origin": "builtin",
+        "n_edges": 478,
+        "self_loops_dropped": 0,
+        "normalization": "assume_normalized=True; used X as-is",
+        "regulators": "tf_list",
+        "params": {
+          "threads": "1",
+          "seed": "42"
+        }
+      },
+      "top_edges": [
+        {
+          "source": "SPI1",
+          "target": "CST3",
+          "weight": 0.226802,
+          "direction": 1
+        },
+        {
+          "source": "SPI1",
+          "target": "LST1",
+          "weight": 0.225438,
+          "direction": 1
+        },
+        {
+          "source": "SPI1",
+          "target": "FTL",
+          "weight": 0.21451,
+          "direction": 1
+        },
+        {
+          "source": "GTF3A",
+          "target": "ARL6IP5",
+          "weight": 0.206605,
+          "direction": -1
+        },
+        {
+          "source": "SPI1",
+          "target": "TYROBP",
+          "weight": 0.201013,
+          "direction": 1
+        }
+      ],
+      "seconds": 5.665,
+      "program_calls": 1,
+      "aracne3": {
+        "argv": [
+          "~/tools/ARACNe3/build/src/app/ARACNe3_app_release",
+          "-e",
+          "<tmp>/expr.tsv",
+          "-r",
+          "<tmp>/regulators.txt",
+          "-o",
+          "<tmp>/out",
+          "--seed",
+          "42",
+          "--threads",
+          "1",
+          "--runid",
+          "grnbench"
+        ],
+        "returncode": 0,
+        "seconds": 5.404,
+        "inputs": {
+          "-e": {
+            "sha256": "43ea49d4fe6bbc9922cb9ea177201af35066043aaec55fa8d90c681a3696a164",
+            "lines": 301,
+            "first_line_tabs": 500
+          },
+          "-r": {
+            "sha256": "c152c5b36669c5390c2133539d9c5ea57cd705ea885eca2c32aa1bb551841071",
+            "lines": 30,
+            "first_line_tabs": 0
+          }
+        },
+        "null_model_sha256": {
+          "Nssamp-317_Nnull-1000000.txt": "5a1048b4f1e97418286a54a96ff69d3f6d073a1b2812169ac3ee32a0a9a21b50",
+          "Nssamp-317_Nnull-1000000_OLS.txt": "6c3a7c896714828fbc106a8d70badb9f190236b0e08df885de9dadbef01c91c4"
+        }
+      },
+      "consolidated": {
+        "file": "consolidated-net_grnbench.tsv",
+        "present": true,
+        "sha256": "6fd63449b15de9d2d97470bf4c444e8b87e402bbcfcecfbd02f838d97f0e9a8e",
+        "header": [
+          "regulator.values",
+          "target.values",
+          "mi.values",
+          "scc.values",
+          "count.values",
+          "log.p.values"
+        ],
+        "rows": 478,
+        "first_rows": [
+          [
+            "KLF6",
+            "GLTSCR2",
+            "0.0020494",
+            "1.008e-05",
+            "1",
+            "-5.86842"
+          ],
+          [
+            "KLF6",
+            "GIMAP4",
+            "0.100064",
+            "-0.0357319",
+            "1",
+            "-5.86842"
+          ],
+          [
+            "KLF6",
+            "PRELID1",
+            "0.0316517",
+            "0.16964",
+            "1",
+            "-5.86842"
+          ],
+          [
+            "KLF6",
+            "SRSF7",
+            "0.0710388",
+            "0.0307703",
+            "1",
+            "-5.86842"
+          ],
+          [
+            "KLF6",
+            "ARPC2",
+            "0.0645673",
+            "0.0523629",
+            "1",
+            "-5.86842"
+          ]
+        ],
+        "columns": {
+          "regulators_with_edges": 30,
+          "mi_min": 0.0,
+          "mi_median": 0.056187249999999994,
+          "mi_max": 0.226802,
+          "mi_zero_rows": 6,
+          "scc_positive": 279,
+          "scc_negative": 199,
+          "scc_zero": 0,
+          "count_values": [
+            1
+          ],
+          "distinct_log_p_values": 1
+        }
+      },
+      "log_times_s": {
+        "Gene expression matrix & regulators list read": 0.0,
+        "Mutual Information null model calculation": 5.0,
+        "Creating subnetwork(s)": 0.0,
+        "Consolidating subnetwork(s)": 0.0
+      },
+      "log_says_success": true,
+      "total_samples": 500,
+      "subsampled_samples": 317,
+      "parsed": true
+    },
+    {
+      "label": "t4_a",
+      "threads": 4,
+      "seed": 42,
+      "extra_args": [],
+      "status": "ok",
+      "error": null,
+      "n_edges": 478,
+      "provenance": {
+        "method": "aracne3",
+        "origin": "builtin",
+        "n_edges": 478,
+        "self_loops_dropped": 0,
+        "normalization": "assume_normalized=True; used X as-is",
+        "regulators": "tf_list",
+        "params": {
+          "threads": "4",
+          "seed": "42"
+        }
+      },
+      "top_edges": [
+        {
+          "source": "SPI1",
+          "target": "CST3",
+          "weight": 0.226802,
+          "direction": 1
+        },
+        {
+          "source": "SPI1",
+          "target": "LST1",
+          "weight": 0.225438,
+          "direction": 1
+        },
+        {
+          "source": "SPI1",
+          "target": "FTL",
+          "weight": 0.21451,
+          "direction": 1
+        },
+        {
+          "source": "GTF3A",
+          "target": "ARL6IP5",
+          "weight": 0.206605,
+          "direction": -1
+        },
+        {
+          "source": "SPI1",
+          "target": "TYROBP",
+          "weight": 0.201013,
+          "direction": 1
+        }
+      ],
+      "seconds": 2.095,
+      "program_calls": 1,
+      "aracne3": {
+        "argv": [
+          "~/tools/ARACNe3/build/src/app/ARACNe3_app_release",
+          "-e",
+          "<tmp>/expr.tsv",
+          "-r",
+          "<tmp>/regulators.txt",
+          "-o",
+          "<tmp>/out",
+          "--seed",
+          "42",
+          "--threads",
+          "4",
+          "--runid",
+          "grnbench"
+        ],
+        "returncode": 0,
+        "seconds": 1.841,
+        "inputs": {
+          "-e": {
+            "sha256": "43ea49d4fe6bbc9922cb9ea177201af35066043aaec55fa8d90c681a3696a164",
+            "lines": 301,
+            "first_line_tabs": 500
+          },
+          "-r": {
+            "sha256": "c152c5b36669c5390c2133539d9c5ea57cd705ea885eca2c32aa1bb551841071",
+            "lines": 30,
+            "first_line_tabs": 0
+          }
+        },
+        "null_model_sha256": {
+          "Nssamp-317_Nnull-1000000.txt": "f73ce545a0b4b889c0f3183efbbae22bb2f3b4a0c81774c13d53609641d2345c",
+          "Nssamp-317_Nnull-1000000_OLS.txt": "2918fdd2316859ee055eb9ecb3a0dcb3939eed2c0f8d75b360ff63e3a02766a2"
+        }
+      },
+      "consolidated": {
+        "file": "consolidated-net_grnbench.tsv",
+        "present": true,
+        "sha256": "6fd63449b15de9d2d97470bf4c444e8b87e402bbcfcecfbd02f838d97f0e9a8e",
+        "header": [
+          "regulator.values",
+          "target.values",
+          "mi.values",
+          "scc.values",
+          "count.values",
+          "log.p.values"
+        ],
+        "rows": 478,
+        "first_rows": [
+          [
+            "KLF6",
+            "GLTSCR2",
+            "0.0020494",
+            "1.008e-05",
+            "1",
+            "-5.86842"
+          ],
+          [
+            "KLF6",
+            "GIMAP4",
+            "0.100064",
+            "-0.0357319",
+            "1",
+            "-5.86842"
+          ],
+          [
+            "KLF6",
+            "PRELID1",
+            "0.0316517",
+            "0.16964",
+            "1",
+            "-5.86842"
+          ],
+          [
+            "KLF6",
+            "SRSF7",
+            "0.0710388",
+            "0.0307703",
+            "1",
+            "-5.86842"
+          ],
+          [
+            "KLF6",
+            "ARPC2",
+            "0.0645673",
+            "0.0523629",
+            "1",
+            "-5.86842"
+          ]
+        ],
+        "columns": {
+          "regulators_with_edges": 30,
+          "mi_min": 0.0,
+          "mi_median": 0.056187249999999994,
+          "mi_max": 0.226802,
+          "mi_zero_rows": 6,
+          "scc_positive": 279,
+          "scc_negative": 199,
+          "scc_zero": 0,
+          "count_values": [
+            1
+          ],
+          "distinct_log_p_values": 1
+        }
+      },
+      "log_times_s": {
+        "Gene expression matrix & regulators list read": 0.0,
+        "Mutual Information null model calculation": 1.0,
+        "Creating subnetwork(s)": 0.0,
+        "Consolidating subnetwork(s)": 0.0
+      },
+      "log_says_success": true,
+      "total_samples": 500,
+      "subsampled_samples": 317,
+      "parsed": true
+    },
+    {
+      "label": "t4_b",
+      "threads": 4,
+      "seed": 42,
+      "extra_args": [],
+      "status": "ok",
+      "error": null,
+      "n_edges": 478,
+      "provenance": {
+        "method": "aracne3",
+        "origin": "builtin",
+        "n_edges": 478,
+        "self_loops_dropped": 0,
+        "normalization": "assume_normalized=True; used X as-is",
+        "regulators": "tf_list",
+        "params": {
+          "threads": "4",
+          "seed": "42"
+        }
+      },
+      "top_edges": [
+        {
+          "source": "SPI1",
+          "target": "CST3",
+          "weight": 0.226802,
+          "direction": 1
+        },
+        {
+          "source": "SPI1",
+          "target": "LST1",
+          "weight": 0.225438,
+          "direction": 1
+        },
+        {
+          "source": "SPI1",
+          "target": "FTL",
+          "weight": 0.21451,
+          "direction": 1
+        },
+        {
+          "source": "GTF3A",
+          "target": "ARL6IP5",
+          "weight": 0.206605,
+          "direction": -1
+        },
+        {
+          "source": "SPI1",
+          "target": "TYROBP",
+          "weight": 0.201013,
+          "direction": 1
+        }
+      ],
+      "seconds": 2.101,
+      "program_calls": 1,
+      "aracne3": {
+        "argv": [
+          "~/tools/ARACNe3/build/src/app/ARACNe3_app_release",
+          "-e",
+          "<tmp>/expr.tsv",
+          "-r",
+          "<tmp>/regulators.txt",
+          "-o",
+          "<tmp>/out",
+          "--seed",
+          "42",
+          "--threads",
+          "4",
+          "--runid",
+          "grnbench"
+        ],
+        "returncode": 0,
+        "seconds": 1.855,
+        "inputs": {
+          "-e": {
+            "sha256": "43ea49d4fe6bbc9922cb9ea177201af35066043aaec55fa8d90c681a3696a164",
+            "lines": 301,
+            "first_line_tabs": 500
+          },
+          "-r": {
+            "sha256": "c152c5b36669c5390c2133539d9c5ea57cd705ea885eca2c32aa1bb551841071",
+            "lines": 30,
+            "first_line_tabs": 0
+          }
+        },
+        "null_model_sha256": {
+          "Nssamp-317_Nnull-1000000.txt": "6009dffbaae9a3de73a56474e058fe64f5d1174ae1629320f6914a280e59585d",
+          "Nssamp-317_Nnull-1000000_OLS.txt": "b70ec492a271925e7c9e018d9e67315670397682b2b07de4043005688f7b1cea"
+        }
+      },
+      "consolidated": {
+        "file": "consolidated-net_grnbench.tsv",
+        "present": true,
+        "sha256": "6fd63449b15de9d2d97470bf4c444e8b87e402bbcfcecfbd02f838d97f0e9a8e",
+        "header": [
+          "regulator.values",
+          "target.values",
+          "mi.values",
+          "scc.values",
+          "count.values",
+          "log.p.values"
+        ],
+        "rows": 478,
+        "first_rows": [
+          [
+            "KLF6",
+            "GLTSCR2",
+            "0.0020494",
+            "1.008e-05",
+            "1",
+            "-5.86842"
+          ],
+          [
+            "KLF6",
+            "GIMAP4",
+            "0.100064",
+            "-0.0357319",
+            "1",
+            "-5.86842"
+          ],
+          [
+            "KLF6",
+            "PRELID1",
+            "0.0316517",
+            "0.16964",
+            "1",
+            "-5.86842"
+          ],
+          [
+            "KLF6",
+            "SRSF7",
+            "0.0710388",
+            "0.0307703",
+            "1",
+            "-5.86842"
+          ],
+          [
+            "KLF6",
+            "ARPC2",
+            "0.0645673",
+            "0.0523629",
+            "1",
+            "-5.86842"
+          ]
+        ],
+        "columns": {
+          "regulators_with_edges": 30,
+          "mi_min": 0.0,
+          "mi_median": 0.056187249999999994,
+          "mi_max": 0.226802,
+          "mi_zero_rows": 6,
+          "scc_positive": 279,
+          "scc_negative": 199,
+          "scc_zero": 0,
+          "count_values": [
+            1
+          ],
+          "distinct_log_p_values": 1
+        }
+      },
+      "log_times_s": {
+        "Gene expression matrix & regulators list read": 0.0,
+        "Mutual Information null model calculation": 1.0,
+        "Creating subnetwork(s)": 0.0,
+        "Consolidating subnetwork(s)": 0.0
+      },
+      "log_says_success": true,
+      "total_samples": 500,
+      "subsampled_samples": 317,
+      "parsed": true
+    }
+  ],
+  "comparisons": [
+    {
+      "a": "t1_a",
+      "b": "t1_b",
+      "same_consolidated_file": true,
+      "same_null_model": true,
+      "comparable": true,
+      "edges_a": 478,
+      "edges_b": 478,
+      "shared": 478,
+      "jaccard": 1.0,
+      "max_abs_weight_diff": 0.0,
+      "direction_flips": 0,
+      "identical_edges": true
+    },
+    {
+      "a": "t1_a",
+      "b": "t4_a",
+      "same_consolidated_file": true,
+      "same_null_model": false,
+      "comparable": true,
+      "edges_a": 478,
+      "edges_b": 478,
+      "shared": 478,
+      "jaccard": 1.0,
+      "max_abs_weight_diff": 0.0,
+      "direction_flips": 0,
+      "identical_edges": true
+    },
+    {
+      "a": "t4_a",
+      "b": "t4_b",
+      "same_consolidated_file": true,
+      "same_null_model": false,
+      "comparable": true,
+      "edges_a": 478,
+      "edges_b": 478,
+      "shared": 478,
+      "jaccard": 1.0,
+      "max_abs_weight_diff": 0.0,
+      "direction_flips": 0,
+      "identical_edges": true
+    }
+  ],
+  "verdict": {
+    "every_run_returned_a_network": true,
+    "identical_edges": {
+      "t1_a~t1_b": true,
+      "t1_a~t4_a": true,
+      "t4_a~t4_b": true
+    }
+  },
+  "privacy_scan": "clean"
+}

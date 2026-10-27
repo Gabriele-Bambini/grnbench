@@ -11,7 +11,7 @@ resolution, the adapter, ``standardize_edges``) and must return an edge table th
   the genes TFA drives just as strongly but without a motif (a disabled motif step fails).
 
 Only the methods whose dependencies are outside ``requirements/lock-py311.txt`` may skip:
-aracne3 (java on PATH and the jar named by ``ARACNE3_JAR``), regdiffusion and regdiffusion_motif
+aracne3 (the native ARACNe3 program, named by ``GRNBENCH_ARACNE3_BIN`` or on PATH), regdiffusion and regdiffusion_motif
 (the regdiffusion package and torch). ``SKIP_REASONS`` names those dependencies, and a method
 skips only when the registry says it cannot run here and one of them is really absent; the skip
 message is "not tested here: <the registry's reason> (waits for: <dependency>)". Everything else
@@ -59,7 +59,7 @@ SMOKE = {
 # scikit-learn are in the lock file, so genie3, grnboost2 and the motif methods are not listed:
 # they fail when their dependency is missing.
 SKIP_REASONS = {
-    "aracne3": [("executable", "java"), ("env_path", "ARACNE3_JAR")],
+    "aracne3": [("env_path", "GRNBENCH_ARACNE3_BIN")],         # or on PATH: then the registry runs it
     "regdiffusion": [("module", "regdiffusion"), ("module", "torch")],
     "regdiffusion_motif": [("module", "regdiffusion"), ("module", "torch")],
 }

@@ -50,11 +50,12 @@ grnbench methods
 grnbench strategies
 
 echo "=== optional: ARACNe3 ==="
-if command -v java >/dev/null 2>&1; then
-  echo "java: $(java -version 2>&1 | head -1)"
-  echo "set ARACNE3_JAR=/path/to/aracne3.jar to enable the aracne3 adapter"
+if [ -n "${GRNBENCH_ARACNE3_BIN:-}" ] || command -v ARACNe3_app_release >/dev/null 2>&1 \
+     || command -v ARACNe3_app >/dev/null 2>&1; then
+  echo "ARACNe3 program set; 'grnbench methods' above says whether the aracne3 adapter can run"
 else
-  echo "java not on PATH: the aracne3 adapter will report itself unavailable (by design)"
+  echo "ARACNe3 not built: the aracne3 adapter reports itself unavailable (by design)."
+  echo "To enable it, build ARACNe3 (hpc/README.md) and set GRNBENCH_ARACNE3_BIN."
 fi
 
 echo "=== self-test ==="

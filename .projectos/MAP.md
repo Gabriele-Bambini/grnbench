@@ -21,6 +21,8 @@ Updated: 2026-10-23.
   `benchmarks/diff_rows_nested.py` (where two `rows/` folders differ at any depth, timings apart; diagnosis, #95).
 - Motif-prior lift decomposition: `benchmarks/motif_sensitivity.py` (`plan`, `run`, `report`) from a
   `--keep-artifacts` run (EXP-20261003-GB-1); tests `tests/test_motif_sensitivity.py`.
+- ARACNe3 on the HPC: build `hpc/aracne3_build.sbatch`, adapter smoke run `hpc/aracne3_smoke.sbatch` ->
+  `benchmarks/aracne3_smoke.py` (EXP-20261018-GB-1; tests `tests/test_aracne3_smoke.py`). Never on a laptop.
 - C4's EPR comparison re-read from its committed rows, with planning power: `benchmarks/epr_power.py`
   (EXP-20261020-GB-1); tests `tests/test_epr_power.py`.
 - Second-person rerun outputs: `benchmarks/results/EXP-20261003-LM-1-repro-GB/` (#95; record section 4b).

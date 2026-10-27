@@ -1,0 +1,17 @@
+~/tools/ARACNe3/build/src/app/ARACNe3_app_release -e <tmp>/expr.tsv -r <tmp>/regulators.txt -o <tmp>/out --seed 42 --threads 4 --runid grnbench 
+
+---------Sun Oct 18 03:40:49 2026 CEST---------
+Beginning ARACNe3 instance...
+
+Gene expression matrix & regulators list read time: 0s
+
+Mutual Information null model calculation time: 1s
+
+Creating subnetwork(s) time: 0s
+Total subnetworks generated: 1
+
+Consolidating subnetwork(s) time: 0s
+Subnetworks consolidated: 1
+
+Writing final network...
+SUCCESS!

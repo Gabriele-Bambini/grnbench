@@ -348,7 +348,7 @@ def _simulator() -> int:
 
 def _model_internals() -> None:
     """The seed reaches the random calls inside the adapters."""
-    from grnbench.infer import classical, community, regdiffusion_adapter, regression, tree_methods
+    from grnbench.infer import aracne3, classical, community, regdiffusion_adapter, regression, tree_methods
     rel = _src(tree_methods)
     arboreto = _func(rel, "_run_arboreto")
     for call in _calls(arboreto, "create_graph"):
@@ -370,6 +370,11 @@ def _model_internals() -> None:
     for name in ("extra_trees", "gradient_boosting"):
         _hands_on(_func(rel, name), "_per_target_importance")
     _leaf(_func(_src(regdiffusion_adapter), "regdiffusion_runner"))
+    argv = [n for n in ast.walk(_func(_src(aracne3), "run_aracne3")) if isinstance(n, ast.List)
+            and any(isinstance(e, ast.Constant) and e.value == "--seed" for e in n.elts)]
+    assert len(argv) == 1, "run_aracne3: one command line with --seed"
+    flag = next(i for i, e in enumerate(argv[0].elts) if isinstance(e, ast.Constant) and e.value == "--seed")
+    assert ast.unparse(argv[0].elts[flag + 1]) == "str(int(seed))", "run_aracne3 hands its seed to --seed"
     comm = _func(_src(community), "community")
     extra = [n.value for n in ast.walk(comm) if isinstance(n, ast.Assign)
              and any(_is_name(t, "extra") for t in n.targets)]
@@ -660,7 +665,7 @@ def test_library_covers_every_seeded_runner():
         base = inspect.getclosurevars(spec.runner).nonlocals.get("base") if not seeded else None
         seeded = seeded or (base is not None and "seed" in inspect.signature(base).parameters)
         assert (f"model.{name}" in library) == seeded, name
-    assert "model.aracne3" not in library        # no seed parameter, the jar gets none: tied by absence
+    assert library["model.aracne3"] == 42        # the native program's --seed (#105)
 
 
 def test_no_global_seeding():

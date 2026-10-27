@@ -13,7 +13,7 @@ reason. Bring your own model: `examples/plugins/README.md` (D-009).
 | extra | registered, runs with `--methods all` or by name (`--methods bicor,mrnet`). Shown as `[extra]` in `grnbench methods`. |
 | not included | not built in; the reason is in section 3. A plugin can still run it. |
 
-A method that cannot run here (missing package, jar or resource) is listed with its reason, never
+A method that cannot run here (missing package, program or resource) is listed with its reason, never
 hidden (D-006). No score from any extra method is part of a claim until an experiment record
 declares it (section 4).
 
@@ -28,7 +28,7 @@ declares it (section 4).
 | `lasso` | per-target L1 regression over the regulators | scikit-learn |
 | `random_forest` | per-target random-forest importance, GENIE3's estimator without dask | scikit-learn |
 | `genie3`, `grnboost2` | arboreto (Huynh-Thu et al. 2010; Moerman et al. 2019) | arboreto, dask |
-| `aracne3` | the ARACNe3 program | java + `ARACNE3_JAR` |
+| `aracne3` | the ARACNe3 program (Califano lab; native C++, not a jar) | `GRNBENCH_ARACNE3_BIN` or `ARACNe3_app_release` on PATH |
 | `regdiffusion` | diffusion-model adjacency (Zhu & Slonim 2024) | torch |
 | `motif_prior`, `pearson_motif`, `grnboost2_motif`, `regdiffusion_motif`, `pearson_cistarget`, `grnboost2_cistarget` | cisTarget motif prior alone, rank-multiplied with a model, or as pySCENIC's pruning step | `GRNBENCH_CISTARGET_DIR` |
 

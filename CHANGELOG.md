@@ -413,6 +413,45 @@
   one with the strongest evidence (highest weight; the first seen on a tie), no longer the first seen: uns
   "tissue: skeletalmuscle" (weight 2) hid the curated `obs['tissue']` "SkeletalMuscle" (weight 3), read after it,
   and kept the 25% gate (review of #161).
+- `aracne3` now drives the real ARACNe3 program (issue #105). The adapter ran
+  `java -jar $ARACNE3_JAR -i … -o … -t …`, a command that neither ARACNe3 (a native C++ program that
+  needs `-e`, `-r` and `-o`) nor its Java predecessor ARACNe-AP (where `-t` is the TF file) accepts, and
+  it wrote cells as rows. It now runs `ARACNe3_app_release -e expr.tsv -r regulators.txt -o out
+  --seed 42 --threads 1 --runid grnbench` in a fresh temporary working folder, found through
+  `GRNBENCH_ARACNE3_BIN` or PATH (`ARACNE3_JAR` is no longer read), with genes as rows, and reads
+  `consolidated-net_grnbench.tsv` strictly (weight = MI, direction = sign of the Spearman correlation);
+  `extra_args` accepts only flags ARACNe3 reads. Written against upstream commit `3d8791a` and tested
+  with a stand-in for the program (`tests/test_aracne3.py`) and then run against the real program on the
+  HPC, where it works as written (EXP-20261018-GB-1). The method never ran before, so no result changes.
+  A relative `GRNBENCH_ARACNE3_BIN` is made absolute when it is found: the program starts inside its own
+  temporary folder, where the relative path passed the availability check but failed the run (LM review).
+  `grnbench.seeds` now records aracne3's seed (library row `model.aracne3` = 42, the program's `--seed`,
+  traced from the command line) and lists `benchmarks/aracne3_smoke.py` as not covered.
+- ARACNe3 on the HPC (EXP-20261018-GB-1, issue #109): `hpc/aracne3_build.sbatch` builds the pinned
+  upstream program inside a job (the cluster has no cmake; a pinned Kitware binary in `~/tools`) and
+  refuses an incomplete submodule download; `hpc/aracne3_smoke.sbatch` runs `benchmarks/aracne3_smoke.py`,
+  which calls the `aracne3` adapter against the real program on a fixed PBMC3k subset and records the exit
+  status, messages, edges and whether same-seed runs repeat with 1 and 4 threads (`--resummarize` rewrites
+  a finished run's summary from its files). Result: the adapter works as written (exit 0, ARACNe3 read
+  one sample per cell, 478 edges parsed); same-seed runs repeat byte for byte with 1 thread; with 4
+  threads the null model differed between runs while the network did not. `hpc/README.md` has the
+  measured build steps, including the paced retry when GitHub refuses anonymous submodule clones.
+- `aracne3` keeps a finished network when its temporary folder cannot be deleted: on the cluster's BeeGFS
+  home one deletion failed with `EBUSY` after a successful ARACNe3 run, and the network was lost
+  (EXP-20261019-GB-1, issue #125). The network is now returned, `attrs["temporary_folder_left"]` (the run's
+  provenance) names the folder left behind and a `RuntimeWarning` says so; a run that failed still
+  reports its own error. In a bench job neither is visible (`hpc/engine_bench.sbatch` sets
+  `PYTHONWARNINGS=ignore` and `real_bench.py` keeps no provenance), so the folder stays silently in `TMPDIR`;
+  `hpc/README.md` says when to put `TMPDIR` on the node's local disk instead.
+- `aracne3` no longer takes the engine's generic thread count (independent review of #106): `grnbench infer`
+  and `grnbench run` pass `--threads` (4 by default; `hpc/grnbench.sbatch` the job's CPU count) to every
+  method, and with more than one thread ARACNe3's null model does not repeat from the seed
+  (EXP-20261018-GB-1). ARACNe3 now gets `--threads 1` unless the aracne3-specific `aracne3_threads` asks for
+  more; `method_info.threads` in the run's provenance is the count it got (`threads_not_used` names a generic
+  count set aside). A failed run's error writes the temporary folder as `<tmp>` and the program's path as its
+  file name (the error reaches `inference_manifest.json`), and a keyword the adapter does not take is refused
+  instead of dropped. `benchmarks/aracne3_smoke.py` passes its `--threads` entries as `aracne3_threads`, so
+  its 4-thread runs still get 4 threads; EXP-20261018-GB-1 has a dated note (its result ran from `6927b9f`).
 - Candidate screening now carries the diagnosis' raw-droplet flag into its rebuilt profile. Raw
   10x inputs therefore keep knee cell calling instead of reclassifying called cells as already
   filtered and then applying QC to hundreds of thousands of empty barcodes (issue #30).

@@ -62,7 +62,8 @@ edges + gold ────▶ evaluation ─────────▶ eval_repo
                    AUPRC, AUPRC-ratio, EPR, AUROC, PR curves,
                    score-permutation nulls, cross-method overlap,
                    subsample stability, gold reachability
-(*aracne3 needs java on PATH + ARACNE3_JAR; reported as unavailable otherwise)
+(*aracne3 needs the native ARACNe3 program: GRNBENCH_ARACNE3_BIN or ARACNe3_app_release on
+ PATH; reported as unavailable otherwise)
 ```
 
 ## Why this and not BEELINE, or geneRNIB
@@ -262,7 +263,7 @@ the built-ins — and cannot silently shadow a built-in name.
 | `spearman_signed` | numpy/scipy | deterministic baseline; emits sign as direction |
 | `genie3` | arboreto RF | dashboard-less dask client injected |
 | `grnboost2` | arboreto GBM early-stop | same |
-| `aracne3` | Java jar | parser unit-tested vs published format; runner probes java+ARACNE3_JAR |
+| `aracne3` | ARACNe3 program (native C++) | command, input files and output parser follow upstream's source (commit `3d8791a`), tested with a stand-in and run against the real program on the HPC, where it works as written (EXP-20261018-GB-1) |
 | *yours* | Python or container | see **Bring your own model** |
 
 `grnbench methods` lists every built-in method (classical, motif prior, RegDiffusion and the literature
@@ -273,7 +274,8 @@ original, and what is left out and why: `docs/models_catalog.md`.
 Implementation note: this arboreto release crashes with modern dask when its
 wrappers run with default settings (empty meta delayed-list); we drive
 `arboreto.core.create_graph(include_meta=True)` directly and discard the meta.
-On HPC nodes with Java, export `ARACNE3_JAR=/path/aracne3.jar` to enable ARACNe3.
+ARACNe3 is a native program: build it (`hpc/README.md`) and export
+`GRNBENCH_ARACNE3_BIN=/path/to/ARACNe3_app_release` to enable it.
 
 ## Evaluation
 

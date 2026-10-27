@@ -1,0 +1,6 @@
+code 6927b9fd353541f1a9e006f7438f84bec63f0de5  python Python 3.11.17  cpus 4
+t1_a: ok exit 0 478 edges 5.901 s
+t1_b: ok exit 0 478 edges 5.665 s
+t4_a: ok exit 0 478 edges 2.095 s
+t4_b: ok exit 0 478 edges 2.101 s
+exit status 0

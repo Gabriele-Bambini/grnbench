@@ -347,7 +347,7 @@ REGISTRY: dict[str, MethodSpec] = {
                    grnboost2_runner,
                    unavailable=ARBORETO_UNAVAILABLE),
         MethodSpec("aracne3",
-                   "ARACNe3 MI-based network (Java jar; java on PATH + ARACNE3_JAR env)",
+                   "ARACNe3 MI network (native program: GRNBENCH_ARACNE3_BIN or ARACNe3_app_release on PATH)",
                    aracne3_runner,
                    probe=aracne3_availability),
         # numpy/scipy only - always available, so a benchmark can always run
