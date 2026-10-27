@@ -498,7 +498,7 @@ def test_every_decision_a_choice_changed_names_the_option_behind_it(demo):
         assert all(not plan.chosen_options(k) for k, d in plan.decisions.items() if d.auto_reason is None)
 def test_reproduction_command_always_names_the_seed():
     plan = PrepPlan()
-    assert plan.cli_args("in.h5ad", "out", seed=0) == ["in.h5ad", "--out", "out", "--seed", "0"]
+    assert plan.cli_args("in.h5ad", "out", seed=0) == ["in.h5ad", "--out", "out", "--n-hvg", "all", "--seed", "0"]
     with pytest.raises(TypeError):
         plan.cli_args("in.h5ad", "out")           # no command without the seed it replays at
 
@@ -588,6 +588,31 @@ def test_replaying_a_forced_run_passes_the_gate_it_passed(demo, tmp_path):
     assert gated["error"].startswith("PrepError: QC gate failure"), gated["error"]
     rec = execute_plan(plan, paths["counts"], tmp_path / "run", tf_list=tfs, force=True)[0]
     _replay_gives_the_same_matrix(rec, tmp_path / "replay")
+
+
+def _report_warnings(run_dir) -> list[str]:
+    text = (Path(run_dir) / "report.md").read_text(encoding="utf-8")
+    return text.split("## Warnings\n\n", 1)[1].split("\n\n", 1)[0].splitlines() if "## Warnings" in text else []
+
+
+def test_replaying_a_plan_that_keeps_every_gene_records_the_same_steps_and_warnings(demo, tmp_path, capsys):
+    """LD's review of #162: execute_plan ran a plan's own n_hvg = None without the 'no --n-hvg' note, but the
+    recorded command had no --n-hvg, so its replay added the note: the same matrix and manifest['args'], other
+    warnings in manifest.json, report.md and the terminal."""
+    paths, tfs, diag = demo
+    plan = plan_preprocessing(diag, tf_list=tfs, choices={"context_scope": "pooled"})
+    assert plan.value("n_hvg") is None                     # 900 genes: every gene is kept
+    rec = execute_plan(plan, paths["counts"], tmp_path / "run", tf_list=tfs)[0]
+    _replay_gives_the_same_matrix(rec, tmp_path / "replay")
+    printed = capsys.readouterr().err
+    ran = json.loads(Path(rec["manifest"]).read_text(encoding="utf-8"))
+    replayed = json.loads((tmp_path / "replay" / "manifest.json").read_text(encoding="utf-8"))
+    assert replayed["warnings"] == ran["warnings"]
+    assert _report_warnings(tmp_path / "replay") == _report_warnings(rec["out_dir"])
+    assert "--n-hvg" not in printed
+    assert replayed["steps"] == ran["steps"]
+    assert replayed["args"] == ran["args"] and replayed["feature_selection"] == ran["feature_selection"] is None
+    assert rec["cli"][rec["cli"].index("--n-hvg") + 1] == "all"
 
 
 # -- screening -------------------------------------------------------------------------------- #

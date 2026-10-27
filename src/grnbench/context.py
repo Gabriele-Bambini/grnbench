@@ -210,6 +210,43 @@ def species_label(text: str) -> str:
     return low
 
 
+_CASING_SNIPPET = "gene symbol casing looks {}"
+# CELLxGENE schema 6+ keeps the organism in uns, not in obs; there only the words human/mouse vote.
+_DECLARED_ORGANISM_KEYS = ("organism", "organism_ontology_term_id")
+
+
+def declared_organism(adata) -> tuple[str, str] | None:
+    """``(where, value)`` of the organism ``adata.uns`` declares (``uns['organism']`` first), or None.
+
+    Read for a plan reason only: it adds no fact, so it never changes the organism (issue #149)."""
+    uns = getattr(adata, "uns", None) or {}
+    for key in _DECLARED_ORGANISM_KEYS:
+        value = uns.get(key)
+        if isinstance(value, str) and value.strip():
+            return f"uns['{key}']", " ".join(value.split())[:80]
+    return None
+
+
+def organism_note(ctx: DatasetContext, adata) -> str:
+    """When the organism comes only from gene-name casing (or was not detected) and ``uns`` declares
+    another one, a sentence saying so; else "". Loud only: the organism used is not changed."""
+    declared = declared_organism(adata)
+    if declared is None:
+        return ""
+    where, value = declared
+    used = ctx.get("organism")
+    if used == species_label(value):
+        return ""
+    if used is None:
+        return f"no organism was detected, but {where} says '{value}': the plan does not follow it"
+    support = [f for f in ctx.evidence("organism") if f.value == used]
+    casing = _CASING_SNIPPET.format(f"{used}-like")
+    if not all(f.source == "matrix" and f.snippet == casing for f in support):
+        return ""
+    return (f"the organism '{used}' comes only from gene-name casing, but {where} says '{value}': "
+            "the plan does not follow it")
+
+
 def extract_from_adata(adata, ctx: DatasetContext | None = None) -> DatasetContext:
     """Facts carried by the matrix and its AnnData metadata."""
     from grnbench.hygiene import detect_batch_column, organism_hint
@@ -226,7 +263,7 @@ def extract_from_adata(adata, ctx: DatasetContext | None = None) -> DatasetConte
         hint = organism_hint(names)
         if hint in ("human-like", "mouse-like"):
             ctx.add("organism", hint.split("-")[0], "matrix",
-                    f"gene symbol casing looks {hint}", 4)
+                    _CASING_SNIPPET.format(hint), 4)
     ctx.sources_read.append("matrix")
 
     uns_text = []

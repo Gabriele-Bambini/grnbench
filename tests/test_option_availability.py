@@ -248,18 +248,44 @@ def test_option_table_is_that_of_main(registered_env):
     assert _mismatch(golden.option_table(), GOLDEN["option_table"]) is None
 
 
+# The reason notes issues #149/#116 add to the golden plans (loud only: no value, choice, context or
+# warning changes): Ensembl identifiers leave mito QC without a mitochondrial gene.
+_ENSEMBL_MITO = ("; 100% of the gene identifiers are Ensembl IDs and mitochondrial genes are found only by "
+                 "symbol (MT- prefix): none was found, so the per-cell mito filter is off and the dataset mito "
+                 "gate always passes")
+LOUD_NOTES = {("ensembl_ids/tfs", "max_pct_mito_cell"): _ENSEMBL_MITO,
+              ("ensembl_ids/no_tfs", "max_pct_mito_cell"): _ENSEMBL_MITO}
+
+
+def _without_loud_notes(case, have, want):
+    """``have`` with each decision reason that is main's reason plus a suffix put back to main's, and
+    ``{(case, decision): suffix}``."""
+    have = json.loads(json.dumps(have))
+    found = {}
+    for key, d in have["plan"]["decisions"].items():
+        w = want["plan"]["decisions"].get(key)
+        if w and d["reason"] != w["reason"] and d["reason"].startswith(w["reason"]):
+            found[(case, key)] = d["reason"][len(w["reason"]):]
+            d["reason"] = w["reason"]
+    return have, found
+
+
 @pytest.mark.parametrize("env", ["registered_env", "everything_installed"])
 def test_plans_and_candidates_are_those_of_main(datasets, env, request):
     """Without R: the whole plan (warnings, reasons, sources, selection, profile) and the screening
-    candidates as on main. With every dependency installed: the same choices, decision values and
+    candidates as on main, but for the reason notes of #149/#116 (``LOUD_NOTES``, exactly those). With
+    every dependency installed: the same choices, decision values and
     warning count (main picked scDblFinder, EmptyDrops and DecontX there and ran none of them); only the
     unavailability reasons in the selection and the warnings name the missing executor instead."""
     request.getfixturevalue(env)
     got = golden.plan_values(datasets)
     assert set(got) == set(GOLDEN["plans"])
+    notes = {}
     for case, want in GOLDEN["plans"].items():
         have = got[case]
         if env == "registered_env":
+            have, found = _without_loud_notes(case, have, want)
+            notes.update(found)
             assert _mismatch(have, want) is None, (case, _mismatch(have, want))
         else:
             for key in ("choices", "contexts"):
@@ -268,6 +294,8 @@ def test_plans_and_candidates_are_those_of_main(datasets, env, request):
             assert values == {k: d["value"] for k, d in want["plan"]["decisions"].items()}, case
             assert len(have["plan"]["warnings"]) == len(want["plan"]["warnings"]), case
             assert have["candidates"] == want["candidates"], case
+    if env == "registered_env":
+        assert notes == LOUD_NOTES
 
 
 def test_candidate_study_variants_are_those_of_main_and_of_the_c7_rows(registered_env):

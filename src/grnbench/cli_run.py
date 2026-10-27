@@ -34,9 +34,11 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--out", required=True, help="run directory (created)")
     p.add_argument("--tf-list", default=None, help="TF symbol list (.txt/.csv/.tsv)")
 
+    from grnbench.cli import N_HVG_HELP, n_hvg_value
+
     prep = p.add_argument_group("preprocessing")
     prep.add_argument("--strategy", default="auto")
-    prep.add_argument("--n-hvg", type=int, default=None)
+    prep.add_argument("--n-hvg", type=n_hvg_value, default=None, metavar="all|N", help=N_HVG_HELP)
     prep.add_argument("--group-key", default=None)
     prep.add_argument("--label-key", default=None)
     prep.add_argument("--label-mapping", default=None)

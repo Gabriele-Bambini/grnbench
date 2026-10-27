@@ -34,6 +34,23 @@
   keeps the requested choice as provenance, runs the selected normalization without the impossible
   correction and explains the fallback. A CLI `--n-hvg` request above the available gene count now
   says in the terminal, manifest and report that every remaining gene was kept (#164).
+- Silent behaviours made loud, nothing else changed (#149 items 1, 3, 4, 5, 6; #116): Ensembl identifiers
+  with no mitochondrial gene found by symbol now say that the per-cell mito filter is off and the mito gate
+  always passes (plan reason and `run_prep` warning); a missing-label group such as "unknown" that becomes a
+  per-cell-type context is named in the context reason (still inferred: excluding it is a decision); a
+  context that ends below 200 cells after QC gets a `run_prep` warning (a planner context or a user's
+  `--subset-key`/`--subset-value` alike: "fewer than 200 cells, the minimum the planner uses for a
+  per-cell-type context"); `grnbench prep`/`run` without
+  `--n-hvg` say that all filtered genes are used and that the planner defaults to 1,000 HVGs plus the TFs;
+  an organism guessed from gene-name casing while `uns['organism']` says another is named in the
+  regulators reason; and when the knee finds no cliff on an unfiltered matrix, `diagnose` records it, the
+  plan warns and the cell-calling reason says so instead of "? of ? barcodes (>= nan counts)". A/B on
+  every simulator preset and the demo: identical choices, values, contexts, warnings and processed
+  matrices; only these notes and warnings are added.
+  Review fix (LD): `--n-hvg all` is an explicit value (every filtered gene, no note; `grnbench run` too),
+  a plan's recorded command always names `--n-hvg` (the number, or `all` when the plan keeps every gene)
+  and `manifest['args']['note_all_genes']` records whether the note was asked for, so the replayed command
+  of a plan writes the manifest steps and warnings `execute_plan` wrote, not only the same matrix.
 - Preprocessing plans now tell the truth when a requested option falls back: pseudobulk names the
   ignored batch/normalization choices, per-batch MAD names its global fallback, small matrices name
   the all-gene HVG fallback, and context plans name pooled/largest-type behaviour. Random and

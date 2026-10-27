@@ -113,7 +113,7 @@ def run_prep(
     *,
     strategy: str = "auto",
     tf_list: list[str] | None = None,
-    n_hvg: int | None = None,
+    n_hvg: int | str | None = None,
     group_key: str | None = None,
     label_key: str | None = None,
     label_mapping: dict[str, str] | None = None,
@@ -134,8 +134,20 @@ def run_prep(
     exclude_qc_genes: bool = False,
     per_batch_bounds: dict | None = None,
     cells_per_metacell: int | None = None,
+    note_all_genes: bool = False,
 ) -> PrepResult:
-    """Preprocess a dataset for GRN inference. See module docstring."""
+    """Preprocess a dataset for GRN inference. See module docstring.
+
+    ``n_hvg``: a number of highly variable genes (TFs always kept), ``None`` or ``"all"`` for every filtered
+    gene; ``manifest['args']['n_hvg']`` records the number or None.
+    ``note_all_genes``: the command line sets it when ``--n-hvg`` is not given, so the warnings say
+    that every filtered gene is used and what the planner defaults to (issue #149); a plan's own
+    ``n_hvg = None`` is a choice the plan explains, so ``execute_plan`` leaves it off, and its recorded
+    command passes ``--n-hvg all``. ``manifest['args']['note_all_genes']`` records it, so two runs with the
+    same args have the same warnings (LD's review of #162).
+    """
+    if isinstance(n_hvg, str) and n_hvg.strip().lower() == "all":
+        n_hvg = None
     if subsample_mode not in {None, "random", "stratified"}:
         raise PrepError("subsample_mode must be 'random' or 'stratified'")
     if subsample_mode is not None and subsample_cells is None:
@@ -155,7 +167,7 @@ def run_prep(
         'force': force, 'seed': seed,
         'subset_key': subset_key, 'subset_value': subset_value, 'cell_calling': cell_calling,
         'exclude_qc_genes': exclude_qc_genes, 'per_batch_bounds': per_batch_bounds,
-        'cells_per_metacell': cells_per_metacell,
+        'cells_per_metacell': cells_per_metacell, 'note_all_genes': bool(note_all_genes),
         'requested_tfs': sequence_identity(tf_list) if tf_list is not None else None,
     }
     if subsample_mode is not None:
@@ -257,6 +269,8 @@ def run_prep(
                                  batch_key=batch_col, id_verdict=id_verdict,
                                  n_dup_barcodes=n_dup_barcodes)
     steps.append({"step": "qc", "detail": f"{len(qc_report.gates)} gates evaluated"})
+    if hyg.ensembl_without_mito(id_verdict, qc_report.metrics.get("n_mito_genes", 0)):     # issue #149 item 1
+        warnings_list.append(hyg.ensembl_mito_note(id_verdict, "the per-cell mito filter removes no cell"))
 
     # -- 3. recommendations + strategy choice -------------------------------- #
     med_cells_group = n_groups = None
@@ -292,6 +306,8 @@ def run_prep(
         raise PrepError(f"QC gate failure(s) - {detail}")
 
     # -- 5. cell / gene filters (logged) -------------------------------------- #
+    n_context_before = (None if subset_key is None else
+                        int((adata.obs[subset_key].astype(str).to_numpy() == str(subset_value)).sum()))
     low_genes = adata.obs["_n_genes"].to_numpy() < t.min_genes_per_cell
     zero_total = adata.obs["_total_counts"].to_numpy() <= 0
     upper = {}
@@ -418,6 +434,14 @@ def run_prep(
                       "detail": f"kept {int(keep.sum())} cells with {subset_key} == {subset_value!r}"})
         warnings_list.extend(ledger.record("subset_context", before, adata))
         del before
+        from grnbench.profile import MIN_CELLS_PER_CONTEXT
+        if adata.n_obs < MIN_CELLS_PER_CONTEXT:     # issue #149 item 4: the plan counted cells before QC
+            # True for a planner context and for a --subset-key/--subset-value the user chose alike.
+            removed = "cell QC and doublet removal" if drop_doublets else "cell QC"
+            warnings_list.append(
+                f"context {subset_key} == {subset_value!r} has {adata.n_obs:,} cells after {removed} "
+                f"({n_context_before:,} before), fewer than {MIN_CELLS_PER_CONTEXT} cells, the minimum the "
+                "planner uses for a per-cell-type context")
         mask_ctx = _nnz_per_gene(adata.X) >= t.min_cells_per_gene
         before = adata
         if not mask_ctx.all():
@@ -543,6 +567,10 @@ def run_prep(
                       "detail": ", ".join(f"{k}={v}" for k, v in feature_report.items())})
         warnings_list.extend(ledger.record("feature_selection", before, processed))
         del before
+    elif note_all_genes:             # issue #149 item 5: same data, other features than the planner's
+        from grnbench.autoprep import DEFAULT_N_HVG
+        warnings_list.append(f"no --n-hvg: all {processed.n_vars:,} filtered genes are used; the planner and "
+                             f"the interface default to the TFs plus {DEFAULT_N_HVG:,} highly variable genes")
     tf_coverage = None
     if tf_list:
         matched, requested = match_tfs_in_data(tf_list, processed.var_names)

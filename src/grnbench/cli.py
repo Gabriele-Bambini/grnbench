@@ -1,7 +1,7 @@
 """Command-line interface.
 
     grnbench-prep DATA --out DIR [--strategy auto] [--tf-list FILE]
-                      [--n-hvg N] [--group-key COL] [--force]
+                      [--n-hvg all|N] [--group-key COL] [--force]
 
 Exit codes: 0 success - 2 QC gate failure (use --force to override) - 1 error.
 """
@@ -20,6 +20,21 @@ from grnbench.strategies import list_strategies
 from grnbench.tfs import load_tf_list
 
 
+N_HVG_HELP = ("highly variable genes kept, unioned with the TFs: 'all' = every filtered gene, or a number "
+              "(omitted: every filtered gene, with a note that the planner keeps the TFs plus 1,000 HVGs)")
+
+
+def n_hvg_value(text: str):
+    """``--n-hvg``: 'all' (every filtered gene) or a whole number."""
+    low = str(text).strip().lower()
+    if low == "all":
+        return low
+    try:
+        return int(low)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"expected all or a number of genes, got {text!r}") from None
+
+
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="grnbench-prep",
@@ -31,8 +46,7 @@ def _build_parser() -> argparse.ArgumentParser:
                    help="auto (default) or one of the registered strategies")
     p.add_argument("--tf-list", default=None,
                    help="TF symbol list (.txt/.csv/.tsv); enables TF-union reporting")
-    p.add_argument("--n-hvg", type=int, default=None,
-                   help="select N HVGs unioned with TFs (default: keep all filtered genes)")
+    p.add_argument("--n-hvg", type=n_hvg_value, default=None, metavar="all|N", help=N_HVG_HELP)
     p.add_argument("--group-key", default=None,
                    help="obs column used by pseudobulk and recommendations; cells with "
                         "a missing value are DROPPED (logged)")
@@ -106,7 +120,7 @@ def option_problems(args: argparse.Namespace) -> list[str]:
                    "would process the whole dataset or look for the value None")
     for flag, value in (("--n-hvg", args.n_hvg), ("--subsample-cells", args.subsample_cells),
                         ("--cells-per-metacell", args.cells_per_metacell)):
-        if value is not None and value < 1:
+        if isinstance(value, int) and value < 1:
             out.append(f"{flag} must be at least 1 (got {value})")
     for flag, value in (("--min-genes-per-cell", args.min_genes_per_cell),
                         ("--min-cells-per-gene", args.min_cells_per_gene)):
@@ -214,6 +228,7 @@ def main(argv: list[str] | None = None) -> int:
             per_batch_bounds=(json.loads(Path(args.per_batch_bounds).read_text(encoding="utf-8"))
                               if args.per_batch_bounds else None),
             cells_per_metacell=args.cells_per_metacell,
+            note_all_genes=args.n_hvg is None,
         )
     except PrepError as e:
         gate = str(e).startswith("QC gate failure")
@@ -227,6 +242,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[ERROR] {type(e).__name__}: {e}", file=sys.stderr)
         return 1
 
+    for w in res.manifest.get("warnings") or []:
+        if w.startswith("no --n-hvg:"):     # the planner and the interface keep fewer genes (issue #149)
+            print(f"[NO --n-hvg] {w}", file=sys.stderr)
     print(f"\nGRN-Bench prep complete - strategy: {res.strategy}")
     print("\nQC gates:")
     for g in res.manifest["qc"]["gates"]:

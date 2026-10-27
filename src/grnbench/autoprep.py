@@ -27,7 +27,7 @@ from typing import Any
 
 import numpy as np
 
-from grnbench.context import DatasetContext, build_context, fetch_url_text
+from grnbench.context import DatasetContext, build_context, fetch_url_text, organism_note
 from grnbench.qc import QCReport, Thresholds, run_qc
 
 LOWER_NMADS = 3.0
@@ -205,11 +205,16 @@ class PrepPlan:
         context ran with, always written: without ``--seed`` the command would
         replay at the CLI default, other cells for a screened context (seed 0).
         ``force`` is whether the run went past failed QC gates (None: the plan's value).
+        ``--n-hvg`` is always written, the number or ``all`` (what ``run_prep`` runs when the plan's value is
+        None or absent), so a recorded command never depends on the command-line default (no ``--n-hvg``
+        adds a note that ``execute_plan``'s run does not have; LD's review of #162).
         """
         argv = [str(input_path), "--out", str(out_dir)]
         for key, flag in _CLI_FLAGS.items():
             v = self.value(key)
-            if key in self.decisions and v is not None:
+            if key == "n_hvg":
+                argv += [flag, "all" if v is None else _fmt(v)]
+            elif key in self.decisions and v is not None:
                 argv += [flag, _fmt(v)]
         if self.value("drop_doublets"):
             argv.append("--drop-doublets")
@@ -290,7 +295,11 @@ def _keep_engine_values(plan: PrepPlan, engine: PrepPlan) -> None:
 
 @dataclass
 class Diagnosis:
-    """Everything ``plan_preprocessing`` looked at; the interface plots it."""
+    """Everything ``plan_preprocessing`` looked at; the interface plots it.
+
+    ``knee_no_cliff``: the matrix looks unfiltered but the barcode-rank knee found no cell/empty-droplet
+    cliff, so every barcode was kept (issue #116); the plan says so in a warning.
+    """
     adata: Any
     ingest: dict
     qc: QCReport
@@ -298,6 +307,7 @@ class Diagnosis:
     id_verdict: dict
     raw_droplets: bool = False
     cell_calling: dict | None = None
+    knee_no_cliff: bool = False
 
 
 def diagnose(path, *, orientation: str = "auto", text_files=(), urls=(),
@@ -311,12 +321,15 @@ def diagnose(path, *, orientation: str = "auto", text_files=(), urls=(),
     hyg.sparsify_if_dense(adata)
     from grnbench.profile import looks_unfiltered
     cell_calling = None
+    knee_no_cliff = False
     totals = np.asarray(adata.X.sum(axis=1)).ravel()
     if looks_unfiltered(totals):
         # Profile and thresholds must describe cells, not empty droplets.
         cell_calling = hyg.knee_cell_threshold(totals)
         if cell_calling is not None:
             adata = adata[totals >= cell_calling["threshold"]].copy()
+        else:
+            knee_no_cliff = True       # every barcode is kept: the plan warns (issue #116)
     id_verdict = hyg.detect_id_type(adata.var_names)
     ctx = build_context(path, adata, text_files=text_files, urls=urls, notes=notes,
                         fetch=fetch)
@@ -332,7 +345,7 @@ def diagnose(path, *, orientation: str = "auto", text_files=(), urls=(),
     qc = run_qc(adata, thresholds or Thresholds(), batch_key=batch_col,
                 id_verdict=id_verdict, n_dup_barcodes=hyg.duplicate_barcodes_report(adata))
     return Diagnosis(adata, ing.to_dict(), qc, ctx, id_verdict, raw_droplets=looks_unfiltered(totals),
-                     cell_calling=cell_calling)
+                     cell_calling=cell_calling, knee_no_cliff=knee_no_cliff)
 
 
 def mad_bounds(values, nmads: float, log: bool = True) -> tuple[float, float, float]:
@@ -492,6 +505,9 @@ def plan_preprocessing(diag: Diagnosis, *, methods: list[dict] | None = None,
 
 def _build_plan(diag: Diagnosis, profile, selection, choices: dict | None, *,
                 methods: list[dict] | None) -> PrepPlan:
+    import pandas as pd
+
+    from grnbench import hygiene as hyg
     from grnbench.kb import DECISION_INDEX
     from grnbench.profile import MIN_CELLS_PER_CONTEXT
 
@@ -524,10 +540,17 @@ def _build_plan(diag: Diagnosis, profile, selection, choices: dict | None, *,
 
     # -- cell calling -------------------------------------------------------------- #
     if chosen.get("cell_calling") == "knee":
-        call = diag.cell_calling or {}
-        plan.add("cell_calling", "Cell calling", "knee",
-                 f"{why('cell_calling')[0]}; barcode-rank knee keeps {call.get('n_called', '?')} of "
-                 f"{call.get('n_barcodes', '?')} barcodes (>= {call.get('threshold', float('nan')):.0f} counts)",
+        call = diag.cell_calling
+        if call is not None:
+            called = (f"barcode-rank knee keeps {call.get('n_called', '?')} of {call.get('n_barcodes', '?')} "
+                      f"barcodes (>= {call.get('threshold', float('nan')):.0f} counts)")
+        elif diag.knee_no_cliff:      # issue #116: no "? of ? barcodes (>= nan counts)"
+            called = ("the barcode-rank curve shows no clear cell/empty-droplet cliff, so the knee called no "
+                      "cells; running this plan stops at cell calling")
+        else:
+            called = ("the matrix does not look unfiltered, so no cells were called at diagnosis; the knee "
+                      "runs when the plan is executed")
+        plan.add("cell_calling", "Cell calling", "knee", f"{why('cell_calling')[0]}; {called}",
                  "data", ["knee", None])
 
     # -- high-mitochondrial tissues: relax the dataset-level gate, keep per-cell bounds -- #
@@ -577,6 +600,10 @@ def _build_plan(diag: Diagnosis, profile, selection, choices: dict | None, *,
                     if qc_choice == "mad_per_batch" else "")
         for k, (v, r) in _mad_thresholds(genes, counts, mito, n_mito).items():
             plan.add(k, _QC_LABELS[k], v, fallback + r, "data")
+    if hyg.ensembl_without_mito(diag.id_verdict, n_mito):      # issue #149 item 1: say why mito QC is off
+        mito_key = "max_pct_mito_cell" if "max_pct_mito_cell" in plan.decisions else "per_batch_bounds"
+        plan.decisions[mito_key].reason += "; " + hyg.ensembl_mito_note(
+            diag.id_verdict, "the per-cell mito filter is off")
     v = max(Thresholds().min_cells_per_gene, int(math.ceil(0.001 * profile.n_cells)))
     plan.add("min_cells_per_gene", "Min cells expressing a gene", v,
              f"genes seen in fewer than max(3, 0.1% of {profile.n_cells} cells) = {v} cells", "data")
@@ -670,7 +697,11 @@ def _build_plan(diag: Diagnosis, profile, selection, choices: dict | None, *,
                              "for this species ships with grnbench - provide a TF list (human "
                              "orthologs are an approximation, regulatory edges are not always conserved).")
     tf_source = _TF_SOURCE[chosen["regulators"]].format(organism=organism)
-    plan.add("tf_source", "Transcription-factor list", tf_source, *why("regulators"),
+    tf_reason, tf_reason_source = why("regulators")
+    declared = organism_note(ctx, adata)      # issue #149: the organism is guessed, uns says another
+    if declared:
+        tf_reason += "; " + declared
+    plan.add("tf_source", "Transcription-factor list", tf_source, tf_reason, tf_reason_source,
              ["file", "dorothea:human", "dorothea:mouse", "none"])
 
     # -- cellular context -------------------------------------------------------------- #
@@ -697,6 +728,12 @@ def _build_plan(diag: Diagnosis, profile, selection, choices: dict | None, *,
         if big:
             plan.contexts = [{"name": f"{profile.cell_type_key}={k}",
                               "subset_key": profile.cell_type_key, "subset_value": k} for k in big]
+            # issue #149 item 3: "unknown" & co. are not NaN, so dropna() keeps them; named here, not excluded
+            missing = hyg.missing_label_mask(pd.Series(big, dtype=object))
+            for k, is_missing in zip(big, missing):
+                if is_missing:
+                    context_note += (f"; the group '{k}' ({int(sizes.loc[k]):,} cells) is a missing-label "
+                                     "value, but it is inferred like a cell type")
         else:
             context_note = (f"; no cell type has at least {MIN_CELLS_PER_CONTEXT} cells, "
                             "so the pooled all-cells context runs instead")
@@ -718,6 +755,10 @@ def _build_plan(diag: Diagnosis, profile, selection, choices: dict | None, *,
                 "smaller metacells.")
 
     # -- flags carried to the user ------------------------------------------------------ #
+    if diag.knee_no_cliff:          # issue #116 (never on the registered datasets: filtered, or a knee call)
+        plan.warnings.append(f"The matrix looks unfiltered ({adata.n_obs:,} barcodes, most with < 100 counts) "
+                             "but the barcode-rank knee found no clear cell/empty-droplet cliff: every barcode "
+                             "was kept, so the profile, the QC and the cell bounds describe droplets, not cells.")
     for r in selection.results.values():
         if r.blocked_by_dependency:
             best = next(o for o in r.options if o.option == r.best_overall)

@@ -162,6 +162,19 @@ def detect_id_type(var_names) -> dict:
             "verdict": verdict}
 
 
+def ensembl_without_mito(id_verdict: dict | None, n_mito_genes: int) -> bool:
+    """Ensembl identifiers (all or mixed) and no mitochondrial gene found: mitochondrial genes are
+    found by symbol prefix only (``ingest.MITO_PREFIXES``), so mito QC is off without a word (#149)."""
+    return int(n_mito_genes) == 0 and (id_verdict or {}).get("verdict") in ("ensembl_only", "mixed")
+
+
+def ensembl_mito_note(id_verdict: dict, effect: str) -> str:
+    """Why mito QC does nothing on Ensembl identifiers; ``effect`` says what it means for the per-cell filter."""
+    return (f"{id_verdict.get('ensembl_frac', 0):.0%} of the gene identifiers are Ensembl IDs and mitochondrial "
+            f"genes are found only by symbol (MT- prefix): none was found, so {effect} and the dataset mito "
+            "gate always passes")
+
+
 def organism_hint(var_names) -> str:
     names = pd.Index(var_names).astype(str)
     mouse = names.str.match(MOUSE_SYMBOL_RE).mean()
@@ -191,8 +204,9 @@ def knee_cell_threshold(totals, min_counts: int = 100) -> dict | None:
     Barcodes with a total at or above it are called cells.
 
     ``None`` means "no call", not "every barcode is a cell": ``pipeline.run_prep``
-    turns it into a ``PrepError``, while ``autoprep.diagnose`` currently keeps
-    every barcode and does not warn (issue #116). It is returned when fewer than
+    turns it into a ``PrepError``, while ``autoprep.diagnose`` keeps every
+    barcode and records it (``Diagnosis.knee_no_cliff``), and the plan warns
+    (issue #116). It is returned when fewer than
     200 barcodes reach the floor, or when fewer than 50 or more than 90% of all
     barcodes would be called. That guard is a count band only: it does not check
     that the drop it found is the cell/empty one (heart_10k_v3 with the old floor
