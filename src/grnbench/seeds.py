@@ -24,7 +24,7 @@ One run can span two entry points: ``quick_run(screen=True)`` in the interface i
 
 Not covered (their seeds are not in LEGACY, see :data:`NOT_COVERED`): aracne3_smoke.py, beeline_backtest.py,
 motif_sensitivity.py, calibration.py, demo.py, plugins.py (Python and entry-point plugin runners),
-explore.py, rbridge.py, epr_power.py.
+explore.py, rbridge.py, epr_power.py, split_pool.py.
 """
 from __future__ import annotations
 
@@ -71,6 +71,8 @@ NOT_COVERED: tuple[tuple[str, str], ...] = (
     ("src/grnbench/rbridge.py", "R bridge: seed and RNG kind fixed by r/_wrapper.R per call"),
     ("src/grnbench/explore.py", "grnbench.explore (exploratory): SEED = 0 for its subsamples"),
     ("benchmarks/epr_power.py", "EPR power analysis: BOOTSTRAP_SEED = 42 for its bootstrap"),
+    ("benchmarks/split_pool.py", "D-057 pool split: the required --seed (42 for EXP-20261022-GB) orders "
+                                 "datasets by sha256(seed:dataset_id); no RNG"),
     ("src/grnbench/plugins.py", "Python and entry-point plugin runners keep their own defaults "
                                 "(command plugins are the library row plugin.command)"),
 )

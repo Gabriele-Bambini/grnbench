@@ -2,7 +2,7 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-10-26 (retention ledger, GB's agent); 2026-10-25 (#169 empty stratification pool, LD); 2026-10-25 (#172 leading-dash context replay, LD); 2026-10-26 (#183 test registry isolation, LD); 2026-10-24 (#149/#116 silent behaviours made loud, GB's agent); 2026-10-25 (#164 context/batch and HVG guards, LD); 2026-10-23 (ARACNe3 branch: main merged in, relative binary path fixed, GB's agent); 2026-10-22 (#132 plan/runtime truth, LD);
+Updated: 2026-10-26 (retention ledger, GB's agent); 2026-10-25 (#169 empty stratification pool, LD); 2026-10-25 (#172 leading-dash context replay, LD); 2026-10-26 (#183 test registry isolation, LD); 2026-10-24 (#149/#116 silent behaviours made loud, GB's agent); 2026-10-25 (#164 context/batch and HVG guards, LD); 2026-10-23 (ARACNe3 branch: main merged in, relative binary path fixed, GB's agent); 2026-10-22 (Block 6, 200-dataset pool registered, GB's agent); 2026-10-22 (#132 plan/runtime truth, LD);
 2026-10-18 (ARACNe3 HPC build and smoke run, EXP-20261018-GB-1, issue #109, GB's agent); 2026-10-17 (ARACNe3 adapter, issue #105, GB's agent);
 2026-10-15 (#87, #71, #69 merged at GB's request, GB's agent); 2026-10-10
 (issue #59, LD; interface branch merged with main after #55, GB's agent); 2026-10-09
@@ -50,6 +50,15 @@ pre-registered experiments (D-017).
   to 123 (family of 4) never-used datasets for 80% power. C4 unchanged. Next in this track: 16-2
   (pin `auto_noref` to the pre-D-021 rule, GB's OK first), 14-1 (multiplicity simulation), 13-1
   (motif-source table). 15-2 (HPC) and 15-3 (new data, confirmatory) only with GB's OK.
+- 200-dataset pool (GB, `gb/pool-200`, D-057 ACTIVE since GB's go of 2026-10-23; data issue #141): 200 never-used CELLxGENE
+  datasets, one per study and none from a study used before (174 human / 26 mouse, 21 assays, 105.9 GB), split by seed 42 into 120
+  confirmatory and 80 exploratory before any download. Registered and revised after LM's and LD's reviews (pool redrawn without EXP-20261001-LD-1's
+  datasets, data snapshots, T3 added); nothing scored yet:
+  EXP-20261022-GB-1 (confirmatory, #139: EPR lift of the motif prior for Pearson, family of one pair,
+  planned power 0.865 for +0.10 at n = 120) and EXP-20261022-GB-2 (exploratory stress test, #140:
+  `candidate_study` under clean / doublets / damaged cells). Next, only after GB's go for the cluster:
+  download on the login node, data snapshots `EXP-20261022-GB-{1,2}.data.tsv`, pilot job on 3 exploratory
+  datasets, then GB-1, then GB-2 (QOS `stud`: one job at a time).
 - Preprocessing engine step 2 (GB, issues #128 and #135): option availability (#133, D-031 ACTIVE) and
   the optional R bridge (#136, D-032 ACTIVE) are on `main` since 2026-10-23. An option is available only
   with its dependencies and a grnbench executor (`executors.PLAN_STEPS`); `grnbench.rbridge` finds an

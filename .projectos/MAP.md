@@ -19,6 +19,10 @@ Updated: 2026-10-23.
   `benchmarks/count_plausibility.py` (would ingest's non-raw-counts warning fire on a data root; #42),
   `benchmarks/compare_confirm.py` (a candidate-study rerun's registered primaries vs `CONFIRM.json`; #95),
   `benchmarks/diff_rows_nested.py` (where two `rows/` folders differ at any depth, timings apart; diagnosis, #95).
+- Dataset pools: `benchmarks/fetch_cellxgene.py --one-per-collection --max-cells --exclude-collections` (one dataset per study),
+  `benchmarks/split_pool.py` (seeded confirmatory / exploratory split; D-057, `experiments/EXP-20261022-GB.pool.tsv`),
+  `benchmarks/used_datasets.py` (datasets and studies used by any record or result on any branch),
+  `benchmarks/subgroup_breakdown.py` (descriptive per-subgroup mean difference: organism, assay family, cell vs nucleus).
 - Motif-prior lift decomposition: `benchmarks/motif_sensitivity.py` (`plan`, `run`, `report`) from a
   `--keep-artifacts` run (EXP-20261003-GB-1); tests `tests/test_motif_sensitivity.py`.
 - ARACNe3 on the HPC: build `hpc/aracne3_build.sbatch`, adapter smoke run `hpc/aracne3_smoke.sbatch` ->

@@ -3,6 +3,16 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- `fetch_cellxgene.py --one-per-collection` keeps the smallest H5AD of each CELLxGENE collection (one
+  dataset per study, `collection_id` in the manifest) `--max-cells` lifts the 50,000-cell cap and `--exclude-collections` skips whole
+  studies, `--listing` selects from a saved listing; `benchmarks/used_datasets.py` lists every dataset
+  and study any record or result on any branch used; `benchmarks/subgroup_breakdown.py` gives the
+  declared descriptive breakdown of a paired difference by organism, assay family and cell vs nucleus; the
+  defaults select exactly as before (pinned by a test). `benchmarks/split_pool.py` splits a pool into a
+  confirmatory and an exploratory part by sha256 of a seed and the dataset id. D-057 (ACTIVE, GB's go of 2026-10-23): a pool of
+  200 never-used datasets of every kind from studies never used before, 120 confirmatory and 80 exploratory; EXP-20261022-GB-1
+  (confirmatory, EPR lift of the motif prior) and EXP-20261022-GB-2 (exploratory stress test) registered,
+  not run.
 - C5 and C6: GB signed both section 4b reruns in his own hand (comments on #99 and #100, 2026-10-23), replacing
   the lines the agent typed on his instruction; the CLAIMS cells say the commands were typed by an agent under
   his direction. C6's one differing field (`n_warnings` 4 -> 3) is confirmed to come from the dataset README

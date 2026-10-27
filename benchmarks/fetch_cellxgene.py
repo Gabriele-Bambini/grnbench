@@ -7,7 +7,7 @@ assay x organism so protocols and species are all represented, tissues varied.
 dataset - the ground truth the engine's context detection is checked against.
 
     python benchmarks/fetch_cellxgene.py --out DIR --max 30 --max-mb 100 [--dry-run]
-        [--exclude-ids used_ids.txt] [--exclude-assay targeted]
+        [--exclude-ids used_ids.txt] [--exclude-assay targeted] [--max-cells 50000] [--one-per-collection]
     python benchmarks/fetch_cellxgene.py --out DIR --from-manifest experiments/EXP-...datasets.tsv
 
 ``--from-manifest`` skips the selection and fetches exactly the rows of an earlier
@@ -22,8 +22,10 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import re
 import sys
 import time
+from collections.abc import Sequence
 from http.client import HTTPException
 from pathlib import Path
 from urllib.request import Request, urlopen
@@ -51,11 +53,25 @@ def folder_for(d: dict) -> Path:
     return Path(slug(d["assay"])) / slug(d["organism"]) / f"{slug(tissue, 30)}__{d['dataset_id'][:8]}"
 
 
+_ID = re.compile(r"[0-9a-f]{8}(-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?")
+
+
+def _exclusion_list(path: str, what: str) -> set[str]:
+    """Lower-cased entries of an exclusion file; a BOM (PowerShell's utf8) is not part of an id."""
+    entries = {x.strip().lower() for x in Path(path).read_text(encoding="utf-8-sig").split() if x.strip()}
+    if not entries:
+        raise SystemExit(f"{path}: no {what} listed")
+    return entries
+
+
 def _labels(items) -> list[str]:
     return [i.get("label", "") for i in items or []]
 
 
-def select(datasets: list[dict], n: int, max_mb: float) -> list[dict]:
+def select(datasets: list[dict], n: int, max_mb: float, *, max_cells: int = 50_000,
+           one_per_collection: bool = False) -> list[dict]:
+    """``one_per_collection`` keeps only the smallest H5AD of each CELLxGENE collection, so no two
+    picks come from the same study (an independence rule for large pools)."""
     pool = []
     for d in datasets:
         h5 = [a for a in d.get("assets", []) if a.get("filetype") == "H5AD"]
@@ -66,14 +82,24 @@ def select(datasets: list[dict], n: int, max_mb: float) -> list[dict]:
             continue
         size = h5[0].get("filesize") or 0
         cells = d.get("cell_count") or 0
-        if not (0 < size <= max_mb * 1e6 and 500 <= cells <= 50_000):
+        if not (0 < size <= max_mb * 1e6 and 500 <= cells <= max_cells):
             continue
         pool.append({"dataset_id": d["dataset_id"], "title": d.get("title", ""),
-                     "collection": d.get("collection_name", ""), "citation": d.get("citation", ""),
+                     "collection": d.get("collection_name", ""), "collection_id": d.get("collection_id") or "",
+                     "citation": d.get("citation", ""),
                      "assay": assays[0], "organism": orgs[0],
                      "tissue": ";".join(_labels(d.get("tissue"))[:3]),
                      "suspension_type": ";".join(d.get("suspension_type") or []),
                      "cell_count": cells, "filesize": size, "url": h5[0]["url"]})
+    if one_per_collection:
+        orphans = [d["dataset_id"] for d in pool if not d["collection_id"]]
+        if orphans:
+            raise ValueError(f"no collection_id for {len(orphans)} datasets (e.g. {orphans[:3]}): "
+                             "cannot keep one dataset per collection")
+        smallest: dict[str, dict] = {}
+        for d in sorted(pool, key=lambda d: (d["filesize"], d["dataset_id"])):
+            smallest.setdefault(d["collection_id"], d)
+        pool = list(smallest.values())
     groups: dict[tuple, list] = {}
     for d in sorted(pool, key=lambda d: (d["filesize"], d["dataset_id"])):
         groups.setdefault((d["assay"], d["organism"]), []).append(d)
@@ -127,39 +153,76 @@ def main(argv=None) -> int:
     p.add_argument("--from-manifest", default=None,
                    help="fetch exactly the datasets of this manifest.tsv (no selection; the listing "
                         "only supplies the collection name and citation of README.md)")
+    p.add_argument("--max-cells", type=int, default=50_000,
+                   help="largest cell count kept (the floor stays 500 cells)")
+    p.add_argument("--exclude-collections", default=None,
+                   help="file with CELLxGENE collection ids, one per line, whose datasets are all skipped - "
+                        "e.g. the studies earlier experiments drew from")
+    p.add_argument("--listing", default=None,
+                   help="select from this saved copy of the curation API listing (JSON) instead of the live "
+                        "API, so a registered selection can be redone exactly")
+    p.add_argument("--one-per-collection", action="store_true",
+                   help="keep only the smallest H5AD of each CELLxGENE collection (one per study); "
+                        "the manifest then records collection_id")
     a = p.parse_args(argv)
+    selecting = [f for f, on in (("--organisms", a.organisms), ("--exclude-ids", a.exclude_ids),
+                                 ("--exclude-assay", a.exclude_assay), ("--exclude-collections", a.exclude_collections),
+                                 ("--one-per-collection", a.one_per_collection), ("--listing", a.listing),
+                                 ("--max-cells", a.max_cells != 50_000)) if on]
+    if a.from_manifest and selecting:
+        p.error(f"--from-manifest fetches the listed rows as they are; {', '.join(selecting)} would be ignored")
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     if a.from_manifest:
         with open(a.from_manifest, encoding="utf-8") as fh:
-            picked = [dict(r, filesize=int(r["filesize"]), cell_count=int(r["cell_count"]),
-                           collection="", citation="") for r in csv.DictReader(fh, delimiter="\t")]
+            reader = csv.DictReader(fh, delimiter="\t", quoting=csv.QUOTE_NONE)   # written unquoted
+            rows = list(reader)
+        if any(None in r or None in r.values() for r in rows):
+            p.error(f"{a.from_manifest}: rows with missing or extra columns")
+        picked = [dict(r, filesize=int(r["filesize"]), cell_count=int(r["cell_count"]),
+                       collection="", citation="") for r in rows]
+        extra = [c for c in ("collection_id",) if c in (reader.fieldnames or [])]
         if not a.dry_run:
             _readme_text_from_listing(picked)
-        return _write_and_fetch(out, picked, a.dry_run)
-    with urlopen(Request(API, headers={"User-Agent": "grnbench"}), timeout=120) as r:
-        datasets = json.load(r)
+        return _write_and_fetch(out, picked, a.dry_run, extra)
+    if a.listing:
+        datasets = json.loads(Path(a.listing).read_text(encoding="utf-8"))
+    else:
+        with urlopen(Request(API, headers={"User-Agent": "grnbench"}), timeout=120) as r:
+            datasets = json.load(r)
     if a.organisms:
         keep = {o.strip().lower() for o in a.organisms.split(",")}
         datasets = [d for d in datasets if {x.lower() for x in _labels(d.get("organism"))} <= keep]
     if a.exclude_ids:
-        ids = [x.strip().lower() for x in Path(a.exclude_ids).read_text(encoding="utf-8").split() if x.strip()]
+        ids = _exclusion_list(a.exclude_ids, "dataset ids")
+        bad = [i for i in ids if not _ID.fullmatch(i)]
+        if bad:
+            p.error(f"{a.exclude_ids}: not a dataset id or 8-character id prefix: {bad[:3]}")
+        before = len(datasets)
         datasets = [d for d in datasets if not any(d["dataset_id"].lower().startswith(i) for i in ids)]
+        print(f"--exclude-ids: {before - len(datasets)} datasets dropped ({len(ids)} ids listed)")
+    if a.exclude_collections:
+        colls = _exclusion_list(a.exclude_collections, "collection ids")
+        before = len(datasets)
+        datasets = [d for d in datasets if (d.get("collection_id") or "").lower() not in colls]
+        print(f"--exclude-collections: {before - len(datasets)} datasets dropped ({len(colls)} collections listed)")
     if a.exclude_assay:
         subs = [x.strip().lower() for x in a.exclude_assay.split(",") if x.strip()]
         datasets = [d for d in datasets if not any(s_ in lab.lower() for lab in _labels(d.get("assay"))
                                                    for s_ in subs)]
-    picked = select(datasets, a.max, a.max_mb)
+    picked = select(datasets, a.max, a.max_mb, max_cells=a.max_cells, one_per_collection=a.one_per_collection)
+    if len(picked) < a.max:
+        print(f"only {len(picked)} datasets pass the filters (--max {a.max})")
     for d in picked:
         d["folder"] = folder_for(d).as_posix()
-    return _write_and_fetch(out, picked, a.dry_run)
+    return _write_and_fetch(out, picked, a.dry_run, ["collection_id"] if a.one_per_collection else [])
 
 
-def _write_and_fetch(out: Path, picked: list[dict], dry_run: bool) -> int:
+def _write_and_fetch(out: Path, picked: list[dict], dry_run: bool, extra: Sequence[str] = ()) -> int:
     cols = ["folder", "dataset_id", "assay", "organism", "tissue", "suspension_type", "cell_count",
-            "filesize", "title", "url"]
+            "filesize", "title", "url"] + list(extra)
     lines = ["\t".join(cols)] + ["\t".join(str(d[c]).replace("\t", " ") for c in cols) for d in picked]
-    (out / "manifest.tsv").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (out / "manifest.tsv").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
     total = sum(d["filesize"] for d in picked) / 1e6
     print(f"{len(picked)} datasets, {total:.0f} MB total")
     for d in picked:

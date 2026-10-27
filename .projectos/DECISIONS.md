@@ -198,3 +198,34 @@ STATUS: PROPOSED | ACTIVE | SUPERSEDED by D-xxx | REVERTED
   before it can be chosen. The knowledge base asks R about `r:` packages only when `GRNBENCH_R_BRIDGE=1`;
   off (the default), they count as missing without starting R, so planning never starts R by surprise and
   registered reruns keep their texts.
+### D-057 | 2026-10-22 | claude (for GB) | ACTIVE | A pool of 200 never-used CELLxGENE datasets, one per study, split by a seed before any look
+- decision: new real-data experiments may draw from a fixed pool of 200 CELLxGENE Discover datasets
+  from studies (collections) that no earlier record drew from: human or mouse, single-cell or single-nucleus RNA of any assay except
+  targeted panels and ATAC, H5AD of at most 2 GB with 500 to 500,000 cells, and one dataset per
+  collection (the smallest H5AD of each study; the first 200 of the selector's round-robin over assay x
+  organism). The pool comes from `fetch_cellxgene.py --one-per-collection --exclude-collections` on the
+  public listing of 2026-10-22 and is committed as
+  `experiments/EXP-20261022-GB.pool.tsv`. Before any dataset is downloaded or scored,
+  `split_pool.py --seed 42` puts 120 datasets in a confirmatory part and 80 in an exploratory part
+  (`EXP-20261022-GB-1.datasets.tsv`, `EXP-20261022-GB-2.datasets.tsv`). Confirmatory records use only
+  the confirmatory part; tuning, stress tests and internal checks use only the exploratory part; a
+  dataset never changes part. A confirmatory part already scored for one question may serve a
+  confirmatory test of another question only if nothing was developed or tuned on it (as C7 used C6's
+  datasets).
+- why: the owner asked for it ("usane anche 200 di dataset, anche grandi, basta che abbia senso",
+  2026-10-18; "prendi 200 datasets di tutti i tipi e fai le prove", 2026-10-22). C4's EPR question
+  needs about 100 to 120 never-used datasets (EXP-20261020-GB-1); D-015 and D-017 want confirmation on
+  unused data; one dataset per study, and no study used before, avoid the shared-study pairs found
+  in C4 (erratum of 2026-10-09). The smallest file per study keeps compute bounded and is not chosen by content.
+- alternatives: keep drawing 20 datasets at a time (too few for EPR); a random dataset within each
+  study (larger files, a seed per study); no split (exploratory looks would contaminate the
+  confirmatory data).
+- applies: D-015, D-017 and D-020 (references of each record are its own snapshot manifest); the new
+  data have an issue first (AGENTS.md section 9).
+- approved: GB, 2026-10-23 ("go" on the plan of the registration PR: download, pilot, then the two jobs).
+- update 2026-10-23 (LM's review, before anything was scored): "used before" means any CELLxGENE id in
+  `experiments/` or `benchmarks/results/` on any branch (`benchmarks/used_datasets.py`; 71 datasets in 43
+  studies); the pool is redrawn from the saved listing of 2026-10-22 (`fetch_cellxgene.py --listing`),
+  dropping 6 datasets EXP-20261001-LD-1 had scored. Each record's data provenance is its own snapshot
+  (`EXP-...data.tsv`, checked with `--require-all`); data and large outputs live in a data folder outside the
+  code checkout (the cluster's scratch area is not writable for this account; home has no quota).
