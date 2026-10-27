@@ -27,6 +27,23 @@ def _keep_r_probe_cache_out_of_the_user_cache(_r_probe_cache, monkeypatch):
     monkeypatch.delenv("GRNBENCH_R_BRIDGE", raising=False)
 
 
+@pytest.fixture(autouse=True)
+def _isolate_method_registry():
+    """A test that registers a model must not change any later test (#183)."""
+    from grnbench import plugins
+    from grnbench.infer import base as infer_base
+
+    saved_registry = dict(infer_base.REGISTRY)
+    saved_entry_points = plugins._loaded_entry_points
+    saved_refs = dict(plugins._registered_refs)
+    yield
+    infer_base.REGISTRY.clear()
+    infer_base.REGISTRY.update(saved_registry)
+    plugins._loaded_entry_points = saved_entry_points
+    plugins._registered_refs.clear()
+    plugins._registered_refs.update(saved_refs)
+
+
 # A stand-in for Rscript (plain Python, no R needed). It answers the bridge's two R files:
 # _probe.R prints the JSON line built from FAKE_R_PACKAGES / FAKE_R_BUILT / FAKE_R_LIBRARY (folders joined
 # with os.pathsep) / FAKE_R_VERSION; _wrapper.R reads params.json from its working folder and acts on

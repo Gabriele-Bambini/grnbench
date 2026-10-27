@@ -51,6 +51,8 @@
   a plan's recorded command always names `--n-hvg` (the number, or `all` when the plan keeps every gene)
   and `manifest['args']['note_all_genes']` records whether the note was asked for, so the replayed command
   of a plan writes the manifest steps and warnings `execute_plan` wrote, not only the same matrix.
+- Tests now restore the method and plugin registries after every case, so a UI test that registers
+  a user model cannot make a later plugin test fail only because of collection order (#183).
 - Preprocessing plans now tell the truth when a requested option falls back: pseudobulk names the
   ignored batch/normalization choices, per-batch MAD names its global fallback, small matrices name
   the all-gene HVG fallback, and context plans name pooled/largest-type behaviour. Random and

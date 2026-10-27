@@ -26,20 +26,6 @@ from grnbench.plugins import (
 HAS_PYARROW = importlib.util.find_spec("pyarrow") is not None
 
 
-@pytest.fixture(autouse=True)
-def clean_registry():
-    """Every test starts from the built-in registry and leaves it unchanged."""
-    saved = dict(infer_base.REGISTRY)
-    saved_flag = plugins._loaded_entry_points
-    saved_refs = dict(plugins._registered_refs)
-    yield
-    infer_base.REGISTRY.clear()
-    infer_base.REGISTRY.update(saved)
-    plugins._loaded_entry_points = saved_flag
-    plugins._registered_refs.clear()
-    plugins._registered_refs.update(saved_refs)
-
-
 # --------------------------------------------------------------------------- #
 # python plugins
 # --------------------------------------------------------------------------- #
