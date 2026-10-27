@@ -10,9 +10,12 @@ dataset - the ground truth the engine's context detection is checked against.
         [--exclude-ids used_ids.txt] [--exclude-assay targeted]
     python benchmarks/fetch_cellxgene.py --out DIR --from-manifest experiments/EXP-...datasets.tsv
 
-``--from-manifest`` skips the listing and the selection and fetches exactly the rows of an
-earlier ``manifest.tsv`` (same folders, URLs and truth.json), so a rerun gets the same files
-even if the public listing has changed since. Check them with ``data_manifest.py --check``.
+``--from-manifest`` skips the selection and fetches exactly the rows of an earlier
+``manifest.tsv`` (same folders, URLs and truth.json), so a rerun gets the same files even if
+the public listing has changed since. Check them with ``data_manifest.py --check``. It reads
+the listing only for the collection name and citation of each README.md (the engine reads
+README.md as a text source), and says so on stderr for each dataset it cannot fill; the
+downloads do not depend on it, and ``--dry-run`` does not read it.
 """
 from __future__ import annotations
 
@@ -21,6 +24,7 @@ import csv
 import json
 import sys
 import time
+from http.client import HTTPException
 from pathlib import Path
 from urllib.request import Request, urlopen
 
@@ -86,6 +90,26 @@ def select(datasets: list[dict], n: int, max_mb: float) -> list[dict]:
     return picked
 
 
+def _readme_text_from_listing(picked: list[dict]) -> None:
+    """Fill ``collection`` and ``citation`` of manifest rows from the listing, by dataset id, so
+    README.md is the text the listing route writes. Never fails the download: a dataset the
+    listing cannot fill keeps empty values and gets one loud line on stderr."""
+    try:
+        with urlopen(Request(API, headers={"User-Agent": "grnbench"}), timeout=120) as r:
+            listing, why = {d["dataset_id"]: d for d in json.load(r)}, "not in the CELLxGENE listing"
+    except (OSError, ValueError, HTTPException, KeyError, TypeError) as e:   # unreachable, not JSON, malformed
+        listing, why = {}, f"CELLxGENE listing not fetched ({e})"
+    for d in picked:
+        hit = listing.get(d["dataset_id"])
+        if hit is None:
+            print(f"WARNING {d['dataset_id']} ({d['folder']}): {why}; its README.md has no collection "
+                  "name or citation, so it differs from the one the listing route writes. The engine reads "
+                  "README.md as a text source: planner warnings may differ from the original run.",
+                  file=sys.stderr, flush=True)
+            continue
+        d["collection"], d["citation"] = hit.get("collection_name", ""), hit.get("citation", "")
+
+
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--out", required=True)
@@ -101,7 +125,8 @@ def main(argv=None) -> int:
     p.add_argument("--exclude-assay", default=None,
                    help="comma-separated case-insensitive substrings of assay labels to skip, e.g. 'targeted'")
     p.add_argument("--from-manifest", default=None,
-                   help="fetch exactly the datasets of this manifest.tsv (no listing, no selection)")
+                   help="fetch exactly the datasets of this manifest.tsv (no selection; the listing "
+                        "only supplies the collection name and citation of README.md)")
     a = p.parse_args(argv)
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -109,6 +134,8 @@ def main(argv=None) -> int:
         with open(a.from_manifest, encoding="utf-8") as fh:
             picked = [dict(r, filesize=int(r["filesize"]), cell_count=int(r["cell_count"]),
                            collection="", citation="") for r in csv.DictReader(fh, delimiter="\t")]
+        if not a.dry_run:
+            _readme_text_from_listing(picked)
         return _write_and_fetch(out, picked, a.dry_run)
     with urlopen(Request(API, headers={"User-Agent": "grnbench"}), timeout=120) as r:
         datasets = json.load(r)

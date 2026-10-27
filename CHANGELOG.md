@@ -3,6 +3,10 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- `fetch_cellxgene.py --from-manifest` (#156) now writes the same `README.md` as the listing route: it takes
+  the collection name and citation from the CELLxGENE listing by dataset id, and warns on stderr, per dataset,
+  when it cannot (the download goes on). The empty README it wrote before was the cause of C6's
+  `n_warnings` 4 -> 3 on rerun (EXP-20261002-LM-1, section 4b); no score was affected.
 - Preprocessing plans now tell the truth when a requested option falls back: pseudobulk names the
   ignored batch/normalization choices, per-batch MAD names its global fallback, small matrices name
   the all-gene HVG fallback, and context plans name pooled/largest-type behaviour. Random and
