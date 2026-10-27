@@ -34,6 +34,16 @@ pre-registered experiments (D-017).
   to 123 (family of 4) never-used datasets for 80% power. C4 unchanged. Next in this track: 16-2
   (pin `auto_noref` to the pre-D-021 rule, GB's OK first), 14-1 (multiplicity simulation), 13-1
   (motif-source table). 15-2 (HPC) and 15-3 (new data, confirmatory) only with GB's OK.
+- Preprocessing engine step 2 (GB, issues #128 and #135): option availability (#133, D-031 ACTIVE) and
+  the optional R bridge (#136, D-032 ACTIVE) are on `main` since 2026-10-23. An option is available only
+  with its dependencies and a grnbench executor (`executors.PLAN_STEPS`); `grnbench.rbridge` finds an
+  Rscript (conda env `grnbench-r` by default), probes its packages once per cache and runs R scripts with a
+  fixed seed and RNG kind; `grnbench env` shows what is there. Checked against the real `grnbench-r` env on
+  GB's Windows PC; not on Linux or the cluster yet (installing R there needs the owner's OK). Step 2c
+  (`gb/kb-r-availability`, draft PR #144): the knowledge base sees R packages through the bridge when
+  `GRNBENCH_R_BRIDGE=1`; off (default) plans are unchanged and R is never started. No R option has an
+  executor yet, so no plan changes either way. Next: the first R executor, with the step that needs it
+  (4b EmptyDrops, 7b scDblFinder).
 - Issue #132 (LD, `ld/plan-runtime-truth`): six silent mismatches between requested preprocessing
   choices and actual execution are fixed with explicit fallback reasons, an auditable subsampling
   mode and strict decision-key validation; awaiting review.

@@ -441,7 +441,11 @@ def test_env_reports_the_optional_tools_and_fails_only_for_an_r_you_named(capsys
     assert any(r["tool"] == "r:SoupX" and "ambient_rna=soupx" in r["used_for"] for r in rows)
     assert grnbench_main(["env"]) == 0
     out = capsys.readouterr().out
-    assert out.splitlines()[0].split() == ["tool", "found", "version", "source"] and "r:scDblFinder" in out
+    assert out.splitlines()[0].startswith("R in planning: off (GRNBENCH_R_BRIDGE=1")
+    assert out.splitlines()[1].split() == ["tool", "found", "version", "source"] and "r:scDblFinder" in out
+    monkeypatch.setenv("GRNBENCH_R_BRIDGE", "1")
+    assert grnbench_main(["env"]) == 0 and capsys.readouterr().out.startswith("R in planning: on\n")
+    monkeypatch.delenv("GRNBENCH_R_BRIDGE")
     assert grnbench_main(["env", "--rscript", "no/such/Rscript"]) == 1, "the R you named does not work"
     assert "no Rscript at" in capsys.readouterr().out
     assert grnbench_main(["env", "--rscript", ""]) == 1 and "--rscript is empty" in capsys.readouterr().out

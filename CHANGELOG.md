@@ -65,6 +65,12 @@
   `skipped_variants` are unchanged. The "best option ... is unavailable" warning names what actually
   runs; what it would take to run the best option is in `plan.option_notes` and in the interface. Not
   fixed here: regulator options are recorded only (#131); six other plan/run mismatches (#132).
+- The knowledge base can see R packages through the R bridge (step 2c, #135, D-032): with
+  `GRNBENCH_R_BRIDGE=1`, `kb` asks `rbridge.requirement_status` for `r:` requirements (one cached probe);
+  off, the default, an R package counts as missing without starting R, so plans, `grnbench kb`, the
+  interface and reruns of registered experiments are unchanged. The rpy2 path is gone. No R option has a
+  grnbench executor yet, so with the bridge on an installed package only changes the reason to "no grnbench
+  executor ... yet". `grnbench env` says whether R is on for planning.
 - `test_grnbench_ui_hands_the_theme_to_streamlit` compares the app path after resolving it, so it no longer fails
   where the home directory is a symlink, as on the cluster (#124).
 - `grnbench.seeds` (#126, step 1a): `DEFAULT_SEED = 42`, `derive` (named child seeds from `SeedSequence`,

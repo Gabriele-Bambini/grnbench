@@ -206,9 +206,12 @@ def tilde(path: str | os.PathLike | None) -> str | None:
 
 
 def clear_memo() -> None:
-    """Forget what this process remembers about R and conda (the disk cache stays): a new worker's view."""
+    """Forget what this process remembers about R and conda (the disk cache stays): a new worker's view.
+    It also forgets the R the knowledge base looked up (``kb._r_runtime``), failed lookups included."""
     _PROBE_MEMO.clear()
     _CONDA_MEMO.clear()
+    from grnbench import kb
+    kb._R_RUNTIME.clear()
 
 
 def cache_dir() -> Path:
@@ -731,7 +734,7 @@ def requirement_status(req: str, rt: RRuntime | None | EllipsisType = ...) -> Re
     A missing one has the reason ``missing: <req>``, the knowledge base's own text; an R package built for
     another R version has ``built for R x.y``. The detail is in ``install_hint``, which also names any R
     candidate that was skipped. ``rt`` is the R to ask (``...``: :func:`find_rscript`; None: there is no R).
-    Not used by ``kb.Option.availability`` yet (step 2c)."""
+    The knowledge base asks it for ``r:`` requirements when the bridge is on (``kb.r_bridge_on``)."""
     kind, _, name = req.partition(":")
     missing = f"missing: {req}"
     if kind == "py":
@@ -942,7 +945,11 @@ def environment_report(explicit: str | None = None, *, fresh: bool = False) -> l
 def environment_status(explicit: str | None = None, *, fresh: bool = False) -> tuple[list[dict], bool]:
     """:func:`environment_report` plus whether looking for R failed: True when it raised (an R that was
     named does not work, ``GRNBENCH_R_ENV`` names no env, an existing env has no working R, or an internal
-    error), False when R was found or is simply absent or turned off. ``grnbench env`` exits 1 on True."""
+    error), False when R was found or is simply absent or turned off. ``grnbench env`` exits 1 on True.
+    ``fresh=True`` also makes the knowledge base look R up again next time (``kb._r_runtime``)."""
+    if fresh:
+        from grnbench import kb
+        kb._R_RUNTIME.clear()
     try:
         uses = _kb_uses()
         reqs = _r_requirements()

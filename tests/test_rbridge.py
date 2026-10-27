@@ -691,6 +691,62 @@ def test_the_r_files_ship_inside_the_package():
 
 
 # --------------------------------------------------------------------------- #
+# the knowledge base sees R packages through the bridge, only when it is on (step 2c)
+# --------------------------------------------------------------------------- #
+
+def test_the_knowledge_base_asks_r_only_when_the_bridge_is_on(bare, fake_rscript, monkeypatch):
+    monkeypatch.setenv("GRNBENCH_RSCRIPT", str(fake_rscript.path))     # an R with SoupX, without scDblFinder
+    soupx, scdbl = kb.DECISION_INDEX["ambient_rna"], kb.DECISION_INDEX["doublets"]
+    monkeypatch.delenv("GRNBENCH_R_BRIDGE", raising=False)
+    assert not kb.r_bridge_on()
+    assert soupx.availability("soupx") == (False, "missing: r:SoupX"), "off: the registered text"
+    kb.option_table()
+    assert fake_rscript.calls() == [], "off: planning and the option table never start R"
+    for value in ("1", "on", "TRUE", " yes "):
+        monkeypatch.setenv("GRNBENCH_R_BRIDGE", value)
+        assert kb.r_bridge_on(), value
+    assert soupx.option("soupx").availability() == (True, ""), "on: the package is found in R"
+    ok, reason = soupx.availability("soupx")
+    assert not ok and reason == "no grnbench executor for ambient_rna=soupx yet", "found, but nothing runs it yet"
+    assert scdbl.availability("scdblfinder") == (False, "missing: r:scDblFinder")
+    assert [c["script"] for c in fake_rscript.calls()] == ["_probe.R"], "one probe answers every R requirement"
+    monkeypatch.setenv("GRNBENCH_R_BRIDGE", "0")
+    assert soupx.availability("soupx") == (False, "missing: r:SoupX")
+
+
+def test_the_bridge_on_with_no_usable_r_reads_as_missing_never_as_an_error(bare, fake_rscript, tmp_path,
+                                                                           monkeypatch):
+    monkeypatch.setenv("GRNBENCH_R_BRIDGE", "1")
+    monkeypatch.setenv("GRNBENCH_RSCRIPT", "none")
+    assert kb.DECISION_INDEX["ambient_rna"].availability("soupx") == (False, "missing: r:SoupX")
+    monkeypatch.setenv("GRNBENCH_RSCRIPT", str(tmp_path / "no" / "Rscript"))     # a named R that is not there
+    assert kb.DECISION_INDEX["ambient_rna"].availability("soupx") == (False, "missing: r:SoupX")
+    assert fake_rscript.calls() == []
+
+
+def test_the_bridge_on_starts_a_broken_r_once_per_process_not_once_per_package(bare, tmp_path, monkeypatch):
+    starts = tmp_path / "starts.txt"
+    broken = _script(tmp_path / "broken", f'echo x >> "{starts}"; exit 1', f'@echo x>> "{starts}"\r\n@exit /b 1')
+    monkeypatch.setenv("GRNBENCH_R_BRIDGE", "1")
+    monkeypatch.setenv("GRNBENCH_RSCRIPT", str(broken))
+    kb.option_table()
+    kb.option_table()
+    assert kb.DECISION_INDEX["ambient_rna"].availability("soupx") == (False, "missing: r:SoupX")
+    assert len(starts.read_text().splitlines()) == 1, "a failing R is asked once, then remembered as unusable"
+    rbridge.clear_memo()                                   # a new session (or Check R) asks again
+    kb.option_table()
+    assert len(starts.read_text().splitlines()) == 2
+
+
+def test_no_text_names_rpy2_any_more():
+    from grnbench import strategies
+    texts = [kb._REQ_HINT["r"]] + [s.unavailable or "" for s in strategies.REGISTRY.values()]
+    root = Path(__file__).resolve().parents[1]
+    texts += [line for line in (root / "README.md").read_text(encoding="utf-8").splitlines() if "scran" in line]
+    assert not [t for t in texts if "rpy2" in t], "D-032: R runs through the bridge, never rpy2"
+
+
+# --------------------------------------------------------------------------- #
 # real R (skips without one; on a machine with the grnbench-r env it must run)
 # --------------------------------------------------------------------------- #
 

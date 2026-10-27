@@ -23,6 +23,7 @@ Agents are tools, not contributors: log the person who directed the agent.
 | 2026-10-09 | LM | Visualization, Software | main figures for C4-C7 (`paper/figures/fig_motif_lift`, `fig_reference_free`, `paper/make_figures.py`); PR #62 |
 | 2026-10-22 | LD | Software, Validation | preprocessing plan/runtime truthfulness and regression coverage; issue #132 |
 | 2026-10-20 | GB | Formal analysis, Methodology, Software | power of the paired t over datasets (`grnbench.eval.power`) and C4's EPR comparison re-read from its committed rows (`benchmarks/epr_power.py`); EXP-20261020-GB-1, issue #127 |
+| 2026-10-22 | GB | Software | the knowledge base sees R packages through the R bridge when `GRNBENCH_R_BRIDGE=1` (step 2c; off by default, R never started by planning); issue #135 |
 | 2026-10-21 | GB | Software | optional R bridge (`grnbench.rbridge`, `grnbench env`, R env in `requirements/`); issue #135 |
 | 2026-10-20 | GB | Software | an option is available only if grnbench can run it (`executors.py`, `kb.DecisionPoint.availability`; forcing an unrunnable option fails loudly); issue #128 |
 | 2026-10-20 | GB | Software | `grnbench.seeds`: master seed, named child seeds and the frozen table of the seeds each entry point uses today, with a test tying it to the code; issue #126 |

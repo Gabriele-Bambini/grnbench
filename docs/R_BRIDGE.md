@@ -135,12 +135,24 @@ exactly when `run_r` would refuse: the R you named (`--rscript`, `GRNBENCH_RSCRI
 `GRNBENCH_R_ENV` names no env, or an env that exists has no working R. Scripts can check it.
 The install lines for packages outside the approved set (DoubletFinder, Slingshot) are for reference:
 adding them to `grnbench-r` needs the owner's OK.
-In the interface, the sidebar's **Environment** popover shows the same rows; R starts only when you
-press **Check R**, and again each time you press it.
+In the interface, the sidebar's **Environment** popover shows the same rows; with the bridge off for
+planning (the default), R starts only when you press **Check R**, and again each time you press it.
+With `GRNBENCH_R_BRIDGE=1`, planning a dataset also asks R once per session.
 
-## Not wired yet (step 2c)
+## The knowledge base and R (step 2c)
 
-The knowledge base still decides availability on its own (`kb.Option.availability`, unchanged), so no
-R option can be chosen by the planner yet, and planner output is the same as before. Step 2c
-(after PR #133) connects `requirement_status` to the knowledge base, keeping the reason text
-`missing: r:<package>`. Under the current preset, R options will be opt-in.
+Whether an option's `r:` packages are installed is asked of R only when you turn the bridge on for
+planning: `GRNBENCH_R_BRIDGE=1` (also `on`, `true`, `yes`). Then `kb` asks
+`rbridge.requirement_status`, one cached probe for all the packages; nothing is ever imported into
+Python (no rpy2).
+
+Off (the default), an `r:` package counts as missing without starting R. The reason stays
+`missing: r:<package>`, so planning, `grnbench kb` and the interface never start R by surprise, and
+reruns of registered experiments keep their texts. A broken or absent R with the bridge on reads as
+missing too, never as an error.
+
+Being installed is not enough to be chosen: an option also needs a grnbench executor
+(`executors.PLAN_STEPS`, D-031). No R option has one yet, so with the bridge on an installed package
+changes the reason to `no grnbench executor for <decision>=<option> yet`, and the plan stays the same.
+The executors come with the steps that use them (cell calling, doublets, ambient RNA). Under the
+current preset R options stay opt-in.

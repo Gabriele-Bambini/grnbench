@@ -334,7 +334,7 @@ REGISTRY: dict[str, StrategySpec] = {
                      metacells),
         StrategySpec("scran_pooled",
                      "scran pooled-size-factor normalization (R interop)",
-                     unavailable="requires R scran via rpy2 - planned"),
+                     unavailable="requires R scran through the optional R bridge (D-032) - planned"),
         StrategySpec("scvi_latent",
                      "scVI latent space as expression surrogate",
                      unavailable="requires scvi-tools - planned"),

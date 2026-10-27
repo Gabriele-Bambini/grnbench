@@ -194,3 +194,7 @@ STATUS: PROPOSED | ACTIVE | SUPERSEDED by D-xxx | REVERTED
 - alternatives: rpy2 (above); the system R (versions differ per machine and the user library leaks in);
   Docker only (one more runtime on every laptop, not assumed on the cluster).
 - note: D-031 is proposed in PR #133; this PR takes D-032 (renumber if main takes it first).
+- update 2026-10-23 (step 2c, issue #135, PR #144): an R option also needs a grnbench executor (D-031)
+  before it can be chosen. The knowledge base asks R about `r:` packages only when `GRNBENCH_R_BRIDGE=1`;
+  off (the default), they count as missing without starting R, so planning never starts R by surprise and
+  registered reruns keep their texts.

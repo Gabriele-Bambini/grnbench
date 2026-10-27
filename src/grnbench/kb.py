@@ -22,6 +22,7 @@ cannot drift apart. ``KB_VERSION`` is recorded in every run manifest.
 from __future__ import annotations
 
 import importlib.util
+import os
 import shutil
 from dataclasses import dataclass, field
 
@@ -128,6 +129,17 @@ class Option:
         return True, ""
 
 
+R_BRIDGE_ENV = "GRNBENCH_R_BRIDGE"
+
+
+def r_bridge_on() -> bool:
+    """Whether ``r:`` requirements are checked in R through the optional R bridge (D-032).
+
+    Opt-in (``GRNBENCH_R_BRIDGE=1``): off, an R package counts as missing without starting R, so planning
+    never starts R by surprise and reruns of registered experiments keep their texts."""
+    return os.environ.get(R_BRIDGE_ENV, "").strip().lower() in {"1", "on", "true", "yes"}
+
+
 def _have(req: str) -> bool:
     kind, _, name = req.partition(":")
     if kind == "py":
@@ -135,18 +147,33 @@ def _have(req: str) -> bool:
     if kind == "cli":
         return shutil.which(name) is not None
     if kind == "r":
-        if importlib.util.find_spec("rpy2") is None:
+        if not r_bridge_on():
             return False
-        try:  # pragma: no cover - needs R
-            from rpy2.robjects.packages import isinstalled
-            return bool(isinstalled(name))
-        except Exception:  # noqa: BLE001
-            return False
+        from grnbench import rbridge          # R runs as a child process, never inside Python (no rpy2)
+        rt = _r_runtime()
+        return rt is not None and rbridge.requirement_status(req, rt).ok
     return False
 
 
+# The R the bridge found, per process and per R setting. A failed lookup is remembered too, so a broken or hanging
+# R is started once, not once per package check; rbridge.clear_memo() forgets it (grnbench env and Check R do).
+_R_RUNTIME: dict[tuple[str, ...], object] = {}
+_R_SETTINGS = ("GRNBENCH_RSCRIPT", "GRNBENCH_R_ENV", "R_HOME", "CONDA_EXE", "PATH")
+
+
+def _r_runtime():
+    from grnbench import rbridge
+    key = tuple(os.environ.get(name, "") for name in _R_SETTINGS)
+    if key not in _R_RUNTIME:
+        try:
+            _R_RUNTIME[key] = rbridge.find_rscript()
+        except rbridge.RBridgeError:
+            _R_RUNTIME[key] = None
+    return _R_RUNTIME[key]
+
+
 _REQ_HINT = {"py": "pip install {}", "cli": "put {} on PATH",
-             "r": "install the R package {} and rpy2 (grnbench looks for R packages through rpy2)"}
+             "r": "install the R package {} in the grnbench-r env and set GRNBENCH_R_BRIDGE=1 (docs/R_BRIDGE.md)"}
 _REQ_WORDS = {"py": "the Python package {}", "r": "the R package {}", "cli": "the program {}"}
 
 

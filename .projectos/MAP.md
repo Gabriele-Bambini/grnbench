@@ -1,14 +1,11 @@
 # Map - grnbench (where things are)
 
 Keep this short and current: update it in any PR that adds, moves or removes a module, script or folder.
-Updated: 2026-10-21.
-Updated: 2026-10-20.
+Updated: 2026-10-23.
 
 ## Run it
 - Tests: `python -m pytest -q -p no:cacheprovider` (floor in AGENTS.md section 4). Golden values frozen
   from main for A/B tests, with the script that wrote them: `tests/golden/`.
-- Board (session start): `python -m grnbench.board`.
-- Tests: `python -m pytest -q -p no:cacheprovider` (floor in AGENTS.md section 4).
 - Board (session start): `python -m grnbench.board`; `--digest` weekly digest, `--claims` claims status table.
 - GUI: `grnbench ui` (Streamlit, `.claude/launch.json` config `grnbench-ui`). Demo data: `grnbench demo --out d`.
 - One dataset end to end: `grnbench run --data d.h5ad --out runs/x --gold dorotheaABC`.
@@ -28,8 +25,6 @@ Updated: 2026-10-20.
   (EXP-20261020-GB-1); tests `tests/test_epr_power.py`.
 - Second-person rerun outputs: `benchmarks/results/EXP-20261003-LM-1-repro-GB/` (#95; record section 4b).
   `benchmarks/diagnose_rerun.py` (where a rerun's rows differ from the committed rows; exploratory, #24).
-- Motif-prior lift decomposition: `benchmarks/motif_sensitivity.py` (`plan`, `run`, `report`) from a
-  `--keep-artifacts` run (EXP-20261003-GB-1); tests `tests/test_motif_sensitivity.py`.
 - Second-person rerun outputs: `benchmarks/results/EXP-20261002-LM-1-repro-GB/` (#94; record section 4b).
 - Second-person rerun outputs: `benchmarks/results/EXP-20260926-LM-1-repro-GB/` (#93; record section 4b).
 - Second-person rerun outputs: `benchmarks/results/EXP-20260925-LM-2-repro-GB/` (#24; record section 4b).
@@ -41,9 +36,8 @@ Updated: 2026-10-20.
 | area | modules |
 |---|---|
 | ingest + preprocessing | `ingest` (formats -> counts AnnData), `pipeline` (`run_prep`, every step in `manifest.json`), `retention` (ledger: cells, genes and named TFs each step removed; warns when a gene filter drops a detected TF), `qc` (loud gates), `hygiene` (doublets, metadata), `features` (HVG with TF union), `strategies` (pseudobulk, metacells, ...) |
-| cleaning engine | `kb` (stages, options, evidence, references), `context` (what the data are), `profile`, `selector` (rules), `autoprep` (plan, execute), `screen` (candidate pipelines on the data, reference split) |
-| R bridge (optional) | `rbridge` (find an Rscript, cached probe, `run_r` / `run_external`, `requirement_status`, `environment_report` / `environment_status`), `r/_wrapper.R` (seed, RNG kind, `session.json`), `r/_probe.R` (versions as one JSON line); not wired into `kb` availability yet |
 | cleaning engine | `kb` (stages, options, evidence, references), `executors` (`PLAN_STEPS`: which options grnbench can run, which are recorded only; refuses imputation, D-002), `context` (what the data are), `profile`, `selector` (rules), `autoprep` (plan, execute), `screen` (candidate pipelines on the data, reference split) |
+| R bridge (optional) | `rbridge` (find an Rscript, cached probe, `run_r` / `run_external`, `requirement_status`, `environment_report` / `environment_status`), `r/_wrapper.R` (seed, RNG kind, `session.json`), `r/_probe.R` (versions as one JSON line); `kb` availability asks it for `r:` packages when `GRNBENCH_R_BRIDGE=1` (`kb.r_bridge_on`) |
 | inference | `infer/` (`base` contract + registry, `correlation`, `classical`, `tree_methods` GENIE3/GRNBoost2, `aracne3`, `regdiffusion_adapter`, `cistarget` motif prior / pruning, `association` bicor/WGCNA/propr/ARACNe-style/MRNET, `regression` TIGRESS/BBSR/pcNet/extra-trees/boosting, `community` rank aggregation), `plugins` (bring your own model); what is built in and what is not: `docs/models_catalog.md` |
 | evaluation + statistics | `eval/` (`metrics`, `gold`, `universe`, `nulls`, `stability`, `comparison` = `compare_units` paired t + Holm, `power` = power and needed n of that t, for planning) |
 | evaluation + statistics | `eval/` (`metrics`, `gold`, `universe`, `nulls`, `stability`, `comparison` = `compare_units` paired t + Holm) |

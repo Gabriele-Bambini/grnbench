@@ -21,8 +21,10 @@ def _r_probe_cache(tmp_path_factory) -> Path:
 
 @pytest.fixture(autouse=True)
 def _keep_r_probe_cache_out_of_the_user_cache(_r_probe_cache, monkeypatch):
-    """No test writes R probe results into the person's real cache folder."""
+    """No test writes R probe results into the person's real cache folder, and none inherits the person's
+    GRNBENCH_R_BRIDGE (tests that need the bridge on set it themselves)."""
     monkeypatch.setenv("GRNBENCH_CACHE_DIR", str(_r_probe_cache))
+    monkeypatch.delenv("GRNBENCH_R_BRIDGE", raising=False)
 
 
 # A stand-in for Rscript (plain Python, no R needed). It answers the bridge's two R files:

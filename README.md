@@ -325,6 +325,6 @@ See [`hpc/README.md`](hpc/README.md).
 
 ## Roadmap
 
-- **v0.6** — SERGIO/BoolODE synthetic ground truth, `scran_pooled` (rpy2),
+- **v0.6** — SERGIO/BoolODE synthetic ground truth, `scran_pooled` (R, through the optional R bridge),
   results store (sqlite+parquet) with a dashboard over it, PIDC and CellOracle
   adapters.

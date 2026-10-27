@@ -146,6 +146,9 @@ def _env(rest: list[str]) -> int:
     if args.json:
         print(json.dumps(rows, indent=2))
         return code
+    from grnbench import kb
+    state = "on" if kb.r_bridge_on() else "off (GRNBENCH_R_BRIDGE=1 lets the planner see R packages)"
+    print(f"R in planning: {state}")
     width = max(len(r["tool"]) for r in rows)
     print(f"{'tool':{width}s}  found  {'version':10s}  source")
     for r in rows:
