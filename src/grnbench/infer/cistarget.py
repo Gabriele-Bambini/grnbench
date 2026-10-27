@@ -324,7 +324,8 @@ def motif_ranks(tfs, genes, species: str | None = None, root: Path | None = None
 def _motif_rank_of_edges(edges: pd.DataFrame, expr: pd.DataFrame, species, root) -> np.ndarray:
     tfs = list(dict.fromkeys(edges["source"].astype(str)))
     mr = motif_ranks(tfs, expr.columns, species, root)
-    edges.attrs["motif_coverage"] = mr.attrs["motif_coverage"]
+    if "motif_coverage" in mr.attrs:            # ranks a caller built itself carry no coverage report
+        edges.attrs["motif_coverage"] = mr.attrs["motif_coverage"]
     r = mr.to_numpy()
     ri = edges["source"].astype(str).map({t: i for i, t in enumerate(mr.index)}).to_numpy()
     ci = edges["target"].astype(str).map({g: i for i, g in enumerate(mr.columns)}).to_numpy()
@@ -342,7 +343,8 @@ def motif_prior(expr: pd.DataFrame, tf_names: list[str] | None = None, species: 
     long = long[long["source"] != long["target"]]
     out = pd.DataFrame({"source": long["source"], "target": long["target"],
                         "weight": -long["rank"].astype(float)})
-    out.attrs["motif_coverage"] = mr.attrs["motif_coverage"]
+    if "motif_coverage" in mr.attrs:
+        out.attrs["motif_coverage"] = mr.attrs["motif_coverage"]
     return out
 
 
@@ -355,9 +357,10 @@ def motif_rank_product(edges: pd.DataFrame, expr: pd.DataFrame, species: str | N
     mot_rank = pd.Series(_motif_rank_of_edges(out, expr, species, root)).rank(
         ascending=True, method="average").to_numpy()
     out["weight"] = -(np.log(base_rank) + np.log(mot_rank)) / 2
-    cov = out.attrs["motif_coverage"]
+    cov = out.attrs.get("motif_coverage")
     out = out.sort_values("weight", ascending=False, kind="stable").reset_index(drop=True)
-    out.attrs["motif_coverage"] = cov
+    if cov is not None:
+        out.attrs["motif_coverage"] = cov
     return out
 
 

@@ -228,3 +228,18 @@ def test_symbols_record_coverage_without_warning_and_leave_scores_alone(resource
     got = prior.set_index(["source", "target"])["weight"]
     ref = (-mr.stack().astype(float)).rename_axis(["source", "target"])
     assert np.array_equal(got.sort_index().to_numpy(), ref.loc[got.index].sort_index().to_numpy())
+
+
+def test_rank_product_accepts_motif_ranks_without_a_coverage_report(monkeypatch):
+    """The knockdown runner passes ranks it built itself, with no coverage report: no KeyError (#84 follow-up)."""
+    import numpy as np
+    import pandas as pd
+    from grnbench.infer import cistarget
+    genes = ["TF1", "G1", "G2"]
+    ranks = pd.DataFrame([[1.0, 2.0, 3.0]], index=["TF1"], columns=genes)
+    monkeypatch.setattr(cistarget, "motif_ranks", lambda tfs, cols, species, root: ranks)
+    edges = pd.DataFrame({"source": ["TF1", "TF1"], "target": ["G1", "G2"], "weight": [0.5, 0.9]})
+    expr = pd.DataFrame(np.ones((2, 3)), columns=genes)
+    out = cistarget.motif_rank_product(edges, expr, "human")
+    assert set(out["target"]) == {"G1", "G2"} and "motif_coverage" not in out.attrs
+    assert "motif_coverage" not in cistarget.motif_prior(expr, ["TF1"], "human").attrs
