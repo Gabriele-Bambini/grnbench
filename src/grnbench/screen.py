@@ -20,6 +20,7 @@ the models, so the pipeline is never chosen on the edges it is judged on.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import time
 from pathlib import Path
@@ -31,6 +32,8 @@ SCREEN_METHOD = "pearson_signed"   # seconds per dataset; a proxy, not a verdict
 STABILITY_TOP_K = 500
 STABILITY_HALF_CELLS = 150         # equal-size halves: stability must not reward cell count
 MAX_SCREEN_CELLS = 3000
+# Name of the cell-sampling rule (D-024). Runners pin it in RUN_CONFIG.json; bump it if the rule changes.
+CELL_SAMPLING = "blake2b64-seed-barcode-v1"
 
 
 def split_reference(pairs, seed: int = 0) -> tuple[set, set]:
@@ -92,6 +95,26 @@ def batch_leakage(adata, batch_key: str | None, seed: int = 0) -> float | None:
     return float(silhouette_score(pcs, labels, random_state=seed))
 
 
+def stable_cell_order(obs_names, seed: int = 0) -> np.ndarray:
+    """Positions of the cells ordered by a hash of seed and barcode.
+
+    Independent of row order, so a few cells more or fewer upstream change only
+    those cells in a sample (positional sampling reshuffles everything).
+    Duplicate names are ordered by position. Rule name: `CELL_SAMPLING`. The cap
+    (`stable_subsample`) keeps all cells at or below K, but the fixed-size halves of
+    `edge_stability` come from this order too, so they differ from the positional
+    ones on any matrix large enough to have two halves.
+    """
+    keys = np.array([int.from_bytes(hashlib.blake2b(f"{seed}|{n}".encode(), digest_size=8).digest(), "big")
+                     for n in obs_names], dtype=np.uint64)
+    return np.argsort(keys, kind="stable")
+
+
+def stable_subsample(obs_names, k: int, seed: int = 0) -> np.ndarray:
+    """Sorted positions of k cells chosen by `stable_cell_order` (all when n <= k)."""
+    return np.sort(stable_cell_order(obs_names, seed=seed)[:k])
+
+
 def _top_pairs(edges: pd.DataFrame, k: int) -> set:
     top = edges.reindex(edges["weight"].abs().sort_values(ascending=False).index).head(k)
     return set(zip(top["source"].astype(str).str.upper(), top["target"].astype(str).str.upper()))
@@ -106,7 +129,7 @@ def edge_stability(adata, tf_list, method: str = SCREEN_METHOD, k: int = STABILI
     # Fixed-size halves: with all cells, a pooled pipeline (more cells) always
     # looks more stable than a per-cell-type one, whatever its quality.
     half = min(adata.n_obs // 2, STABILITY_HALF_CELLS)
-    order = np.random.default_rng(seed).permutation(adata.n_obs)
+    order = stable_cell_order(adata.obs_names, seed=seed)
     halves = [adata[np.sort(order[:half])].copy(), adata[np.sort(order[half:2 * half])].copy()]
     tops = []
     for h in halves:
@@ -132,7 +155,7 @@ def screen_processed(path, tf_list=None, reference_pairs=None, batch_key: str | 
     if n_bad:
         raise ValueError(f"processed matrix has {n_bad} non-finite value(s) (NaN/inf); cannot screen")
     if adata.n_obs > MAX_SCREEN_CELLS:
-        idx = np.sort(np.random.default_rng(seed).choice(adata.n_obs, MAX_SCREEN_CELLS, replace=False))
+        idx = stable_subsample(adata.obs_names, MAX_SCREEN_CELLS, seed=seed)
         adata = adata[idx].copy()
     tfs = resolve_tf_names(adata.var_names, tf_list) if tf_list else None
     row = {"n_cells": int(adata.n_obs), "n_genes": int(adata.n_vars),

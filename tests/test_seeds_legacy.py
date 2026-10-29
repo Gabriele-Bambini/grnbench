@@ -52,6 +52,7 @@ CONSUMERS = {
     "RandomForestRegressor": "random_state", "RandomForestClassifier": "random_state",
     "ExtraTreesRegressor": "random_state", "GradientBoostingRegressor": "random_state",
     "Lasso": "random_state", "spring_layout": "seed", "RegDiffusionTrainer": "seed",
+    "stable_subsample": "seed", "stable_cell_order": "seed",   # screen.py: cells by a hash of seed and barcode (D-024)
 }
 TRACED: set[str] = set()          # every source file a tracer read
 
@@ -160,6 +161,13 @@ def _ast_default(fdef: ast.FunctionDef, param: str = "seed"):
     defaults = dict(zip([a.arg for a in args][len(args) - len(fdef.args.defaults):], fdef.args.defaults))
     defaults.update({a.arg: d for a, d in zip(fdef.args.kwonlyargs, fdef.args.kw_defaults) if d is not None})
     return ast.literal_eval(defaults[param])
+
+
+def _literal_cap_seed(fdef: ast.FunctionDef):
+    """The one literal seed of every ``stable_subsample(..., seed=<literal>)`` in ``fdef`` (D-024 cell caps)."""
+    values = {ast.literal_eval(_kw(c, "seed")) for c in _calls(fdef, "stable_subsample")}
+    assert len(values) == 1, f"{fdef.name}: stable_subsample seeds {values}"
+    return values.pop()
 
 
 def _literal_rng_seed(fdef: ast.FunctionDef):
@@ -276,8 +284,8 @@ def _screening_from(seed) -> dict:
     for fn in (screen.split_reference, autoprep.execute_plan, screen.screen_processed):
         assert all(_passes(c, fn) for c in _calls(fdef, fn.__name__)), f"screen_candidates -> {fn.__name__}"
     proc = _func(rel, "screen_processed")
-    rngs = _calls(proc, "default_rng")
-    assert len(rngs) == 1 and _is_name(rngs[0].args[0], "seed"), "screen_processed: cap default_rng(seed)"
+    caps = _calls(proc, "stable_subsample")
+    assert len(caps) == 1 and _is_name(_kw(caps[0], "seed"), "seed"), "screen_processed: cap stable_subsample(seed=seed)"
     for fn in (screen.batch_leakage, screen.edge_stability):
         assert all(_passes(c, fn) for c in _calls(proc, fn.__name__)), f"screen_processed -> {fn.__name__}"
     _leaf(proc, keywords=("seed",))
@@ -315,7 +323,7 @@ def _engine_scoring() -> dict:
         assert _kw(call, "seed") is None and len(splats) == 1 and _names(splats[0]) == {"method_params", "m"}
     params = ast.literal_eval(_module_assign(ENGINE, "BENCH_METHOD_PARAMS"))
     assert not any("seed" in inner for inner in params.values())
-    return {"score.cell_cap": _literal_rng_seed(score), "model.*": UNSEEDED}
+    return {"score.cell_cap": _literal_cap_seed(score), "model.*": UNSEEDED}
 
 
 def _viz_seed() -> int:
@@ -539,7 +547,7 @@ def _real_bench() -> dict:
     assert all(_kw(c, "method_params") is None for c in _calls(task, "score_candidates"))
     models = _func(REAL, "score_models")
     engine = _engine_scoring()
-    cap = {_literal_rng_seed(models), engine["score.cell_cap"]}   # its models, and the proxies via engine_bench
+    cap = {_literal_cap_seed(models), engine["score.cell_cap"]}   # its models, and the proxies via engine_bench
     assert len(cap) == 1, cap
     assert all(_omits_seed(c) for c in _calls(_func(REAL, "final_report"), "build_run")), \
         "the report draws the figures with viz.SEED"

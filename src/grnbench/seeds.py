@@ -131,9 +131,9 @@ _LEGACY: dict[str, dict[str, Cell]] = {
         "profile.nonzero_sample": 0,          # profile.py:69, rng :73
         "profile.batch_silhouette": 0,        # profile.py:110, rng :120, PCA :128, silhouette :132
         "screen.split_reference": 0,          # screen.py:36, rng :38
-        "screen.cell_cap": 0,                 # screen.py:120 screen_processed, cap :135
+        "screen.cell_cap": 0,                 # screen.py:138 screen_processed, cap :153
         "screen.batch_leakage": 0,            # screen.py:80, PCA and silhouette :91-92
-        "screen.edge_stability": 0,           # screen.py:101, permutation :109
+        "screen.edge_stability": 0,           # screen.py:119, stable_cell_order :127
         "model.genie3": 42,                   # infer/tree_methods.py:82; None would give arboreto's
         "model.grnboost2": 42,                #   DEMON_SEED (:72), not 42; :93
         "model.random_forest": 42,            # infer/classical.py:245
@@ -201,29 +201,29 @@ _LEGACY: dict[str, dict[str, Cell]] = {
     # Streamlit interface, "Run and compare" and the quick run's screening
     "interface_screening": {
         "screen.split_reference": 0,          # ui/app.py:643, ui/logic.py:1119 screen_candidates without
-        "screen.cell_cap": 0,                 #   seed -> screen.py:249 seed=0, passed at :280, :331
-        "screen.batch_leakage": 0,            # screen.py:249, :331 -> :141
-        "screen.edge_stability": 0,           # screen.py:249, :331 -> :142
-        "prep.sampling": 0,                   # screen.py:311 execute_plan(seed=seed), so not 42
-        "prep.doublets": 0,                   # screen.py:311
-        "prep.metacells": 0,                  # screen.py:311
-        "model.*": UNSEEDED,                  # screen.py:113, :152 run_method without seed
+        "screen.cell_cap": 0,                 #   seed -> screen.py:267 seed=0, passed at :298, :350
+        "screen.batch_leakage": 0,            # screen.py:267, :350 -> :159
+        "screen.edge_stability": 0,           # screen.py:267, :350 -> :160
+        "prep.sampling": 0,                   # screen.py:331 execute_plan(seed=seed), so not 42
+        "prep.doublets": 0,                   # screen.py:331
+        "prep.metacells": 0,                  # screen.py:331
+        "model.*": UNSEEDED,                  # screen.py:131, :170 run_method without seed
     },
     # benchmarks/real_bench.py, datasets with a reference (all registered rows of C4-C6)
     "real_bench": {
         "profile.nonzero_sample": 0,          # profile.py:69, :79
         "profile.batch_silhouette": 0,        # profile.py:110, :180
         "screen.split_reference": 0,          # real_bench.py:347 screen_candidates without seed
-                                              #   -> screen.py:249 seed=0, passed at :280
-        "screen.cell_cap": 0,                 # screen.py:249, :331
-        "screen.batch_leakage": 0,            # screen.py:249, :331
-        "screen.edge_stability": 0,           # screen.py:249, :331
-        "prep.sampling": 0,                   # screen.py:311
-        "prep.doublets": 0,                   # screen.py:311
-        "prep.metacells": 0,                  # screen.py:311
-        "score.cell_cap": 0,                  # real_bench.py:253 default_rng(0); engine_bench.py:339 via :352
+                                              #   -> screen.py:267 seed=0, passed at :298
+        "screen.cell_cap": 0,                 # screen.py:267, :350
+        "screen.batch_leakage": 0,            # screen.py:267, :350
+        "screen.edge_stability": 0,           # screen.py:267, :350
+        "prep.sampling": 0,                   # screen.py:331
+        "prep.doublets": 0,                   # screen.py:331
+        "prep.metacells": 0,                  # screen.py:331
+        "score.cell_cap": 0,                  # real_bench.py:254 stable_subsample(seed=0); engine_bench.py:339 via :352
         "model.*": UNSEEDED,                  # real_bench.py:274 run_method without seed; screening
-                                              #   screen.py:113, :152; proxies engine_bench.py:348
+                                              #   screen.py:131, :170; proxies engine_bench.py:348
         "viz": 0,                             # viz.py:34, drawn by real_bench.py:618 build_run
     },
     # benchmarks/real_bench.py, datasets without a reference (the row's "seed": 0 is only a label)
@@ -244,10 +244,10 @@ _LEGACY: dict[str, dict[str, Cell]] = {
         "screen.cell_cap": TASK,              # engine_bench.py:455
         "screen.batch_leakage": TASK,         # engine_bench.py:455
         "screen.edge_stability": TASK,        # engine_bench.py:455
-        "prep.sampling": TASK,                # engine_bench.py:455 -> screen.py:311
-        "prep.doublets": TASK,                # screen.py:311
-        "prep.metacells": TASK,               # screen.py:311
-        "score.cell_cap": 0,                  # engine_bench.py:339 default_rng(0), whatever the task seed
+        "prep.sampling": TASK,                # engine_bench.py:455 -> screen.py:331
+        "prep.doublets": TASK,                # screen.py:331
+        "prep.metacells": TASK,               # screen.py:331
+        "score.cell_cap": 0,                  # engine_bench.py:339 stable_subsample(seed=0), whatever the task seed
         "model.*": UNSEEDED,                  # engine_bench.py:348 run_method; BENCH_METHOD_PARAMS (:43)
                                               #   has no seed, passed at :408
     },
@@ -261,9 +261,9 @@ _LEGACY: dict[str, dict[str, Cell]] = {
         "screen.cell_cap": TASK,              # candidate_study.py:292
         "screen.batch_leakage": TASK,         # candidate_study.py:292
         "screen.edge_stability": TASK,        # candidate_study.py:292
-        "prep.sampling": TASK,                # candidate_study.py:292 -> screen.py:311
-        "prep.doublets": TASK,                # screen.py:311
-        "prep.metacells": TASK,               # screen.py:311
+        "prep.sampling": TASK,                # candidate_study.py:292 -> screen.py:331
+        "prep.doublets": TASK,                # screen.py:331
+        "prep.metacells": TASK,               # screen.py:331
         "score.cell_cap": 0,                  # engine_bench.py:339 via candidate_study.py:302
         "model.*": UNSEEDED,                  # engine_bench.py:348 via candidate_study.py:302
                                               #   (EVAL_METHODS only, all deterministic)
@@ -277,7 +277,7 @@ _PREP = ("prep.sampling", "prep.doublets", "prep.metacells")
 _SCREEN = ("screen.split_reference", "screen.cell_cap", "screen.batch_leakage", "screen.edge_stability")
 # One call takes one int and uses it for several components; a caller cannot split it without changing
 # the callee, so those components are one knob. run_prep(seed=) (directly or through execute_plan) feeds
-# prep.*; screen_candidates(seed=) feeds screen.* and, through execute_plan(seed=seed) at screen.py:311,
+# prep.*; screen_candidates(seed=) feeds screen.* and, through execute_plan(seed=seed) at screen.py:331,
 # the prep it runs. community(seed=) hands its seed to every member (community.py:60), so the members it
 # runs share model.community's knob by construction. Any other component is its own knob.
 _FAN_OUT = {
@@ -300,7 +300,7 @@ def knob(component: str, entry_point: str) -> str:
 # The parameter a component's seed goes in; None: no parameter, so kwargs() has nothing to pass.
 _PARAM = {
     "stability.model": "algorithm_seed",          # eval/stability.py:28
-    "score.cell_cap": None,                       # a literal at the call site: default_rng(0)
+    "score.cell_cap": None,                       # a literal at the call site: stable_subsample(seed=0)
     "viz": None,                                  # the module constant viz.SEED
 }
 _PARAM_AT = {("interface", "viz"): "seed"}        # the ui/logic figure functions take seed= (logic.py:568)

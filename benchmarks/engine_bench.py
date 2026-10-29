@@ -36,7 +36,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from grnbench.screen import BASELINE_CHOICES
+from grnbench.screen import BASELINE_CHOICES, CELL_SAMPLING, stable_subsample
 
 EVAL_METHODS = ["pearson_signed", "spearman_signed", "clr"]
 DEFAULT_BENCH_MODELS = ["pearson_signed", "clr", "grnboost2", "regdiffusion"]
@@ -216,8 +216,13 @@ def ensure_run_config(out: str | Path, manifest_meta: dict, *, runner: str,
     if path.exists():
         previous = json.loads(path.read_text(encoding="utf-8"))
         if previous != payload:
+            old_cfg = previous.get("scientific_config", {})
+            diff = sorted(k for k in set(old_cfg) | set(scientific_config)
+                          if old_cfg.get(k, "<absent>") != scientific_config.get(k, "<absent>"))
             raise ValueError(
-                f"{path}: run configuration differs from the existing immutable configuration; "
+                f"{path}: run configuration differs from the existing immutable configuration "
+                f"(scientific_config keys: {', '.join(diff) or 'none, runner or task hash'}); "
+                "a run written before a sampling or scoring rule changed cannot be resumed: "
                 "use a new output directory"
             )
     else:
@@ -336,7 +341,7 @@ def score_candidates(records_by_cand, plans, tfs, eval_pairs,
                 continue
             adata = ad.read_h5ad(rec["processed"])
             if adata.n_obs > MAX_SCORE_CELLS:
-                keep = np.sort(np.random.default_rng(0).choice(adata.n_obs, MAX_SCORE_CELLS, replace=False))
+                keep = stable_subsample(adata.obs_names, MAX_SCORE_CELLS, seed=0)
                 adata = adata[keep].copy()
             genes = pd.Index(adata.var_names).astype(str)
             sources = resolve_tf_names(genes, tfs)
@@ -1012,6 +1017,7 @@ def main(argv=None) -> int:
                                          "method_params": {m: BENCH_METHOD_PARAMS.get(m, {})
                                                            for m in models},
                                          "max_score_cells": MAX_SCORE_CELLS,
+                                         "cell_sampling": CELL_SAMPLING,
                                          "context_truth_scoring": "macro_by_context",
                                          "artifact_policy": ("all" if args.keep else
                                                              "sentinels" if args.keep_artifacts

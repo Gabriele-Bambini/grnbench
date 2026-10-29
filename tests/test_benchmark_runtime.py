@@ -263,3 +263,49 @@ def test_pool_results_raises_when_a_worker_is_killed_instead_of_hanging():
     assert sorted(bench.pool_results(abs, [-1, -2], 2)) == [1, 2]
     with pytest.raises(BrokenProcessPool):
         list(bench.pool_results(os._exit, [9], 1))      # the worker process dies, as under OOM
+
+
+def _real_bench():
+    path = Path(__file__).parents[1] / "benchmarks" / "real_bench.py"
+    spec = importlib.util.spec_from_file_location("real_bench_runtime_tests", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _rewrite_config(path: Path, mutate) -> None:
+    """Rewrite RUN_CONFIG.json the way an older or different rule would have written it."""
+    import hashlib
+    cfg = json.loads(path.read_text(encoding="utf-8"))
+    mutate(cfg["scientific_config"])
+    cfg.pop("config_sha256")
+    cfg["config_sha256"] = hashlib.sha256(
+        json.dumps(cfg, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    path.write_text(json.dumps(cfg), encoding="utf-8")
+
+
+@pytest.mark.parametrize("runner", ["engine_bench", "real_bench"])
+def test_resume_pins_cell_sampling_rule(tmp_path, runner):
+    """An output written without `cell_sampling` (old runs) or with another rule is refused on resume."""
+    from grnbench.screen import CELL_SAMPLING
+    bench = _engine_bench() if runner == "engine_bench" else _real_bench()
+    tasks = tmp_path / "tasks.json"
+    bench.write_task_manifest(tasks, [], task_type="test")
+    out = tmp_path / "out"
+    argv = ["run", "--tasks", str(tasks), "--out", str(out)]
+    bench.main(argv)
+    cfg_path = out / "RUN_CONFIG.json"
+    cfg = json.loads(cfg_path.read_text(encoding="utf-8"))["scientific_config"]
+    assert cfg["cell_sampling"] == CELL_SAMPLING == "blake2b64-seed-barcode-v1"
+    assert cfg["max_score_cells"] == 3000
+    bench.main(argv)                                        # same rule: resume works
+    _rewrite_config(cfg_path, lambda c: c.pop("cell_sampling"))
+    with pytest.raises(ValueError, match=r"configuration differs.*cell_sampling"):
+        bench.main(argv)
+    _rewrite_config(cfg_path, lambda c: c.update(cell_sampling="positional-default-rng-v0"))
+    with pytest.raises(ValueError, match=r"configuration differs.*cell_sampling"):
+        bench.main(argv)
+    if runner == "real_bench":                              # old real_bench configs lacked the cap too
+        _rewrite_config(cfg_path, lambda c: (c.update(cell_sampling=CELL_SAMPLING), c.pop("max_score_cells")))
+        with pytest.raises(ValueError, match=r"configuration differs.*max_score_cells"):
+            bench.main(argv)

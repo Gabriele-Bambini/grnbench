@@ -38,10 +38,11 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from engine_bench import (BASELINE, EVAL_METHODS, RETRYABLE_STATUSES, TERMINAL_STATUSES,
+from engine_bench import (BASELINE, EVAL_METHODS, MAX_SCORE_CELLS, RETRYABLE_STATUSES, TERMINAL_STATUSES,
                           _atomic_json, _normalise_status, enforce_completeness, keep_awake,
                           pool_results, ensure_run_config, load_task_manifest, score_candidates,
                           write_task_manifest)  # noqa: E402
+from grnbench.screen import CELL_SAMPLING  # noqa: E402
 
 MIN_REFERENCE_EDGES = 50
 # Regulators scored: the TFs with the most reference targets present in the data. Evaluation
@@ -228,10 +229,10 @@ def score_models(records_by_cand, plans, arms: dict, methods: list[str], tfs, ev
     not change the returned scores.
     """
     import anndata as ad
-    from engine_bench import MAX_SCORE_CELLS
     from grnbench.eval.metrics import GoldIndex, evaluate_ranking
     from grnbench.infer import prepare_expression, run_method
     from grnbench.infer.cistarget import cistarget_rerank, motif_rank_product
+    from grnbench.screen import stable_subsample
     from grnbench.tfs import resolve_tf_names
 
     gi = GoldIndex.coerce(set(eval_pairs))
@@ -250,7 +251,7 @@ def score_models(records_by_cand, plans, arms: dict, methods: list[str], tfs, ev
                 continue
             adata = ad.read_h5ad(rec["processed"])
             if adata.n_obs > MAX_SCORE_CELLS:
-                keep = np.sort(np.random.default_rng(0).choice(adata.n_obs, MAX_SCORE_CELLS, replace=False))
+                keep = stable_subsample(adata.obs_names, MAX_SCORE_CELLS, seed=0)
                 adata = adata[keep].copy()
             genes = pd.Index(adata.var_names).astype(str)
             sources = resolve_tf_names(genes, tfs)
@@ -682,6 +683,8 @@ def main(argv=None) -> int:
     ensure_run_config(args.out, manifest_meta, runner="real_bench",
                       scientific_config={"models": models or [], "screen_methods": EVAL_METHODS,
                                          "max_tfs": MAX_TFS,
+                                         "max_score_cells": MAX_SCORE_CELLS,
+                                         "cell_sampling": CELL_SAMPLING,
                                          "min_reference_edges": MIN_REFERENCE_EDGES,
                                          "reference_split": "within_tf_half",
                                          "reference_sha256": reference_fingerprints(args.refs)})

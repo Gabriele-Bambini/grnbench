@@ -18,6 +18,11 @@ comparison, published as a tool with a paper. Headline claims from real data (D-
 pre-registered experiments (D-017).
 
 ## In progress
+- D-024 (LM, `lm/stable-subsample`, PROPOSED): cell subsampling for screening/scoring is keyed by
+  barcode hash. The 3,000-cell cap changes only above 3,000 cells; the 150-cell halves of
+  `edge_stability` change on every sufficiently large matrix, below the cap too. New runs do not reproduce
+  old rows exactly; runners pin `cell_sampling` and refuse to resume an older output. Follow-up:
+  `pipeline.subsample_cells` and `profile.py` are still positional.
 - Retention ledger (#176, GB, `gb/retention-ledger`): `grnbench.retention`; every cell- or
   gene-removing step of `run_prep` records cells, genes and the named TFs it removed (manifest
   `retention`, portable diagnostics, report table), and a gene filter that drops a TF detected in the

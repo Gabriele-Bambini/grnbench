@@ -19,6 +19,12 @@
   written by the fetch route (#156). No number or status changes.
 - D-022 accepted (ACTIVE, GB and LD on #79): the next experiments test networks against CRISPRi knockdowns; a single-screen experiment may take the TF as its unit, with a dependence-keeping null and a replication set. TP53 in breast cancer is parked as an exploratory example of use, run after the engine plan.
 - Symmetric statistics (Pearson, Spearman, mutual information, partial correlation) now give bit-identical weights to A->B and B->A. `numpy.corrcoef` divides the covariance by the two standard-deviation vectors one after the other, so reciprocal entries could differ in the last bit (on a seeded 300 x 60 matrix, 581 of 1,770 pairs; `np.cov` itself is symmetric), and tie-aware AUPRC then split or merged 2-edge tie blocks differently on Windows and Linux: about 1.5% of the AUPRC ratio on the measured pair of #82, around its third decimal. Registered results reproduce at their recorded commit (`CODE_COMMIT`); new runs of the same data can differ from them at about that size.
+- Screening and benchmark scoring subsample cells by a hash of the barcode, not by position (D-024):
+  a few cells more or fewer upstream (scrublet differing across platforms) no longer reshuffle the
+  3,000-cell sample or flip the screened choice. Two effects on new runs: the cap changes only above
+  3,000 cells; the 150-cell halves of `edge_stability` change on every sufficiently large matrix, below
+  the cap too. `engine_bench` and `real_bench` pin `cell_sampling` (`blake2b64-seed-barcode-v1`) in
+  `RUN_CONFIG.json` (`real_bench` also `max_score_cells`) and refuse to resume an output without it.
 - `fetch_cellxgene.py --from-manifest` (#156) now writes the same `README.md` as the listing route: it takes
   the collection name and citation from the CELLxGENE listing by dataset id, and warns on stderr, per dataset,
   when it cannot (the download goes on). The empty README it wrote before was the cause of C6's

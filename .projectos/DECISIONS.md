@@ -190,6 +190,39 @@ STATUS: PROPOSED | ACTIVE | SUPERSEDED by D-xxx | REVERTED
 - accepted 2026-10-27: GB agreed on #79 (2026-10-22: the knockdown part goes ahead, TP53 parked as an
   exploratory example of use run after the engine plan, the wording above) and LD on #79 (review of
   2026-10-25 at db5a270: agrees with the contract and asks for ACTIVE). Records may now cite it.
+
+### D-024 | 2026-10-10 | claude (for LM) | PROPOSED | Cells are subsampled by a hash of their barcode, not by position
+- decision: screening (the 3,000-cell sample and the two halves of edge stability) and benchmark
+  scoring (`MAX_SCORE_CELLS` in `real_bench.py` and `engine_bench.py`) pick cells by a 64-bit blake2b
+  hash of `f"{seed}|{obs_name}"` (`screen.stable_cell_order`, `screen.stable_subsample`): first K
+  of that order, returned sorted; halves = first and second half of the order. n_obs <= K keeps all
+  cells. `pipeline.subsample_cells` (user-facing, stratified) and `profile.py` are not changed.
+- why: EXP-20260925-LM-2, dataset lung__7b3368a5, same commit on Windows and Linux (#82): QC metrics are
+  identical, but scrublet run per batch removed 82 predicted doublets on Windows and 87 on Linux
+  (4,047 vs 4,042 cells left), every position after them shifted, and the positional 3,000-cell sample
+  was mostly different cells. The pooled candidate screened 1.4932 on Windows and 1.5164 on Linux against
+  the baseline's 1.5045 on both, and the screened choice flipped. With the hash, removing 3 of 5,000
+  cells changes at most 3 sampled barcodes (positional rule: 2,046 of 3,000 shared). Checked on the same
+  dataset with this change plus the symmetric-weights fix (#86): the pooled candidate's platform gap
+  drops from 0.023 to 0.009 (1.5310 vs 1.5403), the baseline agrees to 4e-8 (1.559887390 vs
+  1.559887452) and both platforms choose the baseline. One dataset; the per-batch scrublet difference
+  itself remains.
+- alternatives: keep positional sampling (one changed cell reshuffles the sample); stratified
+  sampling only (does not fix the reshuffle).
+- consequence: registered results keep their numbers and their kept `processed.h5ad` files. Two
+  effects change what new runs sample. (a) The cap (`MAX_SCREEN_CELLS`, `MAX_SCORE_CELLS`, K = 3,000)
+  changes only above K: at or below K all cells are kept. (b) The two fixed-size halves of
+  `edge_stability` (150 cells each) are drawn from the same hash order, so they change below K too,
+  on every matrix large enough to have two halves. Example, 800 cells named `AAAC000000-1`..`AAAC000799-1`, 150-cell halves, seed 0: the
+  old and new first halves share 26 cells, the second halves 22 (chance level is about 28). So stability
+  values, and anything that depends on them (the screened choice), differ from old rows on
+  datasets of any size, not only above K. New runs do not reproduce old rows exactly. Do not merge into a branch that
+  must reproduce registered rows (EXP-20261003-GB-1 gate 1).
+- pin: the rule is named `screen.CELL_SAMPLING = "blake2b64-seed-barcode-v1"`. Both runners record it
+  in `RUN_CONFIG.json` (`real_bench` also records `max_score_cells`), and `ensure_run_config` refuses to
+  resume an output written without it or with another value. `report` does not check it, so committed
+  runs can still be reported. A golden vector in `tests/test_stable_subsample.py` fixes the algorithm
+  across processes (`PYTHONHASHSEED`).
 ### D-031 | 2026-10-21 | claude (for GB) | ACTIVE | An option is available only if its dependencies are installed and grnbench can run it
 - decision: availability is decided per (decision, option) (`DecisionPoint.availability`). An option is
   available only when its dependencies are installed AND `executors.PLAN_STEPS` maps it onto the
