@@ -126,6 +126,9 @@ def pearson_signed(expr: pd.DataFrame, tf_names: list[str] | None = None,
     regulators = _regulators(expr, tf_names)
     corr = np.corrcoef(expr.to_numpy(dtype=np.float64), rowvar=False)
     corr = np.nan_to_num(corr, nan=0.0)   # genes with zero variance
+    # corrcoef divides by the two std vectors one after the other, so r[i,j] and r[j,i] can differ in
+    # the last bit (np.cov itself is symmetric); averaging makes A->B == B->A
+    corr = (corr + corr.T) / 2
     idx = [expr.columns.get_loc(g) for g in regulators]
     block = corr[np.ix_(idx, range(expr.shape[1]))]
     return _long(regulators, expr.columns, np.abs(block), np.sign(block))
@@ -136,7 +139,10 @@ def mutual_info(expr: pd.DataFrame, tf_names: list[str] | None = None,
     regulators = _regulators(expr, tf_names)
     X = expr.to_numpy(dtype=np.float64)
     rows = np.array([expr.columns.get_loc(g) for g in regulators])
-    return _long(regulators, expr.columns, _mi_matrix(X, rows, int(n_bins)))
+    mi = _mi_matrix(X, rows, int(n_bins))
+    sub = mi[:, rows]                       # regulator x regulator part
+    mi[:, rows] = (sub + sub.T) / 2         # A->B == B->A to the last bit
+    return _long(regulators, expr.columns, mi)
 
 
 def _clr_scores(X: np.ndarray, n_bins: int) -> np.ndarray:
@@ -187,6 +193,7 @@ def ppcor(expr: pd.DataFrame, tf_names: list[str] | None = None,
     d = np.sqrt(np.abs(np.diag(prec)))
     d = np.where(d > 0, d, 1.0)
     partial = -prec / np.outer(d, d)
+    partial = (partial + partial.T) / 2   # A->B == B->A to the last bit
     np.fill_diagonal(partial, 0.0)
 
     idx = [expr.columns.get_loc(g) for g in regulators]

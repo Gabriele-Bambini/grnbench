@@ -223,3 +223,47 @@ def test_tf_list_none_makes_every_gene_a_regulator(planted):
     adata, _, _ = planted
     edges, _ = run_method("pearson_signed", adata, assume_normalized=True)
     assert set(edges["source"]) == set(adata.var_names)
+
+
+# --------------------------------------------------------------------------- #
+# symmetric statistics: A->B and B->A are bit-identical
+# --------------------------------------------------------------------------- #
+
+SYMMETRIC = ["pearson_signed", "spearman_signed", "mutual_info", "clr", "ppcor"]
+
+
+@pytest.fixture(scope="module")
+def dup_data():
+    """300 cells x 60 genes (float32), 20 regulators, a few near-duplicate genes."""
+    rng = np.random.default_rng(1)
+    X = rng.lognormal(0, 1, (300, 60)).astype("float32")
+    X[:, 1] = X[:, 0] + rng.normal(0, 0.01, 300).astype("float32")
+    X[:, 21] = X[:, 20] * 2 + rng.normal(0, 0.01, 300).astype("float32")
+    X[:, 41] = X[:, 3]
+    X[rng.random(X.shape) < 0.3] = 0
+    genes = [f"G{i}" for i in range(60)]
+    return _adata(X, genes), genes[:20]
+
+
+@pytest.mark.parametrize("method", SYMMETRIC)
+def test_symmetric_statistic_gives_identical_weights_both_ways(method, dup_data):
+    adata, regs = dup_data
+    edges, _ = run_method(method, adata, regs)
+    w = edges.set_index(["source", "target"])["weight"]
+    pairs = [(a, b) for a in regs for b in regs if a < b and (a, b) in w.index
+             and (b, a) in w.index]
+    assert len(pairs) > 100
+    ab = np.array([w[p] for p in pairs])
+    ba = np.array([w[p[::-1]] for p in pairs])
+    assert np.array_equal(ab, ba)
+
+
+def test_pearson_weights_still_equal_abs_corrcoef(dup_data):
+    adata, regs = dup_data
+    edges, _ = run_method("pearson_signed", adata, regs, assume_normalized=True)
+    genes = list(adata.var_names)
+    ref = np.abs(np.corrcoef(adata.X.astype(np.float64), rowvar=False))
+    ref = np.nan_to_num(ref, nan=0.0)
+    got = edges.assign(i=edges["source"].map(genes.index),
+                       j=edges["target"].map(genes.index))
+    assert np.allclose(got["weight"], ref[got["i"], got["j"]], rtol=0, atol=1e-12)

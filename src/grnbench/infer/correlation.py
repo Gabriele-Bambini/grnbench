@@ -19,6 +19,9 @@ def spearman_signed_abs(expr: pd.DataFrame,
     ranks = expr.rank(axis=0, method="average")
     corr = np.corrcoef(ranks.to_numpy(dtype=np.float64), rowvar=False)
     corr = np.nan_to_num(corr, nan=0.0, posinf=0.0, neginf=0.0)
+    # corrcoef divides by the two std vectors one after the other, so r[i,j] and r[j,i] can differ in
+    # the last bit (np.cov itself is symmetric); averaging makes A->B == B->A
+    corr = (corr + corr.T) / 2
 
     reg_idx = [expr.columns.get_loc(g) for g in regulators]
     block = corr[np.ix_(reg_idx, list(range(expr.shape[1])))]
