@@ -238,7 +238,7 @@ def _fit_lasso(Xr, y, alpha=None, seed=42):
         # coefficient magnitude at the knee of the path. lasso_path fits no
         # intercept, so center first: otherwise column means buy coefficients,
         # and this branch differs from the Lasso(fit_intercept=True) one below
-        _, coefs, _ = lasso_path(Xr - Xr.mean(axis=0), y - y.mean(), n_alphas=20)
+        _, coefs, _ = lasso_path(Xr - Xr.mean(axis=0), y - y.mean(), alphas=20)
         return np.abs(coefs[:, len(coefs[0]) // 2])
     from sklearn.linear_model import Lasso
     return np.abs(Lasso(alpha=float(alpha), random_state=int(seed)).fit(Xr, y).coef_)

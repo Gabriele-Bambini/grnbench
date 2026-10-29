@@ -117,3 +117,11 @@ def test_setup_env_torch_line_survives_a_crlf_lock(tmp_path):
     calls = (tmp_path / "calls.log").read_bytes()
     assert b"\r" not in calls
     assert b"--extra-index-url https://pypi.org/simple PYTHONPATH=" in calls
+
+
+@pytest.mark.parametrize("script", ["grnbench.sbatch", "beeline_backtest.sbatch", "engine_bench.sbatch"])
+def test_sbatch_imports_the_checkout_after_activating_the_env(script):
+    lines = (ROOT / "hpc" / script).read_text(encoding="utf-8").splitlines()
+    export = next(i for i, x in enumerate(lines)
+                  if x == 'export PYTHONPATH="$REPO_DIR/src${PYTHONPATH:+:$PYTHONPATH}"')
+    assert export > next(i for i, x in enumerate(lines) if "conda activate" in x)

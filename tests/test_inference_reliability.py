@@ -270,3 +270,35 @@ def test_run_method_uses_resolved_names_and_never_expands_zero_matches():
         run_method(
             "spearman_signed", adata, tf_list=["TP53"], assume_normalized=True
         )
+
+
+def test_default_lasso_path_raises_no_future_warning():
+    """scikit-learn 1.9 deprecates lasso_path(n_alphas=) and 1.11 removes it."""
+    import warnings
+
+    rng = np.random.default_rng(0)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        _fit_lasso(rng.normal(size=(30, 4)), rng.normal(size=30))
+
+
+def test_extra_trees_uses_the_requested_thread_budget(monkeypatch):
+    import sklearn.ensemble
+
+    seen = []
+
+    class _RecordingForest:
+        def __init__(self, **kwargs):
+            seen.append(kwargs)
+
+        def fit(self, X, y):
+            self.feature_importances_ = np.zeros(X.shape[1])
+            return self
+
+    monkeypatch.setattr(sklearn.ensemble, "ExtraTreesRegressor", _RecordingForest)
+    expr = pd.DataFrame(np.random.default_rng(0).normal(size=(20, 3)), columns=["A", "B", "C"])
+
+    run_method("extra_trees", AnnData(expr.to_numpy(np.float32), var=pd.DataFrame(index=expr.columns)),
+               tf_list=["A"], assume_normalized=True, threads=3)
+
+    assert seen and all(kwargs["n_jobs"] == 3 for kwargs in seen)

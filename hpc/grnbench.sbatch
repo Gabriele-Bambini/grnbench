@@ -45,6 +45,8 @@ source "$CONDA_SH" && conda activate "$ENV_NAME" || {
   echo "cannot activate conda env '$ENV_NAME' — run: bash hpc/setup_env.sh" >&2
   exit 1
 }
+# Import grnbench from this checkout, not the conda env's editable install: the synced checkout is what GIT_COMMIT names.
+export PYTHONPATH="$REPO_DIR/src${PYTHONPATH:+:$PYTHONPATH}"
 
 : "${DATA:?set DATA=/path/to/dataset.h5ad}"
 OUT="${OUT:-$REPO_DIR/runs/${SLURM_JOB_ID:-manual}}"

@@ -141,8 +141,8 @@ _LEGACY: dict[str, dict[str, Cell]] = {
                                               #   is deterministic)
         "model.regdiffusion": 0,              # infer/regdiffusion_adapter.py:23
         "model.tigress": 42,                  # infer/regression.py:43
-        "model.extra_trees": 42,              # infer/regression.py:294
-        "model.gradient_boosting": 42,        # infer/regression.py:303
+        "model.extra_trees": 42,              # infer/regression.py:295
+        "model.gradient_boosting": 42,        # infer/regression.py:304
         "model.community": None,              # infer/community.py:40; None, so members get none (:60)
         "model.grnboost2_motif": 42,          # infer/cistarget.py:330-332 hands **params to grnboost2
         "model.regdiffusion_motif": 0,        # infer/cistarget.py:330-332 -> regdiffusion

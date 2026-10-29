@@ -65,7 +65,7 @@ def _build_parser() -> argparse.ArgumentParser:
     inf.add_argument("--plugin", action="append", default=None, metavar="SPEC",
                      help="custom model spec file or 'module:Attribute' (repeatable)")
     inf.add_argument("--threads", type=thread_count, default=4,
-                     help="CPU budget (>= 1) for random_forest, GENIE3, GRNBoost2 and ARACNe3; default 4, not every core; also used by the stability re-runs")
+                     help="CPU budget (>= 1) for random_forest, extra_trees, GENIE3, GRNBoost2 and ARACNe3; default 4, not every core; also used by the stability re-runs")
 
     ev = p.add_argument_group("evaluation")
     ev.add_argument("--gold", default=None,

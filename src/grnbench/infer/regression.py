@@ -268,13 +268,14 @@ def _masked_matvec(corr: np.ndarray, others: np.ndarray, v: np.ndarray) -> np.nd
 # tree ensembles, scikit-learn only
 # --------------------------------------------------------------------------- #
 
-def _fit_extra_trees(Xr, y, n_estimators=100, max_features="sqrt", seed=42):
+def _fit_extra_trees(Xr, y, n_estimators=100, max_features="sqrt", seed=42, threads=None):
     from sklearn.ensemble import ExtraTreesRegressor
 
     if y.std() == 0:
         return np.zeros(Xr.shape[1])
     m = ExtraTreesRegressor(n_estimators=int(n_estimators), max_features=max_features,
-                            random_state=int(seed), n_jobs=-1)
+                            random_state=int(seed),
+                            n_jobs=-1 if threads is None else int(threads))
     m.fit(Xr, y)
     return m.feature_importances_
 
@@ -291,11 +292,11 @@ def _fit_gradient_boosting(Xr, y, n_estimators=100, learning_rate=0.1, seed=42):
 
 
 def extra_trees(expr: pd.DataFrame, tf_names: list[str] | None = None,
-                n_estimators: int = 100, seed: int = 42, **_) -> pd.DataFrame:
+                n_estimators: int = 100, seed: int = 42, threads: int | None = None, **_) -> pd.DataFrame:
     """Per-target extremely randomised trees importance, the Extra-Trees option of
     GENIE3 (Huynh-Thu et al. 2010, *PLoS ONE* 5:e12776); scikit-learn only."""
     return _per_target_importance(expr, tf_names, _fit_extra_trees,
-                                  n_estimators=n_estimators, seed=seed)
+                                  n_estimators=n_estimators, seed=seed, threads=threads)
 
 
 def gradient_boosting(expr: pd.DataFrame, tf_names: list[str] | None = None,

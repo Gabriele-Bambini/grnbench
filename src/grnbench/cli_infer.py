@@ -52,7 +52,7 @@ def _build_parser() -> argparse.ArgumentParser:
                    help="skip internal cpm_log1p even if X looks like counts")
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--threads", type=thread_count, default=4,
-                   help="CPU budget (>= 1) for random_forest, GENIE3, GRNBoost2 and ARACNe3; default 4, not every core")
+                   help="CPU budget (>= 1) for random_forest, extra_trees, GENIE3, GRNBoost2 and ARACNe3; default 4, not every core")
     p.add_argument("--plugin", action="append", default=None, metavar="SPEC",
                    help="custom model: spec file (.json/.yaml) describing a command/"
                         "Docker adapter, or 'package.module:Attribute' for a Python "

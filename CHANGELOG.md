@@ -202,6 +202,12 @@
   raises with its cause. The BEELINE backtest refuses duplicate dataset/method scores;
   `grnbench.sbatch` and `beeline_backtest.sbatch` take the checkout from `SLURM_SUBMIT_DIR` and refuse
   one without `pyproject.toml`.
+- Follow-ups to #40 (#46): the default `community` scores change too, because `lasso` is one of its default
+  members (they moved with the centered path). `extra_trees` now honours `--threads` (it used every core
+  before; scores do not change). The default lasso path calls `lasso_path(alphas=20)` instead of the
+  `n_alphas=20` that scikit-learn 1.9 deprecates and 1.11 removes; the scores are bit-identical.
+  `grnbench.sbatch` and `beeline_backtest.sbatch` now export `PYTHONPATH="$REPO_DIR/src..."` like
+  `engine_bench.sbatch`, so the job runs the checkout `GIT_COMMIT` names, not the env's install.
 - `grnbench report --paper` builds again: the record's `report input` path is the first quoted span
   (EXP-20261002-LM-1 ends it with a full stop); a run with no per-model scores (a candidate study) gets a
   note instead of an empty table that stopped LaTeX; `compile_tex` reads engine output as UTF-8 and says

@@ -70,7 +70,7 @@ def _build_parser() -> argparse.ArgumentParser:
     s.add_argument("--stability-top-k", type=int, default=100,
                    help="top-k edge set compared across subsamples")
     s.add_argument("--threads", type=thread_count, default=4,
-                   help="CPU budget (>= 1) for the stability re-runs of random_forest, GENIE3, "
+                   help="CPU budget (>= 1) for the stability re-runs of random_forest, extra_trees, GENIE3, "
                         "GRNBoost2 and ARACNe3; default 4, not every core")
     s.add_argument("--stability-methods", default=None,
                    help="comma-separated subset (default: every scored method that "
