@@ -161,6 +161,35 @@ STATUS: PROPOSED | ACTIVE | SUPERSEDED by D-xxx | REVERTED
   fallback (no output when the baseline is refused); change the screening metric (a larger redesign,
   not supported by the evidence yet).
 
+### D-022 | 2026-10-09 | claude (for LM) | ACTIVE | Next experiments test networks against knockdowns; a single-screen experiment may take the TF as its unit
+- decision: (1) direction: the next registered experiments ask whether inferred edges agree with
+  causal evidence rather than only with CollecTRI: CRISPRi knockdowns as the truth (Replogle 2022, RPE1
+  as design screen and K562 genome-wide as replication). The cleaning engine stays the product (D-012)
+  and D-010 is unchanged. TP53 in breast cancer is parked (GB, #79, 2026-10-22): it is an exploratory
+  example of use, run after the engine plan, and not an aim or a headline claim. Its own record will
+  declare, before any scoring, which TP53 alteration classes count as loss of canonical p53 function
+  (and how missense, VUS, multi-hit and LOH states are handled) and take the unique patient as the unit,
+  with one eligible primary tumour per patient or a declared deduplication rule (LD, #79, 2026-10-22).
+  (2) unit of analysis: when an experiment rests on one screen, the dataset cannot be the unit
+  (`experiments/TEMPLATE.md`, AGENTS.md section 7). Such an experiment may take the TF as its unit, if
+  its record (a) uses a null that keeps the dependence between units (shared controls; TFs whose motif
+  rows or targets are correlated, by permuting labels jointly across units rather than per unit), and
+  (b) names an independent replication set analysed as its own family. A headline claim from such an
+  experiment needs both sets. Experiments with several datasets keep the dataset as the unit.
+- why: our claims (C4-C7) measure agreement with CollecTRI, which is built from the literature, and the
+  team's earlier projects (TS-GNN, grnprep) never had a truth from an intervention. Feasibility, descriptive
+  only: RPE1 has 83 of 154 perturbed TFs at knockdown >= 0.70 with more than 10 responsive genes (#67,
+  job 687167). On the
+  dependence point: on the kept C6 artifacts the TFs' cisTarget rows are correlated (mean pairwise
+  Spearman r 0.30-0.38 in four datasets), so a per-TF permutation understates the spread of a
+  shared-database null (review of #55, 2026-10-09); a TF-level test has to keep that structure.
+- alternatives: keep the dataset as the only unit (one screen gives n = 1; pooling cells or edges as
+  units is worse); pool TFs across screens into one test (mixes two cell lines and hides a failed
+  replication); stay with CollecTRI-only validation (cannot tell recovering the literature from being
+  right about regulation).
+- accepted 2026-10-27: GB agreed on #79 (2026-10-22: the knockdown part goes ahead, TP53 parked as an
+  exploratory example of use run after the engine plan, the wording above) and LD on #79 (review of
+  2026-10-25 at db5a270: agrees with the contract and asks for ACTIVE). Records may now cite it.
 ### D-031 | 2026-10-21 | claude (for GB) | ACTIVE | An option is available only if its dependencies are installed and grnbench can run it
 - decision: availability is decided per (decision, option) (`DecisionPoint.availability`). An option is
   available only when its dependencies are installed AND `executors.PLAN_STEPS` maps it onto the

@@ -34,7 +34,7 @@ in the primary source before it enters `paper/`.
 
 ## 3. Where our results fit
 
-This section is a proposal pending D-022 (proposed on branch `lm/d022-direction`) and the team's decision in
+This section follows D-022 (ACTIVE since 2026-10-27) and is a proposal pending the team's decision in
 issue #73; it is not a project claim. Our evidence matches the field's 2025-26 position (expression-only near
 random; adding the cisTarget motif prior raises the AUPRC ratio on the CollecTRI evaluation half, claims C4-C6 in
 `paper/CLAIMS.md`, with the C5 caveat that its datasets were already used for C4, resolved by C6 in
