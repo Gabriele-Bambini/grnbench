@@ -11,7 +11,7 @@ scvi, no magic, no CellBender), so the values do not depend on the machine, it w
   and the screening candidates ``select(profile).candidates(max_candidates=4, always=("context_scope",))``;
 * ``variant_candidates``: ``benchmarks/candidate_study.variant_candidates()``.
 
-``option_availability_main.json`` was written this way from a read-only copy of main 6917c88;
+``option_availability_main.json`` was regenerated on 2026-10-27 after merging main 2836485;
 ``tests/test_option_availability.py`` compares the current code with it. ``benchmarks/`` is found
 next to ``src/`` (``PYTHONPATH=src`` or an editable install, not a site-packages install).
 """

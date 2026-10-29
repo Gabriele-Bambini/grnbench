@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from grnbench.context import (DatasetContext, build_context, discover_text_files, extract_from_text,
-                              geo_text_url, html_to_text)
+                              geo_text_url, html_to_text, read_text_file)
 
 GEO_TEXT = """!Series_title = Single-cell atlas of human bone marrow
 !Series_summary = We profiled 5,000 cells with 10x Genomics Chromium v3.
@@ -96,6 +96,23 @@ def test_readme_discovery_skips_tables_binaries_and_desktop_ini(tmp_path):
     ctx = build_context(data)
     assert ctx.sources_read == ["readme:README.md"]
     assert ctx.get("platform") == "Drop-seq" and ctx.get("organism") == "mouse"
+
+
+def test_read_text_file_normalizes_line_endings_before_snippets(tmp_path):
+    """README evidence is byte-independent across LF, CRLF and legacy CR checkouts."""
+    payload = "Homo sapiens\n10x Genomics Chromium v3\nRaw UMI counts\n"
+    rendered = []
+    for name, raw in (
+        ("lf.md", payload.encode("utf-8")),
+        ("crlf.md", payload.replace("\n", "\r\n").encode("utf-8")),
+        ("cr.md", payload.replace("\n", "\r").encode("utf-8")),
+    ):
+        path = tmp_path / name
+        path.write_bytes(raw)
+        text = read_text_file(path)
+        assert text == payload
+        rendered.append([fact.snippet for fact in extract_from_text(text, name).facts])
+    assert rendered[0] == rendered[1] == rendered[2]
 
 
 def test_urls_are_fetched_and_failures_are_recorded_not_raised():

@@ -2,7 +2,7 @@
 
 An option grnbench cannot run is never chosen by the selector, and forcing one fails loudly. Closes
 the audit finding "external options silently dropped" (audit/2026-09-27 findings.json:513-525, AUDIT
-section 7.5). The A/B tests compare with golden values written from a read-only copy of main 6917c88
+section 7.5). The A/B tests compare with golden values regenerated after merging main 2836485
 (tests/golden/plan_values.py). Known gaps, not fixed here: #131 (regulators recorded only), #132.
 """
 import json
@@ -66,10 +66,10 @@ def _profile(**kw) -> Profile:
 
 
 def _mismatch(a, b, path="$"):
-    """First place where two JSON values differ (floats to 1e-9 relative: BLAS differs by OS), or None."""
+    """First difference (floats to 1e-6 relative: reductions differ slightly by OS), or None."""
     if isinstance(a, float) or isinstance(b, float):
         ok = isinstance(a, (int, float)) and isinstance(b, (int, float)) and (
-            a == b or math.isclose(a, b, rel_tol=1e-9, abs_tol=1e-12))
+            a == b or math.isclose(a, b, rel_tol=1e-6, abs_tol=1e-12))
         return None if ok else f"{path}: {a!r} != {b!r}"
     if isinstance(a, dict) and isinstance(b, dict):
         if set(a) != set(b):
@@ -242,7 +242,7 @@ def test_audit_plan_keeps_removing_doublets_and_calling_cells(datasets, everythi
     assert any("scDblFinder" in w and NO_EXECUTOR.format("doublets=scdblfinder") in w for w in plan.warnings)
 
 
-# -- A/B against main 6917c88 ------------------------------------------------------------------ #
+# -- A/B against main 2836485 ------------------------------------------------------------------ #
 
 def test_option_table_is_that_of_main(registered_env):
     assert _mismatch(golden.option_table(), GOLDEN["option_table"]) is None

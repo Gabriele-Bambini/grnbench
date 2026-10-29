@@ -107,10 +107,10 @@ def test_detection_order_explicit_env_conda_r_home_path(bare, fake_rscript, tmp_
     rt = rbridge.find_rscript()
     assert rt.source == "conda:grnbench-r-test" and Path(rt.rscript).parent.parent == prefix
     assert rt.library == str(prefix / "lib" / "R" / "library") and rt.conda_prefix == str(prefix)
-    assert rt.path_prepend[0] == str(prefix) and rt.version == "4.5.3"
+    assert rt.version == "4.5.3"
     if WINDOWS:
-        assert [Path(p).relative_to(prefix).as_posix() for p in rt.path_prepend[1:]] == [
-            "Library/mingw-w64/bin", "Library/usr/bin", "Library/bin", "Scripts", "bin"]
+        assert [Path(p).relative_to(prefix).as_posix() for p in rt.path_prepend] == [
+            ".", "Library/mingw-w64/bin", "Library/usr/bin", "Library/bin", "Scripts", "bin"]
     else:
         assert rt.path_prepend == (str(prefix / "bin"),)
     monkeypatch.delenv("GRNBENCH_R_ENV")                  # the default env grnbench-r does not exist: skipped
@@ -535,6 +535,8 @@ def test_expected_outputs_stay_inside_the_work_folder(bare, fake_rscript, method
     assert victim.read_text(encoding="utf-8") == "keep" and fake_rscript.calls()[-1]["script"] == "_probe.R"
     assert rbridge.run_r(method, seed=1, workdir=work, rt=rt, expect={"out": "sub/../ok.tsv"}).outputs["out"] == \
         work.resolve() / "ok.tsv"
+    sent = json.loads((work / "params.json").read_text(encoding="utf-8"))
+    assert sent["expect"] == {"out": "ok.tsv"}, "R receives the same normalized path the bridge verifies"
 
 
 def test_a_log_that_cannot_be_written_is_reported_as_such(bare, fake_rscript, method, tmp_path):

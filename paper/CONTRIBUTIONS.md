@@ -25,6 +25,7 @@ Agents are tools, not contributors: log the person who directed the agent.
 | 2026-10-22 | LD | Software, Validation | preprocessing plan/runtime truthfulness and regression coverage; issue #132 |
 | 2026-10-22 | GB | Data curation, Methodology, Software | 200-dataset never-used pool, one per study, seeded split (D-057; `fetch_cellxgene.py --one-per-collection`, `split_pool.py`); registration of EXP-20261022-GB-1 and EXP-20261022-GB-2; issues #139-#141 |
 | 2026-10-18 | GB | Software, Investigation | ARACNe3 build on the HPC and smoke run of the `aracne3` adapter against the real program (`benchmarks/aracne3_smoke.py`, `hpc/aracne3_build.sbatch`, `hpc/aracne3_smoke.sbatch`); EXP-20261018-GB-1, issue #109 |
+| 2026-10-25 | LD | Software, Validation | R-bridge path normalization and restoration of the cross-platform full-suite baseline; issue #167 |
 | 2026-10-25 | LD | Software, Validation | context/batch compatibility and loud all-gene HVG fallback; issue #164 |
 | 2026-10-24 | GB | Software, Validation | silent preprocessing behaviours made loud (Ensembl mito QC, missing-label contexts, small contexts after QC, no --n-hvg, organism from casing, knee without a cliff) with an A/B against main; issues #149, #116 |
 | 2026-10-26 | LD | Software, Validation | method/plugin registry isolation across the test suite; issue #183 |

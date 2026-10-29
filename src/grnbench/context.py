@@ -334,7 +334,7 @@ def read_text_file(path: str | Path) -> str | None:
     raw = Path(path).read_bytes()[:MAX_TEXT_BYTES]
     if b"\x00" in raw[:4096]:
         return None
-    text = raw.decode("utf-8", errors="replace")
+    text = raw.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
     return None if _looks_like_table(text[:4096]) else text
 
 

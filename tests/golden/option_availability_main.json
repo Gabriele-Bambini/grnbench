@@ -777,7 +777,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.15, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.15, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -2187,7 +2187,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.15, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.15, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -3619,7 +3619,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -3851,7 +3851,7 @@
      "batch_celltype_cramers_v": 0.04097909915914964,
      "batch_depth_ratio": 1.7806419134140015,
      "batch_key": "batch",
-     "batch_silhouette": 0.17336659133434296,
+     "batch_silhouette": 0.17336662113666534,
      "cell_type_key": "cell_type",
      "data_technology_hint": "umi",
      "dependencies": {
@@ -5111,7 +5111,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -5343,7 +5343,7 @@
      "batch_celltype_cramers_v": 0.04097909915914964,
      "batch_depth_ratio": 1.7806419134140015,
      "batch_key": "batch",
-     "batch_silhouette": 0.17336659133434296,
+     "batch_silhouette": 0.17336662113666534,
      "cell_type_key": "cell_type",
      "data_technology_hint": "umi",
      "dependencies": {
@@ -6566,7 +6566,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -6801,7 +6801,7 @@
      "batch_celltype_cramers_v": 1.0,
      "batch_depth_ratio": 1.0209600925445557,
      "batch_key": "batch",
-     "batch_silhouette": 0.21291129291057587,
+     "batch_silhouette": 0.21291127800941467,
      "cell_type_key": "cell_type",
      "data_technology_hint": "umi",
      "dependencies": {
@@ -8012,7 +8012,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -8247,7 +8247,7 @@
      "batch_celltype_cramers_v": 1.0,
      "batch_depth_ratio": 1.0209600925445557,
      "batch_key": "batch",
-     "batch_silhouette": 0.21291129291057587,
+     "batch_silhouette": 0.21291127800941467,
      "cell_type_key": "cell_type",
      "data_technology_hint": "umi",
      "dependencies": {
@@ -9440,7 +9440,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -10850,7 +10850,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -12249,7 +12249,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -13659,7 +13659,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -15049,35 +15049,35 @@
       },
       {
        "key": "platform",
-       "snippet": "c) Synthetic single-cell RNA-seq, simulated to look like 10x Genomics Chromium v3 data: raw UMI counts, 1500 cells in two sequen",
+       "snippet": "tic) Synthetic single-cell RNA-seq, simulated to look like 10x Genomics Chromium v3 data: raw UMI counts, 1500 cells in two sequenc",
        "source": "readme:README.md",
        "value": "10x Chromium",
        "weight": 2
       },
       {
        "key": "technology",
-       "snippet": "c) Synthetic single-cell RNA-seq, simulated to look like 10x Genomics Chromium v3 data: raw UMI counts, 1500 cells in two sequen",
+       "snippet": "tic) Synthetic single-cell RNA-seq, simulated to look like 10x Genomics Chromium v3 data: raw UMI counts, 1500 cells in two sequenc",
        "source": "readme:README.md",
        "value": "umi",
        "weight": 2
       },
       {
        "key": "technology",
-       "snippet": "simulated to look like 10x Genomics Chromium v3 data: raw UMI counts, 1500 cells in two sequencing batches (column `batc",
+       "snippet": ", simulated to look like 10x Genomics Chromium v3 data: raw UMI counts, 1500 cells in two sequencing batches (column `batch",
        "source": "readme:README.md",
        "value": "umi",
        "weight": 1
       },
       {
        "key": "value_type",
-       "snippet": "seq, simulated to look like 10x Genomics Chromium v3 data: raw UMI counts, 1500 cells in two sequencing batches (column `batch`), th",
+       "snippet": "-seq, simulated to look like 10x Genomics Chromium v3 data: raw UMI counts, 1500 cells in two sequencing batches (column `batch`), thr",
        "source": "readme:README.md",
        "value": "raw_counts",
        "weight": 1
       },
       {
        "key": "n_cells_declared",
-       "snippet": "o look like 10x Genomics Chromium v3 data: raw UMI counts, 1500 cells in two sequencing batches (column `batch`), three cell typ",
+       "snippet": "to look like 10x Genomics Chromium v3 data: raw UMI counts, 1500 cells in two sequencing batches (column `batch`), three cell type",
        "source": "readme:README.md",
        "value": "1500",
        "weight": 1
@@ -15310,7 +15310,7 @@
      "batch_celltype_cramers_v": 0.04308944208903896,
      "batch_depth_ratio": 1.3570184707641602,
      "batch_key": "batch",
-     "batch_silhouette": 0.07841525226831436,
+     "batch_silhouette": 0.07841524481773376,
      "cell_type_key": "cell_type",
      "data_technology_hint": "umi",
      "dependencies": {
@@ -16510,35 +16510,35 @@
       },
       {
        "key": "platform",
-       "snippet": "c) Synthetic single-cell RNA-seq, simulated to look like 10x Genomics Chromium v3 data: raw UMI counts, 1500 cells in two sequen",
+       "snippet": "tic) Synthetic single-cell RNA-seq, simulated to look like 10x Genomics Chromium v3 data: raw UMI counts, 1500 cells in two sequenc",
        "source": "readme:README.md",
        "value": "10x Chromium",
        "weight": 2
       },
       {
        "key": "technology",
-       "snippet": "c) Synthetic single-cell RNA-seq, simulated to look like 10x Genomics Chromium v3 data: raw UMI counts, 1500 cells in two sequen",
+       "snippet": "tic) Synthetic single-cell RNA-seq, simulated to look like 10x Genomics Chromium v3 data: raw UMI counts, 1500 cells in two sequenc",
        "source": "readme:README.md",
        "value": "umi",
        "weight": 2
       },
       {
        "key": "technology",
-       "snippet": "simulated to look like 10x Genomics Chromium v3 data: raw UMI counts, 1500 cells in two sequencing batches (column `batc",
+       "snippet": ", simulated to look like 10x Genomics Chromium v3 data: raw UMI counts, 1500 cells in two sequencing batches (column `batch",
        "source": "readme:README.md",
        "value": "umi",
        "weight": 1
       },
       {
        "key": "value_type",
-       "snippet": "seq, simulated to look like 10x Genomics Chromium v3 data: raw UMI counts, 1500 cells in two sequencing batches (column `batch`), th",
+       "snippet": "-seq, simulated to look like 10x Genomics Chromium v3 data: raw UMI counts, 1500 cells in two sequencing batches (column `batch`), thr",
        "source": "readme:README.md",
        "value": "raw_counts",
        "weight": 1
       },
       {
        "key": "n_cells_declared",
-       "snippet": "o look like 10x Genomics Chromium v3 data: raw UMI counts, 1500 cells in two sequencing batches (column `batch`), three cell typ",
+       "snippet": "to look like 10x Genomics Chromium v3 data: raw UMI counts, 1500 cells in two sequencing batches (column `batch`), three cell type",
        "source": "readme:README.md",
        "value": "1500",
        "weight": 1
@@ -16771,7 +16771,7 @@
      "batch_celltype_cramers_v": 0.04308944208903896,
      "batch_depth_ratio": 1.3570184707641602,
      "batch_key": "batch",
-     "batch_silhouette": 0.07841525226831436,
+     "batch_silhouette": 0.07841524481773376,
      "cell_type_key": "cell_type",
      "data_technology_hint": "umi",
      "dependencies": {
@@ -17969,7 +17969,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.08, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": "\"doublet_frac\": 0.08, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -19379,7 +19379,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.08, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": "\"doublet_frac\": 0.08, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -20778,7 +20778,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -22188,7 +22188,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -23561,7 +23561,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"ensembl\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"ensembl\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -24939,7 +24939,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"ensembl\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"ensembl\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -28997,7 +28997,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -30407,7 +30407,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -31811,7 +31811,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"m",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -33230,7 +33230,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"m",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -34666,7 +34666,7 @@
       },
       {
        "key": "technology",
-       "snippet": "doublet_frac\": 0.05, \"ambient_frac\": 0.08, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": "\"doublet_frac\": 0.05, \"ambient_frac\": 0.08, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -36151,7 +36151,7 @@
       },
       {
        "key": "technology",
-       "snippet": "doublet_frac\": 0.05, \"ambient_frac\": 0.08, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": "\"doublet_frac\": 0.05, \"ambient_frac\": 0.08, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -37592,14 +37592,14 @@
       },
       {
        "key": "organism",
-       "snippet": "\"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"mouse\", \"raw_droplets\": 0, \"readme\": \"correct\", \"seed\": 0",
+       "snippet": ".0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"mouse\", \"raw_droplets\": 0, \"readme\": \"correct\", \"seed\": 0 }",
        "source": "readme:scenario.json",
        "value": "mouse",
        "weight": 1
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"mouse\", \"raw_droplets\": 0, \"readme\": \"",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"mouse\", \"raw_droplets\": 0, \"readme\": \"cor",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -39009,14 +39009,14 @@
       },
       {
        "key": "organism",
-       "snippet": "\"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"mouse\", \"raw_droplets\": 0, \"readme\": \"correct\", \"seed\": 0",
+       "snippet": ".0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"mouse\", \"raw_droplets\": 0, \"readme\": \"correct\", \"seed\": 0 }",
        "source": "readme:scenario.json",
        "value": "mouse",
        "weight": 1
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"mouse\", \"raw_droplets\": 0, \"readme\": \"",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"mouse\", \"raw_droplets\": 0, \"readme\": \"cor",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -40373,7 +40373,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"n",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -41740,7 +41740,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"n",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -43138,7 +43138,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 22000, \"read",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 22000, \"readme\"",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -44576,7 +44576,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 22000, \"read",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 22000, \"readme\"",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -45996,7 +45996,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -47378,7 +47378,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -48756,7 +48756,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -50115,7 +50115,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -51463,7 +51463,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -52878,7 +52878,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -54282,7 +54282,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1
@@ -55692,7 +55692,7 @@
       },
       {
        "key": "technology",
-       "snippet": "\"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\":",
+       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"symbols\", \"raw_droplets\": 0, \"readme\": \"c",
        "source": "readme:scenario.json",
        "value": "umi",
        "weight": 1

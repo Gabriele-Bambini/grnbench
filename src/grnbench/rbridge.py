@@ -837,6 +837,7 @@ def run_r(script: str | Path, *, inputs: Mapping[str, Path] | None = None, param
     work = Path(workdir).expanduser().resolve()
     expect = {str(k): str(v) for k, v in (expect or {}).items()}
     outputs = _expected_files(work, expect)
+    expect = {name: path.relative_to(work).as_posix() for name, path in outputs.items()}
     payload = {"script": str(script_path), "seed": seed, "params": dict(params or {}),
                "inputs": {str(k): str(Path(v).expanduser().resolve()) for k, v in (inputs or {}).items()},
                "expect": expect, "workdir": str(work)}
