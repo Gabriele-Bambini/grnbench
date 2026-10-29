@@ -34,6 +34,7 @@ SOURCES = {  # prefix of the relative path -> (source, version note)
     "cistarget/": ("https://resources.aertslab.org/cistarget/", "cisTarget v10 clustered"),
     "perturb/": ("https://zenodo.org/records/7041849 (fetch_perturb.py)", "scPerturb v1.0, CC BY 4.0"),
     "raw10x/": ("https://cf.10xgenomics.com/samples/cell-exp/ (fetch_10x_raw.py)", "Cell Ranger 3.x public datasets"),
+    "perturb/": ("https://zenodo.org/records/7041849 (fetch_perturb.py)", "Replogle et al. 2022, record v1.0"),
 }
 SKIP = {"INDEX.md", "README.md", "manifest.tsv", "desktop.ini"}
 

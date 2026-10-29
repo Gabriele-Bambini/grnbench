@@ -36,6 +36,8 @@ Updated: 2026-10-23.
 - Second-person rerun outputs: `benchmarks/results/EXP-20260925-LM-2-repro-GB/` (#24; record section 4b).
 - Figures: `grnbench viz <run_dir>`. LaTeX: `grnbench report <run_dir|EXP-ID>`, `grnbench report --paper`.
 - HPC: `hpc/hpc.sh`, VPN `hpc/vpn.ps1` (Windows), guide `docs/HPC.md`, agent procedure `.claude/skills/grnbench-hpc/SKILL.md`.
+- Knockdown validation (EXP-20261016-LM-1): `benchmarks/knockdown_bench.py` (truth), `benchmarks/knockdown_score.py`
+  (infer, score, combine), job `hpc/knockdown_run.sbatch`, pre-registration checks `benchmarks/knockdown_checks/`.
   Step-by-step launch runbooks per experiment issue: `docs/runbooks/` (#24 executed 2026-10-08, #52 launched 2026-10-10).
 
 ## Code (`src/grnbench/`)
@@ -45,6 +47,7 @@ Updated: 2026-10-23.
 | cleaning engine | `kb` (stages, options, evidence, references), `executors` (`PLAN_STEPS`: which options grnbench can run, which are recorded only; refuses imputation, D-002), `context` (what the data are), `profile`, `selector` (rules), `autoprep` (plan, execute), `screen` (candidate pipelines on the data, reference split) |
 | R bridge (optional) | `rbridge` (find an Rscript, cached probe, `run_r` / `run_external`, `requirement_status`, `environment_report` / `environment_status`), `r/_wrapper.R` (seed, RNG kind, `session.json`), `r/_probe.R` (versions as one JSON line); `kb` availability asks it for `r:` packages when `GRNBENCH_R_BRIDGE=1` (`kb.r_bridge_on`) |
 | inference | `infer/` (`base` contract + registry, `correlation`, `classical`, `tree_methods` GENIE3/GRNBoost2, `aracne3`, `regdiffusion_adapter`, `cistarget` motif prior / pruning, `association` bicor/WGCNA/propr/ARACNe-style/MRNET, `regression` TIGRESS/BBSR/pcNet/extra-trees/boosting, `community` rank aggregation), `plugins` (bring your own model); what is built in and what is not: `docs/models_catalog.md` |
+| evaluation + statistics | `eval/` (`metrics`, `gold`, `universe`, `nulls`, `stability`, `comparison` = `compare_units` paired t + Holm, `knockdown` = TF-as-unit scoring against knockdown responders with propensity controls and a TF-label permutation null) |
 | evaluation + statistics | `eval/` (`metrics`, `gold`, `universe`, `nulls`, `stability`, `comparison` = `compare_units` paired t + Holm, `power` = power and needed n of that t, for planning) |
 | evaluation + statistics | `eval/` (`metrics`, `gold`, `universe`, `nulls`, `stability`, `comparison` = `compare_units` paired t + Holm) |
 | reporting | `diagnostics` (portable schema, strict reader and shared normalized report rows), `report` + `html_report` (per run), `viz` + `viz.mplstyle` (figures), `texreport` (LaTeX), `board` (team board) |

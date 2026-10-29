@@ -1,0 +1,678 @@
+{
+ "collectri_sources": 1185,
+ "rpe1": {
+  "n_obs": 247914,
+  "obs_columns": [
+   "UMI_count",
+   "age",
+   "batch",
+   "cancer",
+   "cell_barcode",
+   "cell_line",
+   "celltype",
+   "core_adjusted_UMI_count",
+   "core_scale_factor",
+   "disease",
+   "gene",
+   "gene_id",
+   "gene_transcript",
+   "guide_id",
+   "ncounts",
+   "ngenes",
+   "nperts",
+   "organism",
+   "percent_mito",
+   "percent_ribo",
+   "perturbation",
+   "perturbation_type",
+   "sex",
+   "tissue_type",
+   "transcript",
+   "z_gemgroup_UMI"
+  ],
+  "var_columns": [
+   "chr",
+   "class",
+   "cv",
+   "end",
+   "ensembl_id",
+   "fano",
+   "gene_name",
+   "in_matrix",
+   "length",
+   "mean",
+   "ncells",
+   "ncounts",
+   "start",
+   "std",
+   "strand"
+  ],
+  "X": "float32",
+  "layers": [],
+  "X_dense_dtype": "float32",
+  "X_dense_shape": [
+   247914,
+   8749
+  ],
+  "X_first200rows_all_integer": true,
+  "n_vars": 8749,
+  "var_symbol_column": "gene_name",
+  "var_index_examples": [
+   "NOC2L",
+   "PLEKHN1",
+   "HES4"
+  ],
+  "collectri_sources_in_genes": 548,
+  "obs_numeric": {
+   "UMI_count": {
+    "min": 1481.0,
+    "max": 149768.0,
+    "dtype": "float64"
+   },
+   "age": {
+    "min": 1.0,
+    "max": 1.0,
+    "dtype": "int64"
+   },
+   "batch": {
+    "min": 1.0,
+    "max": 56.0,
+    "dtype": "int64"
+   },
+   "cancer": {
+    "min": 0.0,
+    "max": 0.0,
+    "dtype": "bool"
+   },
+   "core_adjusted_UMI_count": {
+    "min": 3000.165,
+    "max": 64232.5,
+    "dtype": "float64"
+   },
+   "core_scale_factor": {
+    "min": 0.49339604,
+    "max": 2.9859786,
+    "dtype": "float64"
+   },
+   "disease": {
+    "min": NaN,
+    "max": NaN,
+    "dtype": "float64"
+   },
+   "ncounts": {
+    "min": 1457.0,
+    "max": 147863.0,
+    "dtype": "float64"
+   },
+   "ngenes": {
+    "min": 595.0,
+    "max": 7965.0,
+    "dtype": "int64"
+   },
+   "nperts": {
+    "min": 0.0,
+    "max": 1.0,
+    "dtype": "int64"
+   },
+   "percent_mito": {
+    "min": 0.0,
+    "max": 0.10999933,
+    "dtype": "float64"
+   },
+   "percent_ribo": {
+    "min": 0.01986183,
+    "max": 0.57795006,
+    "dtype": "float64"
+   },
+   "z_gemgroup_UMI": {
+    "min": -2.5735235,
+    "max": 9.735307,
+    "dtype": "float64"
+   }
+  },
+  "obs_text": {
+   "cell_barcode": {
+    "n_unique": 247914,
+    "top": [
+     [
+      "AAACCCAAGAAACTAC-53",
+      1
+     ],
+     [
+      "AAACCCAAGAAGCCAC-51",
+      1
+     ],
+     [
+      "AAACCCAAGAAGCGAA-32",
+      1
+     ],
+     [
+      "AAACCCAAGAATACAC-44",
+      1
+     ]
+    ]
+   },
+   "cell_line": {
+    "n_unique": 1,
+    "top": [
+     [
+      "RPE1",
+      247914
+     ]
+    ]
+   },
+   "celltype": {
+    "n_unique": 1,
+    "top": [
+     [
+      "retinal pigment epithelial cells",
+      247914
+     ]
+    ]
+   },
+   "gene": {
+    "n_unique": 2394,
+    "top": [
+     [
+      "non-targeting",
+      11485
+     ],
+     [
+      "TFAM",
+      3580
+     ],
+     [
+      "SLC1A5",
+      1962
+     ],
+     [
+      "GFM1",
+      1699
+     ]
+    ]
+   },
+   "gene_id": {
+    "n_unique": 2392,
+    "top": [
+     [
+      "non-targeting",
+      11485
+     ],
+     [
+      "ENSG00000108064",
+      3580
+     ],
+     [
+      "ENSG00000105281",
+      1962
+     ],
+     [
+      "ENSG00000168827",
+      1699
+     ]
+    ]
+   },
+   "gene_transcript": {
+    "n_unique": 2662,
+    "top": [
+     [
+      "8832_TFAM_P1P2_ENSG00000108064",
+      3580
+     ],
+     [
+      "7976_SLC1A5_P1_ENSG00000105281",
+      1779
+     ],
+     [
+      "3346_GFM1_P1P2_ENSG00000168827",
+      1699
+     ],
+     [
+      "5218_MRPL36_P1P2_ENSG00000171421",
+      1686
+     ]
+    ]
+   },
+   "guide_id": {
+    "n_unique": 2662,
+    "top": [
+     [
+      "TFAM_+_60145205.23-P1P2|TFAM_-_60145223.23-P1P2",
+      3580
+     ],
+     [
+      "SLC1A5_+_47291839.23-P1|SLC1A5_+_47291829.23-P1",
+      1779
+     ],
+     [
+      "GFM1_-_158362387.23-P1P2|GFM1_+_158362379.23-P1P2",
+      1699
+     ],
+     [
+      "MRPL36_+_1799909.23-P1P2|MRPL36_+_1799899.23-P1P2",
+      1686
+     ]
+    ]
+   },
+   "organism": {
+    "n_unique": 1,
+    "top": [
+     [
+      "human",
+      247914
+     ]
+    ]
+   },
+   "perturbation": {
+    "n_unique": 2394,
+    "top": [
+     [
+      "control",
+      11485
+     ],
+     [
+      "TFAM",
+      3580
+     ],
+     [
+      "SLC1A5",
+      1962
+     ],
+     [
+      "GFM1",
+      1699
+     ]
+    ]
+   },
+   "perturbation_type": {
+    "n_unique": 1,
+    "top": [
+     [
+      "CRISPR",
+      247914
+     ]
+    ]
+   },
+   "sex": {
+    "n_unique": 1,
+    "top": [
+     [
+      "Female",
+      247914
+     ]
+    ]
+   },
+   "tissue_type": {
+    "n_unique": 1,
+    "top": [
+     [
+      "cell_line",
+      247914
+     ]
+    ]
+   },
+   "transcript": {
+    "n_unique": 62,
+    "top": [
+     [
+      "P1P2",
+      203698
+     ],
+     [
+      "P2",
+      13569
+     ],
+     [
+      "P1",
+      13298
+     ],
+     [
+      "non-targeting",
+      11485
+     ]
+    ]
+   }
+  },
+  "perturbation_column": "perturbation",
+  "n_perturbed_labels": 2394,
+  "perturbed_collectri_tfs": 154,
+  "perturbed_tfs_in_genes": 117
+ },
+ "k562": {
+  "n_obs": 1989578,
+  "obs_columns": [
+   "UMI_count",
+   "age",
+   "batch",
+   "cancer",
+   "cell_barcode",
+   "cell_line",
+   "core_adjusted_UMI_count",
+   "core_scale_factor",
+   "disease",
+   "gene",
+   "gene_id",
+   "gene_transcript",
+   "guide_id",
+   "ncounts",
+   "ngenes",
+   "nperts",
+   "organism",
+   "percent_mito",
+   "percent_ribo",
+   "perturbation",
+   "perturbation_type",
+   "sex",
+   "tissue_type",
+   "transcript",
+   "z_gemgroup_UMI"
+  ],
+  "var_columns": [
+   "chr",
+   "class",
+   "cv",
+   "end",
+   "ensembl_id",
+   "fano",
+   "gene_name",
+   "in_matrix",
+   "length",
+   "mean",
+   "ncells",
+   "ncounts",
+   "start",
+   "std",
+   "strand"
+  ],
+  "X": "float32",
+  "layers": [],
+  "X_dense_dtype": "float32",
+  "X_dense_shape": [
+   1989578,
+   8248
+  ],
+  "X_first200rows_all_integer": true,
+  "n_vars": 8248,
+  "var_symbol_column": "gene_name",
+  "var_index_examples": [
+   "LINC01409",
+   "LINC01128",
+   "NOC2L"
+  ],
+  "collectri_sources_in_genes": 538,
+  "obs_numeric": {
+   "UMI_count": {
+    "min": 564.0,
+    "max": 73354.0,
+    "dtype": "float64"
+   },
+   "age": {
+    "min": 53.0,
+    "max": 53.0,
+    "dtype": "int64"
+   },
+   "batch": {
+    "min": 1.0,
+    "max": 273.0,
+    "dtype": "int64"
+   },
+   "cancer": {
+    "min": 1.0,
+    "max": 1.0,
+    "dtype": "bool"
+   },
+   "core_adjusted_UMI_count": {
+    "min": 2000.0747,
+    "max": 57743.234,
+    "dtype": "float64"
+   },
+   "core_scale_factor": {
+    "min": 0.2538407,
+    "max": 2.0327523,
+    "dtype": "float64"
+   },
+   "ncounts": {
+    "min": 557.0,
+    "max": 72352.0,
+    "dtype": "float64"
+   },
+   "ngenes": {
+    "min": 323.0,
+    "max": 6853.0,
+    "dtype": "int64"
+   },
+   "nperts": {
+    "min": 0.0,
+    "max": 1.0,
+    "dtype": "int64"
+   },
+   "percent_mito": {
+    "min": 0.0,
+    "max": 0.24997015,
+    "dtype": "float64"
+   },
+   "percent_ribo": {
+    "min": 0.012972973,
+    "max": 0.65320855,
+    "dtype": "float64"
+   },
+   "z_gemgroup_UMI": {
+    "min": -3.1460176,
+    "max": 10.993712,
+    "dtype": "float64"
+   }
+  },
+  "obs_text": {
+   "cell_barcode": {
+    "n_unique": 1989578,
+    "top": [
+     [
+      "AAACCCAAGAAACCAT-157",
+      1
+     ],
+     [
+      "AAACCCAAGAAACCAT-207",
+      1
+     ],
+     [
+      "AAACCCAAGAAACCAT-29",
+      1
+     ],
+     [
+      "AAACCCAAGAAAGCGA-149",
+      1
+     ]
+    ]
+   },
+   "cell_line": {
+    "n_unique": 1,
+    "top": [
+     [
+      "K562",
+      1989578
+     ]
+    ]
+   },
+   "disease": {
+    "n_unique": 1,
+    "top": [
+     [
+      "chronic myeloid leukemia",
+      1989578
+     ]
+    ]
+   },
+   "gene": {
+    "n_unique": 9867,
+    "top": [
+     [
+      "non-targeting",
+      75328
+     ],
+     [
+      "RPL3",
+      1963
+     ],
+     [
+      "PINK1",
+      1745
+     ],
+     [
+      "DUSP9",
+      1351
+     ]
+    ]
+   },
+   "gene_id": {
+    "n_unique": 9854,
+    "top": [
+     [
+      "non-targeting",
+      75328
+     ],
+     [
+      "NA",
+      2962
+     ],
+     [
+      "ENSG00000100316",
+      1963
+     ],
+     [
+      "ENSG00000158828",
+      1745
+     ]
+    ]
+   },
+   "gene_transcript": {
+    "n_unique": 11187,
+    "top": [
+     [
+      "7472_RPL3_P1P2_ENSG00000100316",
+      1963
+     ],
+     [
+      "6368_PINK1_P1P2_ENSG00000158828",
+      1745
+     ],
+     [
+      "7916_SIMC1_P1P2_ENSG00000170085",
+      1170
+     ],
+     [
+      "8522_STK38L_P1P2_ENSG00000211455",
+      1169
+     ]
+    ]
+   },
+   "guide_id": {
+    "n_unique": 11187,
+    "top": [
+     [
+      "RPL3_+_39715369.23-P1P2|RPL3_+_39715378.23-P1P2",
+      1963
+     ],
+     [
+      "PINK1_-_20960047.23-P1P2|PINK1_-_20960044.23-P1P2",
+      1745
+     ],
+     [
+      "SIMC1_+_175665382.23-P1P2|SIMC1_-_175665396.23-P1P2",
+      1170
+     ],
+     [
+      "STK38L_-_27397261.23-P1P2|STK38L_-_27397233.23-P1P2",
+      1169
+     ]
+    ]
+   },
+   "organism": {
+    "n_unique": 1,
+    "top": [
+     [
+      "human",
+      1989578
+     ]
+    ]
+   },
+   "perturbation": {
+    "n_unique": 9867,
+    "top": [
+     [
+      "control",
+      75328
+     ],
+     [
+      "RPL3",
+      1963
+     ],
+     [
+      "PINK1",
+      1745
+     ],
+     [
+      "DUSP9",
+      1351
+     ]
+    ]
+   },
+   "perturbation_type": {
+    "n_unique": 1,
+    "top": [
+     [
+      "CRISPR",
+      1989578
+     ]
+    ]
+   },
+   "sex": {
+    "n_unique": 1,
+    "top": [
+     [
+      "Female",
+      1989578
+     ]
+    ]
+   },
+   "tissue_type": {
+    "n_unique": 1,
+    "top": [
+     [
+      "cell_line",
+      1989578
+     ]
+    ]
+   },
+   "transcript": {
+    "n_unique": 324,
+    "top": [
+     [
+      "P1P2",
+      1599531
+     ],
+     [
+      "P1",
+      131847
+     ],
+     [
+      "P2",
+      127921
+     ],
+     [
+      "non-targeting",
+      75328
+     ]
+    ]
+   }
+  },
+  "perturbation_column": "perturbation",
+  "n_perturbed_labels": 9867,
+  "perturbed_collectri_tfs": 1123,
+  "perturbed_tfs_in_genes": 533
+ },
+ "overlap": {
+  "perturbed_both": 2391,
+  "rpe1_not_in_k562": 3,
+  "collectri_tfs_perturbed_both": 154
+ }
+}

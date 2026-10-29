@@ -1,0 +1,34 @@
+{
+ "target_power": 0.8,
+ "n": {
+  "rpe1": 73,
+  "k562": 109,
+  "both_stratum": 41
+ },
+ "mde_dz": {
+  "with_regdiffusion:worst_step": {
+   "rpe1": 0.447,
+   "k562": 0.362,
+   "both_stratum": 0.61,
+   "joint_rpe1_and_k562": 0.459
+  },
+  "with_regdiffusion:last_step": {
+   "rpe1": 0.294,
+   "k562": 0.24,
+   "both_stratum": 0.395,
+   "joint_rpe1_and_k562": 0.314
+  },
+  "without_regdiffusion:worst_step": {
+   "rpe1": 0.43,
+   "k562": 0.349,
+   "both_stratum": 0.586,
+   "joint_rpe1_and_k562": 0.443
+  },
+  "without_regdiffusion:last_step": {
+   "rpe1": 0.294,
+   "k562": 0.24,
+   "both_stratum": 0.395,
+   "joint_rpe1_and_k562": 0.314
+  }
+ }
+}

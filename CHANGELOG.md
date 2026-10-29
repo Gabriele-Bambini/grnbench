@@ -30,6 +30,21 @@
   candidates with a non-finite score are unrankable, rank last and flag nobody. Future auto-arm choices can
   differ; reproductions of registered rows use each record's CODE_COMMIT. Impact on the
   C4-C6 experiments in `benchmarks/screen_subset_impact.py` and a dated note in each record.
+- Knockdown evaluator `grnbench.eval.knockdown` (TF = unit, D-022 proposed): per-TF AUPRC ratio or top-k hit rate
+  of predicted targets against knockdown responders, a leave-one-TF-out gene-propensity control per network, the
+  response propensity, and a joint TF-label permutation null next to `compare_units` + Holm; draft record
+  EXP-20261016-LM-1 (not registered until D-022 is ACTIVE). Its runner (`benchmarks/knockdown_bench.py`,
+  `benchmarks/knockdown_score.py`), one resumable job `hpc/knockdown_run.sbatch`, the D-020 snapshot
+  `experiments/EXP-20261016-LM-1.snapshot.tsv`, the P9 sensitivity stratum (`total-shift`, `score --total-shift`)
+  and the design's detectable effect (`benchmarks/knockdown_checks/p11_power.py`). `data_manifest.py` names the
+  `perturb/` source (Replogle 2022, Zenodo 7041849). After an independent review: the AUPRC is the expected AP
+  over random order inside tied blocks (`metrics.expected_average_precision`), the report prints the random
+  expectation for its own units, `combine` gives "not replicated" in either screen order, inference and truth
+  share one control mask and `score` refuses a control cell used twice or a swapped screen. Second review: a
+  failed model makes the inference `incomplete` (exit 3) until its second failure on the same commit (exclusion
+  (c)), Holm always runs over the registered 24 directed hypotheses (a missing arm has p = 1), `run.json` refuses
+  a resume from another commit, snapshot, model list or permutation count, `truth.json` names the right test
+  normalisation, and `knockdown_score.py infer` takes `--experiment`.
 - `fetch_cellxgene.py --from-manifest` (#156) now writes the same `README.md` as the listing route: it takes
   the collection name and citation from the CELLxGENE listing by dataset id, and warns on stderr, per dataset,
   when it cannot (the download goes on). The empty README it wrote before was the cause of C6's

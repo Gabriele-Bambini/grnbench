@@ -1,0 +1,17 @@
+{
+  "n_perturbed_tfs": 154,
+  "n_usable": 73,
+  "excluded_by_reason": {
+    "tf_not_measured": 37,
+    "knockdown_below_threshold": 24,
+    "too_few_responders": 12,
+    "too_few_cells_per_construct": 8
+  },
+  "responders_among_usable": {
+    "min": 22.0,
+    "p25": 134.0,
+    "median": 656.0,
+    "p75": 1374.0,
+    "max": 4431.0
+  }
+}

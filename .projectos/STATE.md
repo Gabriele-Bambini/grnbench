@@ -2,7 +2,7 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-10-16 (D-026 accepted, D-018 active, D-029 proposed, "two-sided" wording errata, LM's agent); 2026-10-26 (retention ledger, GB's agent); 2026-10-25 (#169 empty stratification pool, LD); 2026-10-25 (#172 leading-dash context replay, LD); 2026-10-26 (#183 test registry isolation, LD); 2026-10-24 (#149/#116 silent behaviours made loud, GB's agent); 2026-10-25 (#164 context/batch and HVG guards, LD); 2026-10-23 (ARACNe3 branch: main merged in, relative binary path fixed, GB's agent); 2026-10-22 (Block 6, 200-dataset pool registered, GB's agent); 2026-10-22 (#132 plan/runtime truth, LD);
+Updated: 2026-10-22 (EXP-20261016-LM-1 draft PR, LM's agent); 2026-10-16 (D-026 accepted, D-018 active, D-029 proposed, "two-sided" wording errata, LM's agent); 2026-10-26 (retention ledger, GB's agent); 2026-10-25 (#169 empty stratification pool, LD); 2026-10-25 (#172 leading-dash context replay, LD); 2026-10-26 (#183 test registry isolation, LD); 2026-10-24 (#149/#116 silent behaviours made loud, GB's agent); 2026-10-25 (#164 context/batch and HVG guards, LD); 2026-10-23 (ARACNe3 branch: main merged in, relative binary path fixed, GB's agent); 2026-10-22 (Block 6, 200-dataset pool registered, GB's agent); 2026-10-22 (#132 plan/runtime truth, LD);
 2026-10-18 (ARACNe3 HPC build and smoke run, EXP-20261018-GB-1, issue #109, GB's agent); 2026-10-17 (ARACNe3 adapter, issue #105, GB's agent);
 2026-10-15 (#87, #71, #69 merged at GB's request, GB's agent); 2026-10-10
 (issue #59, LD; interface branch merged with main after #55, GB's agent); 2026-10-09
@@ -25,6 +25,11 @@ pre-registered experiments (D-017).
   `pipeline.subsample_cells` and `profile.py` are still positional.
 - Issue #75 (LM, `lm/screen-subset-rule`): D-023 PROPOSED, screening ranks a one-context candidate after a
   non-failed candidate that covers its contexts (failed or non-finite candidates are unrankable); records of EXP-20260925-LM-2, EXP-20260926-LM-1, EXP-20261002-LM-1 noted. Awaits GB review.
+- EXP-20261016-LM-1 (LM, branch `lm/knockdown-registration`, draft PR opened 2026-10-22): DRAFT knockdown
+  validation (RPE1 design, K562 genome-wide replication, TF = unit; 73 and 109 usable TFs, 41 in both). Evaluator
+  `grnbench.eval.knockdown`, runner `knockdown_bench.py` + `knockdown_score.py`, job `hpc/knockdown_run.sbatch`,
+  D-020 snapshot `experiments/EXP-20261016-LM-1.snapshot.tsv` (data root checked, job 713087). Checks P1-P7 and
+  P9-P12 closed; it registers when D-022 is ACTIVE (#79, check P8). No network has been scored against a responder.
 - Retention ledger (#176, GB, `gb/retention-ledger`): `grnbench.retention`; every cell- or
   gene-removing step of `run_prep` records cells, genes and the named TFs it removed (manifest
   `retention`, portable diagnostics, report table), and a gene filter that drops a TF detected in the

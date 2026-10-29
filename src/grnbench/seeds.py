@@ -24,7 +24,8 @@ One run can span two entry points: ``quick_run(screen=True)`` in the interface i
 
 Not covered (their seeds are not in LEGACY, see :data:`NOT_COVERED`): aracne3_smoke.py, beeline_backtest.py,
 motif_sensitivity.py, calibration.py, demo.py, plugins.py (Python and entry-point plugin runners),
-explore.py, rbridge.py, epr_power.py, split_pool.py.
+explore.py, rbridge.py, epr_power.py, split_pool.py, knockdown_bench.py, knockdown_score.py,
+eval/knockdown.py.
 """
 from __future__ import annotations
 
@@ -73,6 +74,12 @@ NOT_COVERED: tuple[tuple[str, str], ...] = (
     ("benchmarks/epr_power.py", "EPR power analysis: BOOTSTRAP_SEED = 42 for its bootstrap"),
     ("benchmarks/split_pool.py", "D-057 pool split: the required --seed (42 for EXP-20261022-GB) orders "
                                  "datasets by sha256(seed:dataset_id); no RNG"),
+    ("benchmarks/knockdown_bench.py", "EXP-20261016-LM-1 truth and controls: control split --seed 0 "
+                                     "(also the subset cap), truth-control cap seed 1, per-TF cell cap seed 2"),
+    ("benchmarks/knockdown_score.py", "EXP-20261016-LM-1 scoring: cell cap after QC --seed 0, "
+                                     "permutation --seed 0 passed to eval/knockdown.py"),
+    ("src/grnbench/eval/knockdown.py", "knockdown evaluator: joint TF-label permutation null, seed 0 "
+                                       "unless the caller passes one"),
     ("src/grnbench/plugins.py", "Python and entry-point plugin runners keep their own defaults "
                                 "(command plugins are the library row plugin.command)"),
 )

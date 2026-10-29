@@ -167,6 +167,32 @@ def average_precision(y: np.ndarray, weights: np.ndarray | None = None) -> float
     return float(np.sum(np.diff(np.r_[0.0, recall]) * precision))
 
 
+def expected_average_precision(scores: np.ndarray, labels: np.ndarray) -> float:
+    """Expected average precision when the order inside every tied block of ``scores`` is uniformly random.
+
+    Exact (McSherry and Najork 2008): a tied block that occupies positions s+1..s+n with r relevant items and
+    R_before relevant items above it puts a relevant item at position s+k with probability r/n, and then
+    R_before + 1 + (k-1)(r-1)/(n-1) relevant items sit at or above it. ``scores`` in ranking order (descending);
+    an unsorted input is sorted first. A single all-tied block scores above the prevalence (R=1: mean of 1/rank).
+    """
+    s, y = np.asarray(scores, dtype=float), np.asarray(labels, dtype=float)
+    if not (s[1:] <= s[:-1]).all():
+        order = np.argsort(-s, kind="stable")
+        s, y = s[order], y[order]
+    n_pos = y.sum()
+    if n_pos == 0:
+        return float("nan")
+    ends = _tie_blocks(s)
+    size = np.diff(np.r_[0, ends]).astype(float)
+    rel = np.diff(np.r_[0.0, np.cumsum(y)[ends - 1]])
+    before = np.cumsum(rel) - rel
+    slope = np.divide(rel - 1, size - 1, out=np.zeros_like(size), where=size > 1)
+    block = np.repeat(np.arange(len(ends)), size.astype(int))
+    k = np.arange(len(s)) - (ends - size).astype(int)[block] + 1
+    hits = before[block] + 1 + (k - 1) * slope[block]
+    return float((rel / size)[block].dot(hits / np.arange(1, len(s) + 1)) / n_pos)
+
+
 def auc_roc(weights: np.ndarray, y: np.ndarray) -> float:
     """Rank-based AUROC (Mann-Whitney U), tie-safe via average ranks."""
     n_pos = int(y.sum())
