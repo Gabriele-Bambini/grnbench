@@ -23,6 +23,8 @@ pre-registered experiments (D-017).
   `edge_stability` change on every sufficiently large matrix, below the cap too. New runs do not reproduce
   old rows exactly; runners pin `cell_sampling` and refuse to resume an older output. Follow-up:
   `pipeline.subsample_cells` and `profile.py` are still positional.
+- Issue #75 (LM, `lm/screen-subset-rule`): D-023 PROPOSED, screening ranks a one-context candidate after a
+  non-failed candidate that covers its contexts (failed or non-finite candidates are unrankable); records of EXP-20260925-LM-2, EXP-20260926-LM-1, EXP-20261002-LM-1 noted. Awaits GB review.
 - Retention ledger (#176, GB, `gb/retention-ledger`): `grnbench.retention`; every cell- or
   gene-removing step of `run_prep` records cells, genes and the named TFs it removed (manifest
   `retention`, portable diagnostics, report table), and a gene filter that drops a TF detected in the

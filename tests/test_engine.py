@@ -713,6 +713,54 @@ def test_rank_with_reference_ignores_the_baseline_rule():
     assert ranking.index[0] == "a" and "AUPRC" in rule
 
 
+def _ctx_rows(**cands):
+    """cands: name -> {context: auprc_ratio}; one row per scored context."""
+    return pd.DataFrame([{"candidate": n, "context": c, "error": None, "edge_stability": 0.5,
+                          "depth_leakage": 0.0, "batch_leakage": 0.0, "reference_auprc_ratio": r}
+                         for n, ctxs in cands.items() for c, r in ctxs.items()])
+
+
+def test_rank_with_reference_never_picks_a_candidate_scored_on_fewer_contexts():
+    from grnbench.screen import rank_candidates
+    rows = _ctx_rows(recommended={"A": 2.0, "B": 1.0, "C": 1.0}, selected_type={"A": 3.0},
+                     other={"A": 1.0, "B": 1.0, "C": 1.0})
+    ranking, rule = rank_candidates(rows)
+    assert list(ranking.index) == ["recommended", "other", "selected_type"]
+    assert ranking["fewer_contexts"].to_dict() == {"recommended": False, "other": False,
+                                                   "selected_type": True} and "D-023" in rule
+
+
+def test_rank_fewer_contexts_flag_ignores_a_failed_superset_so_the_subset_is_not_flagged():
+    from grnbench.screen import rank_candidates
+    rows = pd.concat([_ctx_rows(subset={"A": 5.0}),
+                      _ctx_rows(failed_superset={"A": 1.0, "B": 1.0, "C": 1.0}).assign(
+                          error=[None, None, "boom"])], ignore_index=True)
+    ranking, _ = rank_candidates(rows)
+    assert list(ranking.index) == ["subset", "failed_superset"]
+    assert not ranking.loc["subset", "fewer_contexts"] and ranking.loc["subset", "score"] > 0
+    assert ranking.loc["failed_superset", "score"] == -np.inf
+
+
+def test_rank_non_finite_score_is_unrankable_before_the_context_tiers():
+    from grnbench.screen import rank_candidates
+    ranking, _ = rank_candidates(_ctx_rows(nan_superset={"A": np.nan, "B": np.nan}, finite_subset={"A": 2.0}))
+    assert list(ranking.index) == ["finite_subset", "nan_superset"]
+    assert not ranking.loc["finite_subset", "fewer_contexts"] and np.isfinite(ranking["score"].iloc[0])
+    partial, _ = rank_candidates(_ctx_rows(half_nan={"A": 9.0, "B": np.nan}, finite_subset={"A": 2.0}))
+    assert list(partial.index) == ["finite_subset", "half_nan"]
+
+
+def test_rank_with_reference_keeps_failed_last_and_orders_by_score_on_equal_or_disjoint_contexts():
+    from grnbench.screen import rank_candidates
+    same = rank_candidates(_ctx_rows(a={"A": 1.0, "B": 1.0}, b={"A": 2.0, "B": 2.0}))[0]
+    assert list(same.index) == ["b", "a"]
+    overlap = rank_candidates(_ctx_rows(a={"A": 3.0, "B": 3.0}, b={"B": 1.0, "C": 1.0}))[0]
+    assert list(overlap.index) == ["a", "b"]
+    rows = pd.concat([_ctx_rows(a={"A": 1.0, "B": 1.0}, s={"A": 5.0}),
+                      _ctx_rows(f={"A": 9.0, "B": 9.0}).assign(error=[None, "boom"])], ignore_index=True)
+    assert list(rank_candidates(rows)[0].index) == ["a", "s", "f"]
+
+
 def test_screen_candidates_adds_one_baseline_unless_caller_passes_it(demo, tmp_path, monkeypatch):
     import grnbench.autoprep as autoprep
     from grnbench.screen import BASELINE_CHOICES, screen_candidates

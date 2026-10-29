@@ -25,6 +25,11 @@
   3,000 cells; the 150-cell halves of `edge_stability` change on every sufficiently large matrix, below
   the cap too. `engine_bench` and `real_bench` pin `cell_sampling` (`blake2b64-seed-barcode-v1`) in
   `RUN_CONFIG.json` (`real_bench` also `max_score_cells`) and refuse to resume an output without it.
+- Screening with a reference ranks a candidate scored on a strict subset of a non-failed candidate's contexts
+  after it and `rank_candidates` marks it `fewer_contexts` (#75, D-023 proposed); failed candidates and
+  candidates with a non-finite score are unrankable, rank last and flag nobody. Future auto-arm choices can
+  differ; reproductions of registered rows use each record's CODE_COMMIT. Impact on the
+  C4-C6 experiments in `benchmarks/screen_subset_impact.py` and a dated note in each record.
 - `fetch_cellxgene.py --from-manifest` (#156) now writes the same `README.md` as the listing route: it takes
   the collection name and citation from the CELLxGENE listing by dataset id, and warns on stderr, per dataset,
   when it cannot (the download goes on). The empty README it wrote before was the cause of C6's

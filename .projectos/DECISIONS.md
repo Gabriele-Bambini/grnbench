@@ -223,6 +223,55 @@ STATUS: PROPOSED | ACTIVE | SUPERSEDED by D-xxx | REVERTED
   resume an output written without it or with another value. `report` does not check it, so committed
   runs can still be reported. A golden vector in `tests/test_stable_subsample.py` fixes the algorithm
   across processes (`PYTHONHASHSEED`).
+
+### D-023 | 2026-10-09 | claude (for LM) | PROPOSED | With a reference, screening ranks a candidate scored on a strict subset of a viable candidate's contexts after it
+- decision: in `rank_candidates` with a reference, a candidate is failed/unrankable when it failed on
+  any context or any of its scores is non-finite (NaN or inf); such candidates are excluded from the
+  comparison below and rank last (best stays None when no candidate is rankable). Among the other
+  candidates, one whose set of scored contexts (rows without error, by the `context` column) is a
+  strict subset of a non-failed candidate's set is ranked after every unflagged candidate and marked
+  `fewer_contexts`; a failed superset never flags anyone (a failed pipeline is not a viable
+  alternative), so a lone subset whose only superset failed is chosen and not flagged. The returned
+  rule says so. The pooled `baseline` (context `all`) is not a subset of per-cell-type sets, so it is unaffected. The
+  no-reference rule (D-021) and the handling of failed candidates are unchanged. PROPOSED until GB reviews.
+  Amends D-021's "with a reference, ranking is unchanged".
+- why: issue #75. The score is the mean over a candidate's own contexts, so `context_scope=selected_type`,
+  which cleans and scores only the largest cell type, can beat `recommended` on the easiest context
+  with bit-identical values there, and the cleaning that follows keeps one cell type.
+- impact on the registered experiments (`python benchmarks/screen_subset_impact.py`, committed rows,
+  `real_bench.models_section`; the first line of each block counts the datasets where the auto arm was
+  that candidate; the rows are the declared motif pairs with those datasets dropped, then given the
+  baseline arm's values):
+
+  ```text
+  EXP-20260925-LM-2: 20 rows, auto = context_scope=selected_type in 3: auto_n_contexts [1, 1, 1] vs rules_n_contexts [2, 2, 4]
+  -- affected rows dropped
+  | pearson_motif | pearson_signed | 17 | +0.197 | [+0.148, +0.247] | 5.16e-07 | 1 | pearson_motif |
+  | pearson_motif | motif_prior | 17 | +0.171 | [+0.080, +0.262] | 0.00162 | 1 | pearson_motif |
+  -- affected rows -> baseline arm values
+  | pearson_motif | pearson_signed | 20 | +0.186 | [+0.142, +0.229] | 6.45e-08 | 1 | pearson_motif |
+  | pearson_motif | motif_prior | 20 | +0.154 | [+0.075, +0.233] | 0.00097 | 1 | pearson_motif |
+  EXP-20260926-LM-1: 20 rows, auto = context_scope=selected_type in 3: auto_n_contexts [1, 1, 1] vs rules_n_contexts [2, 2, 4]
+  -- affected rows dropped
+  | grnboost2_motif | grnboost2 | 17 | +0.140 | [+0.119, +0.162] | 5.34e-10 | 1 | grnboost2_motif |
+  | regdiffusion_motif | regdiffusion | 16 | +0.204 | [+0.147, +0.260] | 2.02e-06 | 1 | regdiffusion_motif |
+  -- affected rows -> baseline arm values
+  | grnboost2_motif | grnboost2 | 20 | +0.132 | [+0.111, +0.153] | 1.03e-10 | 1 | grnboost2_motif |
+  | regdiffusion_motif | regdiffusion | 19 | +0.189 | [+0.139, +0.240] | 4.49e-07 | 1 | regdiffusion_motif |
+  EXP-20261002-LM-1: 20 rows, auto = context_scope=selected_type in 4: auto_n_contexts [1, 1, 1, 1] vs rules_n_contexts [4, 4, 2, 4]
+  -- affected rows dropped
+  | pearson_motif | pearson_signed | 16 | +0.203 | [+0.140, +0.266] | 2.48e-05 | 1 | pearson_motif |
+  | grnboost2_motif | grnboost2 | 16 | +0.149 | [+0.118, +0.180] | 1.73e-07 | 1 | grnboost2_motif |
+  | regdiffusion_motif | regdiffusion | 16 | +0.231 | [+0.159, +0.304] | 2.48e-05 | 1 | regdiffusion_motif |
+  -- affected rows -> baseline arm values
+  | pearson_motif | pearson_signed | 20 | +0.193 | [+0.143, +0.244] | 7.59e-07 | 1 | pearson_motif |
+  | grnboost2_motif | grnboost2 | 20 | +0.141 | [+0.115, +0.167] | 3.07e-09 | 1 | grnboost2_motif |
+  | regdiffusion_motif | regdiffusion | 20 | +0.219 | [+0.160, +0.279] | 1.05e-06 | 1 | regdiffusion_motif |
+  ```
+  The registered rows were produced under the old rule and stay as registered; each record carries a dated note.
+  Consequence: future auto-arm choices can differ from the registered ones; reproductions of registered rows use each record's CODE_COMMIT.
+- alternatives: stop forcing `selected_type` as the `context_scope` runner-up (a user-added one would stay
+  unprotected); leave the rule and only disclose it (#75 options 2 and 3).
 ### D-031 | 2026-10-21 | claude (for GB) | ACTIVE | An option is available only if its dependencies are installed and grnbench can run it
 - decision: availability is decided per (decision, option) (`DecisionPoint.availability`). An option is
   available only when its dependencies are installed AND `executors.PLAN_STEPS` maps it onto the

@@ -235,7 +235,10 @@ def rank_candidates(rows: pd.DataFrame, method: str | None = None) -> tuple[pd.D
     With a reference: AUPRC ratio on the selection half - of ``method`` when
     given (the best cleaning depends on the model: per-cell-type contexts help
     correlation methods and starve mutual-information ones), else the mean over
-    the proxy methods; edge stability breaks ties. Without a reference (D-021):
+    the proxy methods; edge stability breaks ties. Failed or unrankable (any non-finite score)
+    candidates rank last; among the rest, a candidate whose scored contexts are a strict subset of
+    another's is ranked after the others and marked ``fewer_contexts`` (D-023).
+    Without a reference (D-021):
     the fixed ``"baseline"`` pipeline when it has no failed context, else edge
     stability (on equal-size cell halves) minus depth and batch leakage. Failed
     contexts rank a candidate last - a pipeline that cannot run is not better.
@@ -253,7 +256,12 @@ def rank_candidates(rows: pd.DataFrame, method: str | None = None) -> tuple[pd.D
     if col in agg and agg[col].notna().any():
         agg["score"] = agg[col] + 1e-3 * agg["edge_stability"].fillna(0)
         rule = (f"AUPRC ratio of {method or 'the proxy methods (mean)'} on the selection half of "
-                "the reference (edge stability breaks ties)")
+                "the reference (edge stability breaks ties); failed candidates and candidates with a non-finite "
+                "score rank last; among the others a candidate scored on a strict subset of another's "
+                "contexts is ranked after it (D-023)")
+        failed |= set(ok.loc[~np.isfinite(ok[col].astype(float)), "candidate"]) if col in ok else set()
+        sets = ok[~ok["candidate"].isin(failed)].groupby("candidate", sort=False)["context"].agg(frozenset)
+        agg["fewer_contexts"] = [i in sets.index and any(sets[i] < o for o in sets) for i in agg.index]
     else:
         agg["score"] = (agg["edge_stability"].fillna(0) - agg["depth_leakage"].fillna(0)
                         - agg.get("batch_leakage", pd.Series(0, index=agg.index)).fillna(0).clip(lower=0))
@@ -264,7 +272,10 @@ def rank_candidates(rows: pd.DataFrame, method: str | None = None) -> tuple[pd.D
             rest = agg.drop(index="baseline").sort_values("score", ascending=False)
             return pd.concat([agg.loc[["baseline"]], rest]), rule
     agg.loc[agg.index.isin(failed), "score"] = -np.inf
-    return agg.sort_values("score", ascending=False), rule
+    agg = agg.sort_values("score", ascending=False)
+    if "fewer_contexts" in agg:  # stable: after the others, before the failed
+        agg = agg.iloc[np.argsort(agg.index.isin(failed) * 2 + agg["fewer_contexts"], kind="stable")]
+    return agg, rule
 
 
 def screen_candidates(diag, input_path, out_dir, *, tf_list=None, reference_pairs=None,
