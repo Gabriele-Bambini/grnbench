@@ -9,7 +9,7 @@ description = "GRN benchmarking with explicit candidate universes, provenance an
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-authors = [{ name = "GRN-Bench contributors" }]
+authors = [{ name = "The grnbench authors" }]
 dependencies = [
     "anndata>=0.10",
     "scanpy>=1.10",

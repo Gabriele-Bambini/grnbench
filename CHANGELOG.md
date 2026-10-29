@@ -80,6 +80,15 @@
   begin with ``-`` replay as data rather than being misread as command-line options (#172).
 - A stratified subsample whose context contains only missing labels now fails that context with an
   actionable `PrepError` instead of dividing by zero and aborting the remaining contexts (#169).
+- Decisions of 2026-10-16 (LM, #73): D-026 ACTIVE (reproduction verdicts have two levels, exact on the
+  registered platform class or equivalent on another; only for reproductions launched after that date,
+  #82 stays DIFFERENT), D-018 ACTIVE (MIT), D-029 PROPOSED (a preprint may carry `confirmed` and
+  `reproduced-computational` claims, each labelled). D-022 to D-025 and D-027, D-028 are on open PRs or
+  issues, so the numbers jump. Wording only, no code: the test of `compare_units` is a paired t with a
+  two-sided interval and a one-sided p in each direction. Fixed in `experiments/TEMPLATE.md`,
+  `experiments/README.md` and `paper/REPORTING_CHECKLIST.md`; dated errata outside section 1 in five
+  records, and one for the dataset counts of EXP-20260925-LM-2. Rule 5 of `experiments/README.md` now
+  says where a reproduction goes (section 4 of the original record).
 - Preprocessing plans now tell the truth when a requested option falls back: pseudobulk names the
   ignored batch/normalization choices, per-batch MAD names its global fallback, small matrices name
   the all-gene HVG fallback, and context plans name pooled/largest-type behaviour. Random and

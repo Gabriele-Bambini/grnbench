@@ -20,10 +20,13 @@ One file per run, local or HPC. This is the only place runs are recorded (not
    Small outputs (reports, CSV/JSON summaries; keep a folder under ~5 MB) go to
    `benchmarks/results/<EXP-ID>/`; large outputs stay outside git, path in the record.
 5. **Your folder only.** Never write into another person's `benchmarks/results/<EXP-ID>/` or rerun
-   into it. A rerun is a new experiment ID that links the old one.
-6. **Report everything.** n and what n is, the exact test, two-sided, effect size with CI, the
-   correction and its family, every declared comparison including the null ones. Negative and
-   inconclusive results stay in the registry. "Significant" only inside the declared family.
+   into it. A rerun is a new experiment ID that links the old one. A reproduction (rule 8) is not a new
+   experiment: it goes in section 4 of the original record, with its small outputs in
+   `benchmarks/results/<EXP-ID>-repro-<initials>/`.
+6. **Report everything.** n and what n is, the exact test (paired t: two-sided interval, one-sided p in
+   each direction, each direction its own hypothesis), effect size with CI, the correction and its
+   family, every declared comparison including the null ones. Negative and inconclusive results stay
+   in the registry. "Significant" only inside the declared family.
 7. **Look inside.** Each record links its figures (`viz/index.md`: QC, embeddings, decisions,
    PR curves, networks, TF-level errors, motif lift, calibration, stability, attributions) and its
    generated report (`latex/`). Scores alone are not a result.

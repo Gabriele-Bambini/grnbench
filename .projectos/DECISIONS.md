@@ -96,10 +96,12 @@ STATUS: PROPOSED | ACTIVE | SUPERSEDED by D-xxx | REVERTED
 - why: the goal is a publishable paper (team request 2026-09-25); D-008 (datasets as units) and the 0.6.0 retraction show what happens without declared families.
 - alternatives: ATTEMPTS.md for runs (one file, merge conflicts between three people, no pre-registration); a lab notebook outside git (not traceable to commits).
 
-### D-018 | 2026-09-25 | claude (for LM) | PROPOSED | Licence: keep MIT ("GRN-Bench contributors")
+### D-018 | 2026-09-25 | claude (for LM) | ACTIVE | Licence: keep MIT ("The grnbench authors")
 - decision: keep the existing MIT LICENSE; confirm the copyright holder wording and the author list (CITATION.cff) before any public release.
 - why: MIT is OSI-approved and accepted by journal code policies; nothing in the repo conflicts with it. Redistributed data keep their own licences (CELLxGENE: CC BY 4.0).
 - alternatives: Apache-2.0 (patent grant), BSD-3. Needs team confirmation.
+- status: ACTIVE since 2026-10-16 (LM, on #73). MIT is confirmed; the copyright holder is "The grnbench authors"
+  (`LICENSE` and `pyproject.toml` changed from "GRN-Bench contributors"). The author list is not decided here: it goes into `CITATION.cff` later.
 
 ### D-019 | 2026-10-01 | codex (for LD) | ACTIVE | Context-specific synthetic truth and controlled breaking-point validation
 - decision: Synthetic engine validation uses partially shared cell-type GRNs (shared-edge regimes
@@ -272,6 +274,53 @@ STATUS: PROPOSED | ACTIVE | SUPERSEDED by D-xxx | REVERTED
   Consequence: future auto-arm choices can differ from the registered ones; reproductions of registered rows use each record's CODE_COMMIT.
 - alternatives: stop forcing `selected_type` as the `context_scope` runner-up (a user-added one would stay
   unprotected); leave the rule and only disclose it (#75 options 2 and 3).
+
+### D-026 | 2026-10-16 | LM (accepted on #73) | ACTIVE | Reproduction verdicts have two levels: exact on the registered platform class, or equivalent on another platform
+- decision: Level 1, exact, on the registered platform class (OS family, Python minor version, the lock;
+  CPU vendor and BLAS written in the record): all numeric row fields within rtol 1e-9. Level 2, another
+  platform: the same task set and the same n per declared comparison after the registered exclusion rules;
+  the same direction and the same Holm decision for every declared comparison; and the mean paired difference
+  between the rerun's and the committed per-dataset primary values within a margin delta declared in section 1
+  of the record (default 0.02 AUPRC-ratio units), by two one-sided t tests at alpha 0.05. Planner choices that
+  flipped and the number of per-dataset primary inputs outside rtol 1e-6 are listed in section 4 and do not
+  decide. Either level, directed and signed by a second person, gives `reproduced`; a rerun from the owner's
+  side gives `reproduced-computational` as now. Records registered from 2026-10-16 on declare the platform class
+  and delta in section 1. Section 1 of a record registered earlier is never edited: when such a record has no
+  delta, a reproduction of it launched after 2026-10-16 uses the default 0.02. Level 1 is available only when every
+  field of the platform-class definition is present in the record or its run artifacts; when any is missing, the
+  reproduction is judged under Level 2, and missing fields are never inferred or added afterwards (LD, #103,
+  2026-10-22). Scope: applies only to reproductions launched after 2026-10-16. A reproduction whose result is already
+  known is never judged again under it: #82 (EXP-20260925-LM-2 rerun on another platform) stays DIFFERENT under
+  the rule of #24, and C4's route to `reproduced` is a new second-person rerun judged under Level 2, since
+  EXP-20260925-LM-2 does not name its CPU vendor or BLAS. The `--equivalence` option of `compare_runs.py` is a separate PR after #43 (not in the PR that
+  records this decision). Approved by GB on #103 (2026-10-21) with a working condition: whenever a reproduction is
+  run by an agent, GB is told before it is recorded. A reproduction is human
+  (`reproduced`, "reproduced by a second person" in the manuscript) only when a second person directed and
+  checked each step and signed section 4 (AGENTS.md section 8); an agent-only rerun stays
+  `reproduced-computational` and the manuscript labels it so.
+- why: rtol 1e-9 held within one platform (the 26/9 rerun of C4: 0 of 1,180 fields differ) and cannot hold
+  across platforms (#82: 40 of 40 primary inputs differ, relative 2.2e-07 to 2.8e-02, while the headline moved
+  by 0.001). A reproduction should test the finding and not only the determinism of one machine. Text proposed
+  in #89, accepted by LM on #73 on 2026-10-16.
+- alternatives: exactness only on a pinned container (tests determinism); applying a new rule to known results
+  (a rule chosen after the result).
+
+### D-029 | 2026-10-16 | claude (for LM) | PROPOSED | A preprint may carry `confirmed` and `reproduced-computational` claims, each labelled with its status
+- decision: A preprint may carry `confirmed` and `reproduced-computational` claims; every claim shows its
+  status where it appears (text, tables, figure captions); the abstract says which findings a second person
+  reproduced; exploratory results are labelled exploratory everywhere; a journal submission still needs
+  `reproduced`. Agreed by LD (#73, 2026-10-18) and GB (#103, 2026-10-21). GB's condition: the step to a
+  journal submission is enforced by the tool, not only stated. Today `grnbench report --paper` accepts
+  `confirmed`, `reproduced-computational` and `reproduced` alike (`texreport.py`), so the PR that activates this
+  decision adds a submission build (`grnbench report --paper --submission`) that fails and names every claim
+  that is not `reproduced`, with a test, and amends rule 3 of `paper/README.md` and section 8 of `AGENTS.md`.
+  GB's side writes that PR after this one merges; until it merges, D-029 stays PROPOSED and both texts stand
+  as written.
+- why: issue #73. Rule 3 came with D-017 after the 0.6.0 retraction, and its wording ("submitted draft")
+  predates any preprint plan. bioRxiv cannot remove a posted paper (withdrawal leaves the original version
+  online), so a preprint needs the same care in what it claims; the status labels are how a reader sees which
+  claims a second person has checked.
+- alternatives: a preprint with only `reproduced` claims; any status, unlabelled.
 ### D-031 | 2026-10-21 | claude (for GB) | ACTIVE | An option is available only if its dependencies are installed and grnbench can run it
 - decision: availability is decided per (decision, option) (`DecisionPoint.availability`). An option is
   available only when its dependencies are installed AND `executors.PLAN_STEPS` maps it onto the

@@ -5,7 +5,7 @@ Every claim in `CLAIMS.md` must pass every line. Reviewers tick it in the PR.
 
 ## Statistics
 - [ ] n stated for every result, and what n is (datasets; never edges, cells or genes as units)
-- [ ] exact test named (paired t via `compare_units` unless the record declares otherwise), two-sided
+- [ ] exact test named (paired t via `compare_units` unless the record declares otherwise); interval two-sided, p one-sided in each direction (each direction its own hypothesis)
 - [ ] effect size (mean paired difference) with 95% CI, not only a p-value
 - [ ] multiple-comparison correction named (Holm) with the full declared family and its size
 - [ ] "significant" used only inside the declared family; unresolved is reported as unresolved, not as "no difference"

@@ -13,8 +13,10 @@
 - datasets: <paths from experiments/datasets.tsv, or the tasks.json that lists them>
 - exclusion rules (decided now): <e.g. targeted panels < 1,000 genes; datasets refused as not counts>
 - comparison family: <every pair that will be tested, e.g. pearson_motif vs pearson_signed, ...>
-- test: paired, two-sided, Holm over the family above, alpha 0.05, via `grnbench compare`
-  (`grnbench.eval.comparison.compare_units`). Effect size = mean paired difference with CI.
+- test: paired t, Holm over the family above, alpha 0.05, via `grnbench compare`
+  (`grnbench.eval.comparison.compare_units`): two-sided interval, one-sided p in each direction (each
+  direction is its own hypothesis, Holm over all directed hypotheses). Effect size = mean paired
+  difference with CI.
 - primary comparison: <A> > <B> | <metric, e.g. auprc_ratio> | <arm, e.g. auto>   (machine-readable H1)
 - smallest effect that matters (margin): <value or "none declared">
 - seeds: <list>; reference split seed: <n>

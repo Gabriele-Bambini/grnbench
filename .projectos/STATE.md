@@ -2,7 +2,7 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-10-26 (retention ledger, GB's agent); 2026-10-25 (#169 empty stratification pool, LD); 2026-10-25 (#172 leading-dash context replay, LD); 2026-10-26 (#183 test registry isolation, LD); 2026-10-24 (#149/#116 silent behaviours made loud, GB's agent); 2026-10-25 (#164 context/batch and HVG guards, LD); 2026-10-23 (ARACNe3 branch: main merged in, relative binary path fixed, GB's agent); 2026-10-22 (Block 6, 200-dataset pool registered, GB's agent); 2026-10-22 (#132 plan/runtime truth, LD);
+Updated: 2026-10-16 (D-026 accepted, D-018 active, D-029 proposed, "two-sided" wording errata, LM's agent); 2026-10-26 (retention ledger, GB's agent); 2026-10-25 (#169 empty stratification pool, LD); 2026-10-25 (#172 leading-dash context replay, LD); 2026-10-26 (#183 test registry isolation, LD); 2026-10-24 (#149/#116 silent behaviours made loud, GB's agent); 2026-10-25 (#164 context/batch and HVG guards, LD); 2026-10-23 (ARACNe3 branch: main merged in, relative binary path fixed, GB's agent); 2026-10-22 (Block 6, 200-dataset pool registered, GB's agent); 2026-10-22 (#132 plan/runtime truth, LD);
 2026-10-18 (ARACNe3 HPC build and smoke run, EXP-20261018-GB-1, issue #109, GB's agent); 2026-10-17 (ARACNe3 adapter, issue #105, GB's agent);
 2026-10-15 (#87, #71, #69 merged at GB's request, GB's agent); 2026-10-10
 (issue #59, LD; interface branch merged with main after #55, GB's agent); 2026-10-09
@@ -219,7 +219,11 @@ pre-registered experiments (D-017).
 
 ## Blockers / open questions
 - Publication route (JOSS / Bioinformatics App Note / Nature-family journal) - team decision.
-- Licence and copyright holder (D-018, proposed: keep MIT).
+- Licence: D-018 is ACTIVE (2026-10-16, LM on #73): MIT, holder "The grnbench authors". The author list
+  (`CITATION.cff`) is still open.
+- Preprint claims: D-029 is agreed (LD on #73, GB on #103) and stays PROPOSED until GB's PR adds
+  `grnbench report --paper --submission` (fails on any claim that is not `reproduced`) and amends
+  `paper/README.md` rule 3 and AGENTS.md section 8. Until then rule 3 stands.
 
 ## Notes for the next agent
 - Never quote the 0.6.0 numbers (retracted). Unresolved != equivalent.
