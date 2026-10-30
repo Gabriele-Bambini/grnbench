@@ -1,0 +1,3 @@
+folder	dataset_id	assay	organism	tissue	suspension_type	cell_count	filesize	title	url
+10x-3-v2/homo-sapiens/breast__44941fdb	44941fdb-8a6f-42d5-9b34-da48c2a3f774	10x 3' v2	Homo sapiens	breast	cell	2276	24168077	HTAPP-783-SMP-4081 scRNA-seq	https://datasets.cellxgene.cziscience.com/c0df617a-321b-46ee-90ec-14f92434be41.h5ad
+10x-3-v3/mus-musculus/primary-motor-cortex__4ec57620	4ec57620-a065-4ac3-8cc7-79c03f0f9849	10x 3' v3	Mus musculus	primary motor cortex	nucleus	4745	32796799	Evolution of cellular diversity in primary motor cortex of mouse - non-neurons	https://datasets.cellxgene.cziscience.com/dbeeface-ee53-4a0a-b13d-eac5428e9b6b.h5ad

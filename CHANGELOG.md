@@ -3,6 +3,12 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- Register EXP-20261018-LD-1 and add a fail-loud, resumable comparison of grnbench's cisTarget
+  pruning with the unmodified official pySCENIC 0.12.1 `ctx` CLI on identical expression matrices,
+  full GRNBoost2 adjacencies and registered human/mouse cisTarget resources. The reference package
+  runs in a separate pinned Python 3.10 environment (`hpc/setup_pyscenic_env.sh` bootstraps pip 23.3.2 via conda-forge);
+  the primary final supported-pair endpoint is not met, while the separately exported union of
+  activating-module pairs matches exactly (Jaccard 1.0). Production model code is unchanged (#110).
 - The full suite is green again after separating three baseline failures from unrelated planner work:
   the R bridge now gives R the normalized relative output path it already validates, its conda PATH test
   follows the platform-specific layout, README text is normalised across LF/CRLF before evidence snippets

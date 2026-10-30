@@ -1,7 +1,7 @@
 # Map - grnbench (where things are)
 
 Keep this short and current: update it in any PR that adds, moves or removes a module, script or folder.
-Updated: 2026-10-23.
+Updated: 2026-10-25.
 
 ## Run it
 - Tests: `python -m pytest -q -p no:cacheprovider` (floor in AGENTS.md section 4). Golden values frozen
@@ -18,7 +18,9 @@ Updated: 2026-10-23.
   reference hashes in `RUN_CONFIG.json`; `report` also writes figures + LaTeX),
   `benchmarks/count_plausibility.py` (would ingest's non-raw-counts warning fire on a data root; #42),
   `benchmarks/compare_confirm.py` (a candidate-study rerun's registered primaries vs `CONFIRM.json`; #95),
-  `benchmarks/diff_rows_nested.py` (where two `rows/` folders differ at any depth, timings apart; diagnosis, #95).
+  `benchmarks/diff_rows_nested.py` (where two `rows/` folders differ at any depth, timings apart; diagnosis, #95),
+  `benchmarks/pyscenic_compare.py` (official pySCENIC 0.12.1 vs grnbench cisTarget on identical
+  expression/adjacency inputs; EXP-20261018-LD-1).
 - Dataset pools: `benchmarks/fetch_cellxgene.py --one-per-collection --max-cells --exclude-collections` (one dataset per study),
   `benchmarks/split_pool.py` (seeded confirmatory / exploratory split; D-057, `experiments/EXP-20261022-GB.pool.tsv`),
   `benchmarks/used_datasets.py` (datasets and studies used by any record or result on any branch),
@@ -39,6 +41,8 @@ Updated: 2026-10-23.
 - Knockdown validation (EXP-20261016-LM-1): `benchmarks/knockdown_bench.py` (truth), `benchmarks/knockdown_score.py`
   (infer, score, combine), job `hpc/knockdown_run.sbatch`, pre-registration checks `benchmarks/knockdown_checks/`.
   Step-by-step launch runbooks per experiment issue: `docs/runbooks/` (#24 executed 2026-10-08, #52 launched 2026-10-10).
+  Isolated pySCENIC reference environment and job: `hpc/setup_pyscenic_env.sh`,
+  `hpc/pyscenic_compare.sbatch`.
 
 ## Code (`src/grnbench/`)
 | area | modules |

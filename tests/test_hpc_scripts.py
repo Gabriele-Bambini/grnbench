@@ -167,6 +167,26 @@ def test_setup_env_torch_line_survives_a_crlf_lock(tmp_path):
     assert b"--extra-index-url https://pypi.org/simple PYTHONPATH=" in calls
 
 
+def test_setup_pyscenic_env_uses_conda_forge_and_installs_requirements(tmp_path):
+    bash = _bash()
+    log = tmp_path / "calls.log"
+    profile = tmp_path / "conda.sh"
+    profile.write_text(
+        f'conda() {{ echo "conda $*" >> "{log.as_posix()}"; if [ "$1" = "env" ] && [ "$2" = "list" ]; then echo "base"; fi; return 0; }}\n'
+        f'python() {{ echo "python $*" >> "{log.as_posix()}"; return 0; }}\n'
+        'pyscenic() { return 0; }\n',
+        encoding="utf-8",
+    )
+    env = {**os.environ, "CONDA_SH": profile.as_posix()}
+    r = subprocess.run([bash, str(ROOT / "hpc" / "setup_pyscenic_env.sh"), "test-pyscenic-env", ROOT.as_posix()],
+                       env=env, capture_output=True, text=True)
+    assert r.returncode == 0, r.stdout + r.stderr
+    calls = log.read_text(encoding="utf-8")
+    assert "conda create -y -c conda-forge -n test-pyscenic-env python=3.10 pip=23.3.2" in calls
+    req = (ROOT / "requirements" / "pyscenic-0.12.1-py310.txt").as_posix()
+    assert f"python -m pip install -r {req}" in calls
+
+
 @pytest.mark.parametrize("script", ["grnbench.sbatch", "beeline_backtest.sbatch", "engine_bench.sbatch"])
 def test_sbatch_imports_the_checkout_after_activating_the_env(script):
     lines = (ROOT / "hpc" / script).read_text(encoding="utf-8").splitlines()

@@ -1,0 +1,107 @@
+{
+  "all_terminal": true,
+  "completed": 2,
+  "expected": 2,
+  "experiment": "EXP-20261018-LD-1",
+  "interpretation": "exploratory descriptive method validation; no confirmatory claim",
+  "permanent_errors": 0,
+  "terminal": 2,
+  "units": [
+    {
+      "id": "cxg__10x-3-v2__homo-sapiens__breast__44941fdb__baseline__ctx0",
+      "modules": {
+        "candidate": 20974,
+        "exact": true,
+        "intersection": 20974,
+        "jaccard": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "reference": 20974,
+        "union": 20974
+      },
+      "scores": {
+        "grnbench_cistarget": {
+          "auprc": 0.02055379489793593,
+          "auprc_ratio": 1.3261728605839562,
+          "epr": 2.133494443797414
+        },
+        "grnboost2": {
+          "auprc": 0.01731051902715431,
+          "auprc_ratio": 1.116910071859266,
+          "epr": 1.5516323227617559
+        },
+        "pyscenic_ctx": {
+          "auprc": 0.01977981997743238,
+          "auprc_ratio": 1.2762344166400832,
+          "epr": 2.0041917502339346
+        }
+      },
+      "seconds": 276.635,
+      "species": "human",
+      "status": "completed",
+      "support": {
+        "candidate": 3911,
+        "exact": false,
+        "intersection": 2392,
+        "jaccard": 0.42913527090061,
+        "precision": 0.6116082843262592,
+        "recall": 0.5898890258939581,
+        "reference": 4055,
+        "union": 5574
+      },
+      "support_outside_universe": {
+        "grnbench": 0,
+        "pyscenic": 0
+      },
+      "task": "cxg__10x-3-v2__homo-sapiens__breast__44941fdb"
+    },
+    {
+      "id": "cxg__10x-3-v3__mus-musculus__primary-motor-cortex__4ec57620__baseline__ctx0",
+      "modules": {
+        "candidate": 27596,
+        "exact": true,
+        "intersection": 27596,
+        "jaccard": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "reference": 27596,
+        "union": 27596
+      },
+      "scores": {
+        "grnbench_cistarget": {
+          "auprc": 0.021901723186886823,
+          "auprc_ratio": 1.4681892141050559,
+          "epr": 2.828772459674429
+        },
+        "grnboost2": {
+          "auprc": 0.016885307458869445,
+          "auprc_ratio": 1.1319121366122795,
+          "epr": 1.3157081207788044
+        },
+        "pyscenic_ctx": {
+          "auprc": 0.021846464294044257,
+          "auprc_ratio": 1.46448491605679,
+          "epr": 2.4998454294797283
+        }
+      },
+      "seconds": 243.838,
+      "species": "mouse",
+      "status": "completed",
+      "support": {
+        "candidate": 7278,
+        "exact": false,
+        "intersection": 5736,
+        "jaccard": 0.5778180719250529,
+        "precision": 0.7881286067600989,
+        "recall": 0.6840787119856887,
+        "reference": 8385,
+        "union": 9927
+      },
+      "support_outside_universe": {
+        "grnbench": 0,
+        "pyscenic": 0
+      },
+      "task": "cxg__10x-3-v3__mus-musculus__primary-motor-cortex__4ec57620"
+    }
+  ]
+}

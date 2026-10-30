@@ -1,0 +1,19 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\title{EXP-20261018-LD-1: pySCENIC reference comparison}
+\begin{document}
+\maketitle
+This is an exploratory, descriptive implementation comparison on identical expression
+matrices and GRNBoost2 adjacencies. No inferential test is performed.
+\begin{center}
+\begin{tabular}{lrrrrr}
+\toprule
+Species & module Jaccard & support Jaccard & base AUPRC-ratio & grnbench & pySCENIC \\
+\midrule
+human & 1.0000 & 0.4291 & 1.1169 & 1.3262 & 1.2762 \\
+mouse & 1.0000 & 0.5778 & 1.1319 & 1.4682 & 1.4645 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{document}
