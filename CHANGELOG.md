@@ -358,6 +358,26 @@
   requested preprocessing strategies are distinct, subset runs and failures use their real context
   label, paths containing spaces remain private, and raw-droplet dimensions retain the pre-calling
   barcode count.
+- Identifier provenance and refusal guards (#58, D-028): ingest maps only from an input-carried
+  symbol column or an explicit `--gene-mapping` table, records the table SHA256 and the complete
+  source-to-representative sum audit in manifests and portable diagnostics, strips human and mouse
+  Ensembl versions, and refuses unresolved Ensembl-only or measured unsafe case/cross-convention
+  collision sets. Exact duplicates never count toward the refusal thresholds. The first real-data
+  calibration (EXP-20261010-LD-1) preserved a failed cumulative-manifest preflight with no matrices
+  inspected; EXP-20261010-LD-2 instead pins an exact approved-input snapshot, stages only those
+  files in job-local scratch and refuses a missing or changed byte before calibration. That run
+  accepted 32/33 inputs but found one false refusal on zebrafish, so the guard remains blocked and
+  the negative result is retained rather than weakening the gate post hoc. D-028 keeps the measured
+  merge/refusal rule for confidently identified human/mouse inputs; another or unknown organism
+  retains distinct case-only spellings with a portable warning while exact duplicates are still summed.
+  EXP-20261011-LD-1 found that v1 did not recognise non-human/mouse Ensembl prefixes before its
+  symbol-casing fallback (32/33 accepted). A real-shape regression now recognises those identifiers
+  as scope `other`; EXP-20261011-LD-2 passed the exact snapshot with 33/33 accepted and no
+  refusal/error, preserving all 91 zebrafish groups while human/mouse retained guarded merging.
+  Review fixes select the input symbol column with the greatest usable coverage, preserve D-027's
+  two-group floor on small panels, expose `ensembl_to_symbol` to the executor registry, and carry an
+  explicit mapping consistently through diagnosis, screening, benchmark execution, the interface,
+  cleaning and the generated reproduction command.
 - Ingest (#42): integer input that does not look raw (near-identical cell totals, 0/1 only) gets a loud
   warning recorded in the manifest, not a refusal until calibrated (`benchmarks/count_plausibility.py`);
   refusals say what the data look like and list count-like layers as suggestions.

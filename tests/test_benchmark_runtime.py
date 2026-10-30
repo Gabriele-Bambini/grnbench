@@ -241,7 +241,11 @@ def test_real_task_manifest_portabilizes_home_paths(tmp_path, monkeypatch):
     spec.loader.exec_module(real_bench)
     engine_bench = _engine_bench()
     source = tmp_path / "source.json"
-    original = [{"id": "a", "path": str(home / "grnbench_data" / "a.h5ad")}]
+    original = [{
+        "id": "a",
+        "path": str(home / "grnbench_data" / "a.h5ad"),
+        "gene_mapping_path": str(home / "grnbench_data" / "mapping.tsv"),
+    }]
     written = engine_bench.write_task_manifest(source, original, task_type="real")
     portable = tmp_path / "portable.json"
 
@@ -251,7 +255,10 @@ def test_real_task_manifest_portabilizes_home_paths(tmp_path, monkeypatch):
     assert payload["source_tasks_sha256"] == written["tasks_sha256"]
     assert meta["source_tasks_sha256"] == written["tasks_sha256"]
     assert loaded[0]["path"] == "~/grnbench_data/a.h5ad"
-    assert real_bench._expand_task_paths(loaded)[0]["path"] == str(home / "grnbench_data" / "a.h5ad")
+    assert loaded[0]["gene_mapping_path"] == "~/grnbench_data/mapping.tsv"
+    expanded = real_bench._expand_task_paths(loaded)[0]
+    assert expanded["path"] == str(home / "grnbench_data" / "a.h5ad")
+    assert expanded["gene_mapping_path"] == str(home / "grnbench_data" / "mapping.tsv")
 
 
 def test_pool_results_raises_when_a_worker_is_killed_instead_of_hanging():

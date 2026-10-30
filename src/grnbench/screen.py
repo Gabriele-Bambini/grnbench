@@ -283,6 +283,7 @@ def screen_candidates(diag, input_path, out_dir, *, tf_list=None, reference_pair
                       selection=None, max_candidates: int = 4, seed: int = 0,
                       method: str = SCREEN_METHOD, extra: list[dict] | None = None,
                       proxy_methods: list[str] | None = None,
+                      gene_mapping_path=None,
                       always_vary: tuple = ("context_scope",)) -> dict:
     """Execute and screen the recommended plan and its one-change alternatives.
 
@@ -344,7 +345,11 @@ def screen_candidates(diag, input_path, out_dir, *, tf_list=None, reference_pair
         plans[name] = plan
         from grnbench.autoprep import safe_folder_name
         safe = safe_folder_name(name)
-        recs = execute_plan(plan, input_path, out / safe, tf_list=tf_list, seed=seed)
+        mapping_kwargs = ({"gene_mapping_path": gene_mapping_path}
+                          if gene_mapping_path is not None else {})
+        recs = execute_plan(
+            plan, input_path, out / safe, tf_list=tf_list,
+            seed=seed, **mapping_kwargs)
         records[name] = recs
         for rec, context in zip(recs, plan.contexts):
             rec["subset_key"] = context.get("subset_key")

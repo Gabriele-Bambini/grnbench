@@ -160,6 +160,8 @@ pipeline outcomes from that artifact; historical runs explicitly show that diagn
 
 ```bash
 grnbench prep  data.h5ad --out runs/mydata --tf-list tfs.txt --n-hvg 3000
+# If the input has Ensembl IDs but no symbol column:
+grnbench prep  data.h5ad --out runs/mapped --gene-mapping id_to_symbol.tsv
 grnbench infer runs/mydata/processed.h5ad --out runs/infer --tf-list tfs.txt
 grnbench eval  runs/infer/*.edges.tsv.gz --gold gold_pairs.tsv --out runs/eval \
                --stability-data runs/mydata/processed.h5ad
@@ -233,7 +235,7 @@ the built-ins — and cannot silently shadow a built-in name.
 | batch effects | auto-detection of batch-like columns + presence gate; `--strategy cpm_log1p_combat` corrects on request, never by default |
 | doublets | heuristic gate always; `--drop-doublets` calls scrublet (per batch) and drops them, **refusing above a 20% call rate** (`--max-doublet-rate`) because that is a failed threshold, not a doublet population |
 | duplicated barcodes | made unique with suffixes, originals kept in `obs['barcode_as_loaded']`, gate reports the count |
-| Ensembl-only / mixed gene IDs | verdict gate: warns that TF matching will fail |
+| Ensembl-only / mixed gene IDs | maps from an input symbol column or `--gene-mapping`; records the table SHA256 and every source-to-representative change; refuses unresolved Ensembl-only or unsafe collision sets |
 | mouse vs human symbols | organism hint recorded; mismatch warning vs TF list |
 | TF list barely matching the data (<30%) | explicit warning in report + manifest |
 | huge dense matrices | auto-sparsify at >=80% zeros (CSR) |
@@ -317,7 +319,13 @@ ARACNe3 is a native program: build it (`hpc/README.md`) and export
 `.h5ad` (counts in X or `layers["counts"]`), 10x `.h5`, 10x MTX directory,
 `.loom`, `.csv`/`.tsv`/`.txt` tables with automatic orientation detection.
 Duplicate gene names are aggregated by sum (never silently dropped or renamed);
-Ensembl version suffixes are stripped.
+human and mouse Ensembl version suffixes are stripped. Exact duplicate sums and
+distinct-spelling case-fold groups are recorded. For confidently identified human/mouse
+inputs, case-only spellings are summed and collision sets above the D-028 safety limits are
+refused. For another or unknown organism, distinct spellings are preserved and warned about. An
+optional two-column Ensembl-to-symbol mapping can be supplied with `--gene-mapping`, with the
+Python API's `gene_mapping_path`, or by uploading it in either interface workflow; the same
+fingerprinted mapping then follows diagnosis, candidate screening and final cleaning.
 
 ## HPC
 

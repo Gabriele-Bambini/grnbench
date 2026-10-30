@@ -55,6 +55,8 @@ def _build_parser() -> argparse.ArgumentParser:
                         "with a missing value are KEPT and excluded from stratification")
     p.add_argument("--label-mapping", default=None,
                    help="two-column file mapping raw -> clean labels")
+    p.add_argument("--gene-mapping", default=None,
+                   help="two-column id -> symbol table; its SHA256 and mapping outcome are recorded")
     p.add_argument("--stratify-key", default=None,
                    help="obs column for stratified subsampling (default: group/label key)")
     p.add_argument("--batch-key", default=None,
@@ -192,7 +194,7 @@ def main(argv: list[str] | None = None) -> int:
             context=context_label(subset_key=args.subset_key, subset_value=args.subset_value),
             category=category,
             sensitive_values=(args.data, args.out, args.tf_list, args.label_mapping,
-                              args.per_batch_bounds),
+                              args.gene_mapping, args.per_batch_bounds),
         )
 
     try:
@@ -210,6 +212,7 @@ def main(argv: list[str] | None = None) -> int:
             label_key=args.label_key,
             label_mapping=(load_label_mapping(args.label_mapping)
                            if args.label_mapping else None),
+            gene_mapping_path=args.gene_mapping,
             stratify_key=args.stratify_key,
             batch_key=args.batch_key,
             min_group_cells=args.min_group_cells,

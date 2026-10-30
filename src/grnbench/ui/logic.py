@@ -24,10 +24,12 @@ def read_pairs(path) -> set[tuple[str, str]]:
 
 
 def analyze(data_path, *, text_files=(), urls=(), notes=None, tf_list=None, choices=None,
-            orientation="auto"):
+            orientation="auto", gene_mapping_path=None):
     """Diagnosis + knowledge-base plan for one dataset: ``{"diag", "plan"}``."""
     from grnbench.autoprep import diagnose, plan_preprocessing
-    diag = diagnose(data_path, orientation=orientation, text_files=text_files, urls=urls, notes=notes)
+    diag = diagnose(
+        data_path, orientation=orientation, text_files=text_files, urls=urls,
+        notes=notes, gene_mapping_path=gene_mapping_path)
     plan = plan_preprocessing(diag, tf_list=tf_list, choices=choices)
     return {"diag": diag, "plan": plan}
 
@@ -260,14 +262,16 @@ def pipeline_overview(plan) -> list[dict]:
     return rows
 
 
-def reproduce_commands(plan, data_path, *, tf_list=None, seed: int) -> list[str]:
+def reproduce_commands(plan, data_path, *, tf_list=None, gene_mapping_path=None,
+                       seed: int) -> list[str]:
     """One ``grnbench prep`` command per context of ``plan``, with the folders ``execute_plan`` writes and ``seed``."""
     from grnbench.autoprep import unique_folder_names
     folders = unique_folder_names([str(c["name"]) for c in plan.contexts])
     cmds = []
     for ctx, name in zip(plan.contexts, folders):
         cli = plan.cli_args(data_path, "OUT/" + name, "tf_list.txt" if tf_list else None, context=ctx,
-                            bounds_path="per_batch_bounds.json", seed=seed)
+                            bounds_path="per_batch_bounds.json",
+                            gene_mapping_path=gene_mapping_path, seed=seed)
         cmds.append(shell_command(["grnbench", "prep", *cli]))
     return cmds
 
@@ -1146,7 +1150,8 @@ def baseline_plan(diag, tf_list=None):
 
 
 def quick_run(data_path, base, methods, *, tf_list=None, reference=None, text_files=(), urls=(), notes=None,
-              screen: bool = False, progress=None, orientation: str = "auto") -> dict:
+              screen: bool = False, progress=None, orientation: str = "auto",
+              gene_mapping_path=None) -> dict:
     """Read, clean, run the models and (with a reference) score them, in one call.
 
     Cleaning is the fixed baseline pipeline (D-021) unless ``screen`` asks the engine to compare
@@ -1161,7 +1166,7 @@ def quick_run(data_path, base, methods, *, tf_list=None, reference=None, text_fi
     work = new_workdir(base)
     tick(0.02, "Reading the data and its context")
     res = analyze(data_path, text_files=text_files, urls=urls, notes=notes, tf_list=tf_list,
-                  orientation=orientation)
+                  orientation=orientation, gene_mapping_path=gene_mapping_path)
     diag, plan = res["diag"], res["plan"]
     screening = None
     if screen:
@@ -1170,12 +1175,18 @@ def quick_run(data_path, base, methods, *, tf_list=None, reference=None, text_fi
         from grnbench.selector import select
         tick(0.1, "Comparing candidate pipelines")
         screening = screen_candidates(diag, data_path, work / "screening", tf_list=tf_list,
-                                      reference_pairs=reference, selection=select(Profile(**plan.profile)))
+                                      reference_pairs=reference,
+                                      selection=select(Profile(**plan.profile)),
+                                      gene_mapping_path=gene_mapping_path)
         plan = screening["plans"][screening["best"]] if screening["best"] in screening["plans"] else plan
     else:
         plan = baseline_plan(diag, tf_list)
     tick(0.3, "Cleaning")
-    records = execute_plan(plan, data_path, work / "clean", tf_list=tf_list, seed=DEFAULT_SEED)
+    mapping_kwargs = ({"gene_mapping_path": gene_mapping_path}
+                      if gene_mapping_path is not None else {})
+    records = execute_plan(
+        plan, data_path, work / "clean", tf_list=tf_list,
+        seed=DEFAULT_SEED, **mapping_kwargs)
     if not any(r.get("processed") for r in records):
         raise RuntimeError("Nothing was run: the data could not be cleaned. "
                            + "; ".join(f"{r['context']}: {r['error']}" for r in records))

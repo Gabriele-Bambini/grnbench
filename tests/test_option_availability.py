@@ -5,6 +5,7 @@ the audit finding "external options silently dropped" (audit/2026-09-27 findings
 section 7.5). The A/B tests compare with golden values regenerated after merging main 2836485
 (tests/golden/plan_values.py). Known gaps, not fixed here: #131 (regulators recorded only), #132.
 """
+import copy
 import json
 import math
 import sys
@@ -244,8 +245,18 @@ def test_audit_plan_keeps_removing_doublets_and_calling_cells(datasets, everythi
 
 # -- A/B against main 2836485 ------------------------------------------------------------------ #
 
-def test_option_table_is_that_of_main(registered_env):
-    assert _mismatch(golden.option_table(), GOLDEN["option_table"]) is None
+def test_option_table_changes_from_main_only_for_executable_identifier_mapping(registered_env):
+    actual = golden.option_table()
+    expected = copy.deepcopy(GOLDEN["option_table"])
+    pair = lambda row: (row["decision"], row["option"])  # noqa: E731
+    mapped = next(row for row in actual
+                  if pair(row) == ("identifier_mapping", "ensembl_to_symbol"))
+    index = next(i for i, row in enumerate(expected)
+                 if pair(row) == ("identifier_mapping", "ensembl_to_symbol"))
+    expected[index] = mapped
+    assert mapped["implementation"] == "grnbench"
+    assert mapped["available"] is True and mapped["unavailable_reason"] == ""
+    assert _mismatch(actual, expected) is None
 
 
 # The reason notes issues #149/#116 add to the golden plans (loud only: no value, choice, context or
@@ -279,9 +290,11 @@ def test_plans_and_candidates_are_those_of_main(datasets, env, request):
     unavailability reasons in the selection and the warnings name the missing executor instead."""
     request.getfixturevalue(env)
     got = golden.plan_values(datasets)
-    assert set(got) == set(GOLDEN["plans"])
+    expected = {case: value for case, value in GOLDEN["plans"].items()
+                if not case.startswith("ensembl_ids/")}
+    assert set(got) == set(expected)
     notes = {}
-    for case, want in GOLDEN["plans"].items():
+    for case, want in expected.items():
         have = got[case]
         if env == "registered_env":
             have, found = _without_loud_notes(case, have, want)
@@ -295,7 +308,9 @@ def test_plans_and_candidates_are_those_of_main(datasets, env, request):
             assert len(have["plan"]["warnings"]) == len(want["plan"]["warnings"]), case
             assert have["candidates"] == want["candidates"], case
     if env == "registered_env":
-        assert notes == LOUD_NOTES
+        # D-028 refuses the old unmapped Ensembl fixture before a plan exists;
+        # its loud mito note is covered by the dedicated ingest/runtime tests.
+        assert notes == {}
 
 
 def test_candidate_study_variants_are_those_of_main_and_of_the_c7_rows(registered_env):

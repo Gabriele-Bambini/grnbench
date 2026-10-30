@@ -371,6 +371,11 @@ def page_data() -> None:
     with st.container(border=True, key="card-data"):
         st.markdown(style.card_title_html(1, "Dataset", "Where are your raw counts?"), unsafe_allow_html=True)
         data_path, tf_path, gold_path = pick_dataset("data")
+        mapping_up = st.file_uploader(
+            "Ensembl ID to gene-symbol mapping (optional)",
+            type=["tsv", "csv", "txt"], key="data_gene_mapping",
+            help="Two columns: input gene ID and gene symbol. grnbench fingerprints the file, "
+                 "records the mapping provenance and refuses conflicting rows.")
     with st.expander("Add context: README files, download pages, notes (optional)", icon=":material/description:"):
         st.caption("Text the engine reads to recognise the protocol, the organism and the design. It is combined with "
                    "what the count values themselves say, and the two are compared on the Profile page.")
@@ -404,6 +409,8 @@ def page_data() -> None:
             tf_path = save_upload(tf_up, work / "inputs")
         if ref_up:
             gold_path = save_upload(ref_up, work / "inputs")
+        gene_mapping_path = (
+            save_upload(mapping_up, work / "inputs") if mapping_up else None)
         from grnbench.tfs import load_tf_list
         tfs = read_upload("a TF list (one gene symbol per line)", load_tf_list, tf_path) if tf_path else None
         reference = None
@@ -417,9 +424,12 @@ def page_data() -> None:
                     st.warning(f"DoRothEA not available: {exc}")
             res = logic.analyze(data_path, text_files=text_files,
                                 urls=[u for u in urls.splitlines() if u.strip()],
-                                notes=notes or None, tf_list=tfs, orientation=S.get("data_orientation", "auto"))
+                                notes=notes or None, tf_list=tfs,
+                                orientation=S.get("data_orientation", "auto"),
+                                gene_mapping_path=gene_mapping_path)
         reset_downstream(*DOWNSTREAM)
         S.update(workdir=work, data_path=str(data_path), tfs=tfs, reference=reference,
+                 gene_mapping_path=(str(gene_mapping_path) if gene_mapping_path else None),
                  diag=res["diag"], plan=res["plan"], user_choices={})
         st.success("Analysis done. Next: check what the engine found about your data.", icon=":material/task_alt:")
     elif data_path is None:
@@ -638,7 +648,9 @@ def page_pipeline() -> None:
     with st.expander("Reproduce from a terminal", icon=":material/terminal:"):
         from grnbench.autoprep import DEFAULT_SEED
         st.caption("One command per cellular context, with the seed *Run cleaning* uses.")
-        for cmd in logic.reproduce_commands(plan, S["data_path"], tf_list=S.get("tfs"), seed=DEFAULT_SEED):
+        for cmd in logic.reproduce_commands(
+                plan, S["data_path"], tf_list=S.get("tfs"),
+                gene_mapping_path=S.get("gene_mapping_path"), seed=DEFAULT_SEED):
             st.code(cmd, language="bash")
         import json
         st.download_button("Download plan.json", json.dumps(plan.to_dict(), indent=2, default=str),
@@ -720,7 +732,8 @@ def page_compare() -> None:
         with st.spinner("Running every candidate pipeline: about a minute for a small dataset, longer for a large one..."):
             S["screen"] = screen_candidates(S["diag"], S["data_path"], logic.fresh_folder(Path(S["workdir"]) / "screening"),
                                             tf_list=S.get("tfs"), reference_pairs=S.get("reference"),
-                                            selection=selection, extra=list(extra))
+                                            selection=selection, extra=list(extra),
+                                            gene_mapping_path=S.get("gene_mapping_path"))
     res = S.get("screen")
     if res is None:
         footer(back=PIPELINE, forward=(f"Skip: {CLEAN}", CLEAN, False))
@@ -775,7 +788,9 @@ def page_clean() -> None:
         if st.button("Run cleaning", type="primary", icon=":material/cleaning_services:"):
             with st.spinner("Cleaning..."):
                 S["records"] = execute_plan(plan, S["data_path"], logic.fresh_folder(Path(S["workdir"]) / "clean"),
-                                            tf_list=S.get("tfs"), seed=DEFAULT_SEED)    # the seed step 3 shows
+                                            tf_list=S.get("tfs"),
+                                            gene_mapping_path=S.get("gene_mapping_path"),
+                                            seed=DEFAULT_SEED)    # the seed step 3 shows
             reset_downstream("runs", "bench", "bench_on")
     recs = S.get("records")
     if not recs:
@@ -997,6 +1012,10 @@ def quick_form() -> None:
         st.markdown(style.card_title_html(1, "Your data", "Try the demo to see how it works, or use your own counts."),
                     unsafe_allow_html=True)
         data_path, tf_path, gold_path = pick_dataset("quick")
+        mapping_up = st.file_uploader(
+            "Ensembl ID to gene-symbol mapping (optional)",
+            type=["tsv", "csv", "txt"], key="quick_gene_mapping",
+            help="Two columns: input gene ID and gene symbol. The file is fingerprinted in the run provenance.")
     with st.container(border=True, key="card-regulators"):
         st.markdown(style.card_title_html(2, "Regulators and reference network",
                                           "Both are optional. Each one makes the result better."),
@@ -1046,6 +1065,8 @@ def quick_form() -> None:
             tf_path = save_upload(tf_up, inputs)
         if ref_up:
             gold_path = save_upload(ref_up, inputs)
+        gene_mapping_path = (
+            save_upload(mapping_up, inputs) if mapping_up else None)
         tfs = read_upload("a TF list (one gene symbol per line)", load_tf_list, tf_path) if tf_path else None
         reference = read_upload("a reference network (a source and a target column)", logic.read_pairs, gold_path) if gold_path else None
         with st.status("Running the analysis...", expanded=True) as status:
@@ -1053,6 +1074,7 @@ def quick_form() -> None:
             try:
                 out = logic.quick_run(data_path, base, methods, tf_list=tfs, reference=reference, screen=screen,
                                       orientation=S.get("quick_orientation", "auto"),
+                                      gene_mapping_path=gene_mapping_path,
                                       progress=lambda f, msg: bar.progress(f, text=msg))
             except Exception as exc:  # noqa: BLE001 - say what stopped it, not a stack trace
                 status.update(label="The run stopped", state="error", expanded=True)
@@ -1061,6 +1083,7 @@ def quick_form() -> None:
             status.update(label="Analysis complete", state="complete", expanded=False)
         reset_downstream(*DOWNSTREAM)
         S.update(workdir=out["workdir"], data_path=str(data_path), tfs=tfs, reference=reference,
+                 gene_mapping_path=(str(gene_mapping_path) if gene_mapping_path else None),
                  diag=out["diag"], plan=out["plan"], user_choices={}, records=out["records"], runs=out["runs"],
                  reference_warning=out["reference_warning"])
         if out["bench"] is not None and not out["bench"].empty:

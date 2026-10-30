@@ -1,8 +1,11 @@
 """Interface: logic end to end on the demo, and the Streamlit app renders."""
 from pathlib import Path
 
+import anndata as ad
+import numpy as np
 import pandas as pd
 import pytest
+import scipy.sparse as sp
 
 from grnbench.autoprep import execute_plan
 from grnbench.demo import write_demo
@@ -51,6 +54,32 @@ def test_shell_command_pastes_back_to_the_same_argv():
     import shlex
     argv = ["grnbench", "prep", r"C:\data\my counts.h5ad", "--subset-value", "T|reg", "--x", "a$b`c'd\"e"]
     assert shlex.split(logic.shell_command(argv)) == argv
+
+
+def test_analyze_and_reproduction_commands_thread_an_explicit_gene_mapping(tmp_path):
+    ids = [f"ENSG{i:011d}" for i in range(250)]
+    src = tmp_path / "ensembl.h5ad"
+    rng = np.random.default_rng(8)
+    counts = np.vstack([
+        rng.poisson(depth, len(ids)) for depth in np.linspace(1.0, 5.0, 20)
+    ]).astype(np.float32)
+    ad.AnnData(
+        sp.csr_matrix(counts),
+        var=pd.DataFrame(index=ids),
+    ).write_h5ad(src)
+    mapping = tmp_path / "gene map.tsv"
+    mapping.write_text(
+        "id\tsymbol\n" + "".join(f"{gene_id}\tGENE{i}\n" for i, gene_id in enumerate(ids)),
+        encoding="utf-8",
+    )
+
+    res = logic.analyze(src, gene_mapping_path=mapping)
+    commands = logic.reproduce_commands(
+        res["plan"], src, gene_mapping_path=mapping, seed=0)
+
+    assert list(res["diag"].adata.var_names[:3]) == ["GENE0", "GENE1", "GENE2"]
+    assert commands and "--gene-mapping '" in commands[0]
+    assert str(mapping) in commands[0]
 
 
 def test_models_including_a_user_model_are_run_and_benchmarked(analysed):

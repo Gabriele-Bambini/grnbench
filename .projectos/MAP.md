@@ -21,6 +21,9 @@ Updated: 2026-10-25.
   `benchmarks/diff_rows_nested.py` (where two `rows/` folders differ at any depth, timings apart; diagnosis, #95),
   `benchmarks/pyscenic_compare.py` (official pySCENIC 0.12.1 vs grnbench cisTarget on identical
   expression/adjacency inputs; EXP-20261018-LD-1).
+- Identifier-policy calibration: `benchmarks/identifier_policy_calibration.py` (production-ingest
+  D-028 organism-aware guard audit over an exact approved-data snapshot), submitted by
+  `hpc/identifier_policy_calibration.sbatch`.
 - Dataset pools: `benchmarks/fetch_cellxgene.py --one-per-collection --max-cells --exclude-collections` (one dataset per study),
   `benchmarks/split_pool.py` (seeded confirmatory / exploratory split; D-057, `experiments/EXP-20261022-GB.pool.tsv`),
   `benchmarks/used_datasets.py` (datasets and studies used by any record or result on any branch),

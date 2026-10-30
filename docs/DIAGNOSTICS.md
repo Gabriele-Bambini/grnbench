@@ -25,6 +25,10 @@ Each candidate/context/model entry records:
   `requested_strategy` preserves the original request (`auto`, for example);
 - cells and genes before and after the relevant stage, when known;
 - compact stage records for preprocessing;
+- optional D-028 gene-identifier provenance: the organism scope and merge/preserve action, mapping
+  source and content hash, mapping outcome,
+  every source identifier and retained representative, exact-duplicate sums, and distinct-spelling
+  case-fold groups. Gene names are allowed; paths, barcodes and expression values are not;
 - for preprocessing, an optional `retention` list (the retention ledger of `grnbench.retention`):
   one row per cell- or gene-removing step that ran, in step order, with `stage`, `cells_before`,
   `cells_after`, `cells_removed` (`null` when the step aggregates cells into pseudobulk samples or
@@ -66,10 +70,12 @@ is matched with every placeholder masked, so it is still found and redacted. The
 the envelope, entry, failure, step and dimension fields and the choice, threshold and retention
 allowlists) are not compared with the local user and host names, so a machine called `message` can
 still write a document; every other key, including any key derived from data, is compared like a
-value. Gene names in the retention ledger go through
-the same redaction with an 80-character bound. Candidate, context and model names are data, not schema field names, but their values
-pass through the same path/identity validation. Raw data and detailed provenance remain in their
-existing controlled artifacts; they are never copied into `diagnostics.json`.
+value. Gene names in the retention ledger go through the same redaction with an 80-character bound.
+Candidate, context and model names are data, not schema field names, but their values pass through
+the same path/identity validation. Raw data and machine-specific provenance remain in their existing
+controlled artifacts. The only complete mapping copied into `diagnostics.json` is the D-028
+gene-name audit described above; it contains no counts or cell-level information. Other detailed
+provenance is never copied into `diagnostics.json`.
 
 Runtime integration is best effort: validation or serialization trouble emits a warning and never
 turns an otherwise successful preprocessing, screening or inference run into a failure. The strict

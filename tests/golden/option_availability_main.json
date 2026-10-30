@@ -16,15 +16,15 @@
    "unavailable_reason": ""
   },
   {
-   "available": false,
+   "available": true,
    "decision": "identifier_mapping",
    "default": false,
    "evidence": "consensus",
-   "implementation": "planned",
+   "implementation": "grnbench",
    "name": "Map Ensembl IDs to symbols",
    "option": "ensembl_to_symbol",
    "stage": "identifiers",
-   "unavailable_reason": "planned in grnbench, not implemented yet"
+   "unavailable_reason": ""
   },
   {
    "available": false,
@@ -1046,7 +1046,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -1687,12 +1687,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -1704,7 +1704,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -2456,7 +2456,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -3097,12 +3097,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -3114,7 +3114,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -3888,7 +3888,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -4577,12 +4577,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -4594,7 +4594,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -5380,7 +5380,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -6069,12 +6069,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -6086,7 +6086,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -6838,7 +6838,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -7505,12 +7505,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -7522,7 +7522,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -8284,7 +8284,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -8951,12 +8951,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -8968,7 +8968,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -9709,7 +9709,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -10350,12 +10350,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -10367,7 +10367,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -11119,7 +11119,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -11760,12 +11760,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -11777,7 +11777,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -12518,7 +12518,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -13159,12 +13159,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -13176,7 +13176,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -13928,7 +13928,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -14569,12 +14569,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -14586,7 +14586,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -15347,7 +15347,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -16019,12 +16019,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -16036,7 +16036,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -16808,7 +16808,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -17480,12 +17480,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -17497,7 +17497,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -18238,7 +18238,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -18879,12 +18879,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -18896,7 +18896,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -19648,7 +19648,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -20289,12 +20289,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -20306,7 +20306,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -21047,7 +21047,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -21688,12 +21688,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -21705,7 +21705,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -22457,7 +22457,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -23098,12 +23098,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -23115,7 +23115,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -23427,2751 +23427,6 @@
      }
     },
     "warnings": [
-     "ambient_rna: best option 'DecontX' is unavailable (missing: r:celda); using 'none'.",
-     "doublets: best option 'scDblFinder' is unavailable (missing: r:scDblFinder); using 'scrublet'."
-    ]
-   }
-  },
-  "ensembl_ids/no_tfs": {
-   "candidates": [
-    {
-     "changes": {},
-     "choices": {
-      "ambient_rna": "none",
-      "batch": "none",
-      "cell_calling": "as_provided",
-      "cell_qc_thresholds": "mad",
-      "confounders": "none",
-      "context_scope": "per_cell_type",
-      "doublets": "scrublet",
-      "gene_filter": "min_cells",
-      "hvg": "all_genes",
-      "identifier_mapping": "keep",
-      "normalization": "cpm_log1p",
-      "pseudotime": "none",
-      "regulators": "dorothea",
-      "sparsity": "single_cells",
-      "subsample": "none"
-     },
-     "name": "recommended"
-    },
-    {
-     "changes": {
-      "context_scope": [
-       "per_cell_type",
-       "selected_type"
-      ]
-     },
-     "choices": {
-      "ambient_rna": "none",
-      "batch": "none",
-      "cell_calling": "as_provided",
-      "cell_qc_thresholds": "mad",
-      "confounders": "none",
-      "context_scope": "selected_type",
-      "doublets": "scrublet",
-      "gene_filter": "min_cells",
-      "hvg": "all_genes",
-      "identifier_mapping": "keep",
-      "normalization": "cpm_log1p",
-      "pseudotime": "none",
-      "regulators": "dorothea",
-      "sparsity": "single_cells",
-      "subsample": "none"
-     },
-     "name": "context_scope=selected_type"
-    }
-   ],
-   "plan": {
-    "choices": {
-     "ambient_rna": "none",
-     "batch": "none",
-     "cell_calling": "as_provided",
-     "cell_qc_thresholds": "mad",
-     "confounders": "none",
-     "context_scope": "per_cell_type",
-     "doublets": "scrublet",
-     "gene_filter": "min_cells",
-     "hvg": "all_genes",
-     "identifier_mapping": "keep",
-     "normalization": "cpm_log1p",
-     "pseudotime": "none",
-     "regulators": "dorothea",
-     "sparsity": "single_cells",
-     "subsample": "none"
-    },
-    "context": {
-     "conflicts": {},
-     "facts": [
-      {
-       "key": "organism",
-       "snippet": "100% of gene ids are ENSG*",
-       "source": "matrix",
-       "value": "human",
-       "weight": 10
-      },
-      {
-       "key": "cell_type_key",
-       "snippet": "column 'cell_type' with 3 levels",
-       "source": "metadata:obs",
-       "value": "cell_type",
-       "weight": 4
-      },
-      {
-       "key": "organism",
-       "snippet": "Single-cell RNA-seq of bone marrow (Homo sapiens), 10x Genomics Chromium v3, raw UMI counts, 1500 cells. Bat",
-       "source": "readme:README.md",
-       "value": "human",
-       "weight": 3
-      },
-      {
-       "key": "platform",
-       "snippet": "Single-cell RNA-seq of bone marrow (Homo sapiens), 10x Genomics Chromium v3, raw UMI counts, 1500 cells. Batches in column",
-       "source": "readme:README.md",
-       "value": "10x Chromium",
-       "weight": 2
-      },
-      {
-       "key": "technology",
-       "snippet": "Single-cell RNA-seq of bone marrow (Homo sapiens), 10x Genomics Chromium v3, raw UMI counts, 1500 cells. Batches in column",
-       "source": "readme:README.md",
-       "value": "umi",
-       "weight": 2
-      },
-      {
-       "key": "technology",
-       "snippet": "f bone marrow (Homo sapiens), 10x Genomics Chromium v3, raw UMI counts, 1500 cells. Batches in column `batch`, cell types i",
-       "source": "readme:README.md",
-       "value": "umi",
-       "weight": 1
-      },
-      {
-       "key": "value_type",
-       "snippet": "eq of bone marrow (Homo sapiens), 10x Genomics Chromium v3, raw UMI counts, 1500 cells. Batches in column `batch`, cell types in `cell",
-       "source": "readme:README.md",
-       "value": "raw_counts",
-       "weight": 1
-      },
-      {
-       "key": "n_cells_declared",
-       "snippet": "w (Homo sapiens), 10x Genomics Chromium v3, raw UMI counts, 1500 cells. Batches in column `batch`, cell types in `cell_type`.",
-       "source": "readme:README.md",
-       "value": "1500",
-       "weight": 1
-      },
-      {
-       "key": "technology",
-       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"ensembl\", \"raw_droplets\": 0, \"readme\": \"c",
-       "source": "readme:scenario.json",
-       "value": "umi",
-       "weight": 1
-      },
-      {
-       "key": "technology",
-       "snippet": "33% of non-zero values are 1, max value 1612",
-       "source": "matrix",
-       "value": "umi",
-       "weight": 4
-      }
-     ],
-     "sources_failed": [],
-     "sources_read": [
-      "matrix",
-      "readme:README.md",
-      "readme:tfs.txt",
-      "readme:scenario.json",
-      "readme:truth_manifest.json"
-     ],
-     "summary": {
-      "accessions": [],
-      "batch_key": null,
-      "cell_type_key": "cell_type",
-      "donor_key": null,
-      "n_cells_declared": "1500",
-      "organism": "human",
-      "perturbation": null,
-      "platform": "10x Chromium",
-      "technology": "umi",
-      "time_course": null,
-      "tissue": null,
-      "value_type": "raw_counts"
-     }
-    },
-    "contexts": [
-     {
-      "name": "cell_type=type1",
-      "subset_key": "cell_type",
-      "subset_value": "type1"
-     },
-     {
-      "name": "cell_type=type2",
-      "subset_key": "cell_type",
-      "subset_value": "type2"
-     },
-     {
-      "name": "cell_type=type3",
-      "subset_key": "cell_type",
-      "subset_value": "type3"
-     }
-    ],
-    "decisions": {
-     "batch_key": {
-      "key": "batch_key",
-      "label": "Batch / donor column",
-      "options": [
-       null,
-       "cell_type",
-       "simulated_state"
-      ],
-      "reason": "no batch-like column",
-      "source": "default",
-      "value": null
-     },
-     "context_scope": {
-      "key": "context_scope",
-      "label": "Cellular context",
-      "options": [
-       "pooled",
-       "per_cell_type",
-       "selected_type"
-      ],
-      "reason": "[context_scope = per_cell_type] 3 cell types with >= 200 cells: pooled co-expression would reflect composition",
-      "source": "knowledge base",
-      "value": "per_cell_type"
-     },
-     "drop_doublets": {
-      "key": "drop_doublets",
-      "label": "Remove doublets (scrublet)",
-      "options": [
-       true,
-       false
-      ],
-      "reason": "[doublets = scrublet] droplet data with enough cells; per-batch calling",
-      "source": "knowledge base",
-      "value": true
-     },
-     "exclude_qc_genes": {
-      "key": "exclude_qc_genes",
-      "label": "Drop mitochondrial/ribosomal genes from features",
-      "options": [
-       true,
-       false
-      ],
-      "reason": "[gene_filter = min_cells] knowledge-base default; standard minimum-detection filter",
-      "source": "knowledge base",
-      "value": false
-     },
-     "force": {
-      "key": "force",
-      "label": "Proceed past failed QC gates",
-      "options": [
-       false,
-       true
-      ],
-      "reason": "no QC gate fails",
-      "source": "knowledge base",
-      "value": false
-     },
-     "group_key": {
-      "key": "group_key",
-      "label": "Pseudobulk group column",
-      "options": [
-       null,
-       "cell_type",
-       "simulated_state"
-      ],
-      "reason": "only used by 'pseudobulk'",
-      "source": "default",
-      "value": null
-     },
-     "max_counts_per_cell": {
-      "key": "max_counts_per_cell",
-      "label": "Max counts per cell",
-      "options": null,
-      "reason": "median 3025 counts/cell; upper 5-MAD bound flags 0 cells (0.0%)",
-      "source": "data",
-      "value": 18602.0
-     },
-     "max_genes_per_cell": {
-      "key": "max_genes_per_cell",
-      "label": "Max detected genes per cell",
-      "options": null,
-      "reason": "upper 5-MAD bound (gross multiplets only) flags 0 cells (0.0%)",
-      "source": "data",
-      "value": 1166
-     },
-     "max_pct_mito_cell": {
-      "key": "max_pct_mito_cell",
-      "label": "Max % mitochondrial counts",
-      "options": null,
-      "reason": "no mitochondrial genes in the matrix: filter off",
-      "source": "data",
-      "value": null
-     },
-     "min_cells_per_gene": {
-      "key": "min_cells_per_gene",
-      "label": "Min cells expressing a gene",
-      "options": null,
-      "reason": "genes seen in fewer than max(3, 0.1% of 1500 cells) = 3 cells",
-      "source": "data",
-      "value": 3
-     },
-     "min_genes_per_cell": {
-      "key": "min_genes_per_cell",
-      "label": "Min detected genes per cell",
-      "options": null,
-      "reason": "median 634 genes/cell; lower 3-MAD bound (log) = 440, floor 50: removes 10 cells (0.7%) (fixed default 200 would remove 0 cells (0.0%))",
-      "source": "data",
-      "value": 440
-     },
-     "n_hvg": {
-      "key": "n_hvg",
-      "label": "Highly variable genes (TFs always kept)",
-      "options": [
-       500,
-       1000,
-       2000,
-       5000,
-       null
-      ],
-      "reason": "[hvg = all_genes] only 1000 genes",
-      "source": "knowledge base",
-      "value": null
-     },
-     "strategy": {
-      "key": "strategy",
-      "label": "Normalization / aggregation",
-      "options": [
-       "cpm_log1p",
-       "pearson_residuals",
-       "pseudobulk",
-       "raw_counts",
-       "cpm_log1p_combat",
-       "cpm_log1p_center_batch",
-       "metacells"
-      ],
-      "reason": "normalization 'cpm_log1p'. [normalization = cpm_log1p] knowledge-base default; as good as more complex transforms; the input BEELINE used [batch = none] knowledge-base default; single batch [sparsity = single_cells] knowledge-base default; 37% zeros: single cells carry enough signal",
-      "source": "knowledge base",
-      "value": "cpm_log1p"
-     },
-     "stratify_key": {
-      "key": "stratify_key",
-      "label": "Stratify subsample / metacell purity by",
-      "options": [
-       null,
-       "cell_type",
-       "simulated_state"
-      ],
-      "reason": "cell-type column 'cell_type'",
-      "source": "metadata:obs",
-      "value": "cell_type"
-     },
-     "subsample_cells": {
-      "key": "subsample_cells",
-      "label": "Subsample cells",
-      "options": null,
-      "reason": "[subsample = none] knowledge-base default; 1500 cells: no subsampling needed",
-      "source": "knowledge base",
-      "value": null
-     },
-     "tf_source": {
-      "key": "tf_source",
-      "label": "Transcription-factor list",
-      "options": [
-       "file",
-       "dorothea:human",
-       "dorothea:mouse",
-       "none"
-      ],
-      "reason": "[regulators = dorothea] organism human: curated TFs",
-      "source": "knowledge base",
-      "value": "dorothea:human"
-     }
-    },
-    "methods": [],
-    "profile": {
-     "batch_celltype_cramers_v": null,
-     "batch_depth_ratio": 1.0,
-     "batch_key": null,
-     "batch_silhouette": null,
-     "cell_type_key": "cell_type",
-     "data_technology_hint": "umi",
-     "dependencies": {
-      "ambient_rna.cellbender": false,
-      "ambient_rna.decontx": false,
-      "ambient_rna.none": true,
-      "ambient_rna.soupx": false,
-      "batch.center_per_batch": true,
-      "batch.combat": true,
-      "batch.harmony": false,
-      "batch.none": true,
-      "batch.per_batch_consensus": false,
-      "batch.scvi_denoised": false,
-      "cell_calling.as_provided": true,
-      "cell_calling.emptydrops": false,
-      "cell_calling.knee": true,
-      "cell_qc_thresholds.fixed": true,
-      "cell_qc_thresholds.mad": true,
-      "cell_qc_thresholds.mad_per_batch": true,
-      "cell_qc_thresholds.miqc": false,
-      "confounders.cell_cycle": false,
-      "confounders.none": true,
-      "context_scope.per_cell_type": true,
-      "context_scope.pooled": true,
-      "context_scope.selected_type": true,
-      "doublets.doubletfinder": false,
-      "doublets.none": true,
-      "doublets.scdblfinder": false,
-      "doublets.scrublet": true,
-      "doublets.solo": false,
-      "gene_filter.min_cells": true,
-      "gene_filter.min_cells_drop_qc_genes": true,
-      "hvg.all_genes": true,
-      "hvg.tf_plus_1000": true,
-      "hvg.tf_plus_2000": true,
-      "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
-      "identifier_mapping.keep": true,
-      "identifier_mapping.orthologs": false,
-      "normalization.cpm_log1p": true,
-      "normalization.pearson_residuals": true,
-      "normalization.raw_counts": true,
-      "normalization.scran": false,
-      "normalization.sctransform": false,
-      "pseudotime.dpt": false,
-      "pseudotime.none": true,
-      "pseudotime.provided": true,
-      "pseudotime.slingshot": false,
-      "regulators.all_genes": true,
-      "regulators.collectri": false,
-      "regulators.dorothea": true,
-      "regulators.user_file": true,
-      "sparsity.imputation": false,
-      "sparsity.metacells": true,
-      "sparsity.pseudobulk": true,
-      "sparsity.single_cells": true,
-      "subsample.none": true,
-      "subsample.random": true,
-      "subsample.stratified": true
-     },
-     "frac_ones_among_nonzero": 0.32895031003501074,
-     "id_verdict": "ensembl_only",
-     "library_cv": 0.36204802989959717,
-     "max_count": 1612.0,
-     "median_counts_per_cell": 3025.0,
-     "median_genes_per_cell": 634.0,
-     "median_pct_mito": 0.0,
-     "min_cells_per_batch": 0,
-     "min_cells_per_type": 331,
-     "n_batches": 0,
-     "n_cell_types": 3,
-     "n_cell_types_with_enough_cells": 3,
-     "n_cells": 1500,
-     "n_genes": 1000,
-     "n_mito_genes": 0,
-     "notes": [],
-     "organism": "human",
-     "platform": "10x Chromium",
-     "raw_droplets_suspected": false,
-     "sparsity": 0.3678133333333333,
-     "technology": "umi",
-     "tf_detected": 0,
-     "tf_requested": 0,
-     "time_course": false
-    },
-    "selection": {
-     "kb_version": "2026.10.2",
-     "results": {
-      "ambient_rna": {
-       "best_overall": "decontx",
-       "blocked_by_dependency": true,
-       "chosen": "none",
-       "decision": "ambient_rna",
-       "impact": "medium",
-       "options": [
-        {
-         "available": false,
-         "name": "DecontX",
-         "option": "decontx",
-         "reasons": [
-          {
-           "delta": 2,
-           "refs": [
-            "ambient2026",
-            "decontx2020"
-           ],
-           "text": "droplet data; DecontX works without the raw matrix"
-          }
-         ],
-         "score": 2.0,
-         "unavailable_reason": "missing: r:celda"
-        },
-        {
-         "available": true,
-         "name": "No correction",
-         "option": "none",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": 1,
-           "refs": [
-            "ambient2026"
-           ],
-           "text": "no GRN-specific evidence that correction helps; avoids over-correction"
-          }
-         ],
-         "score": 1.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": false,
-         "name": "SoupX",
-         "option": "soupx",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [
-            "ambient2026",
-            "soupx2020"
-           ],
-           "text": "least over-correction; needs empty droplets from the raw matrix"
-          }
-         ],
-         "score": 0.5,
-         "unavailable_reason": "missing: r:SoupX"
-        },
-        {
-         "available": false,
-         "name": "CellBender",
-         "option": "cellbender",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [
-            "janssen2023"
-           ],
-           "text": "most precise background estimate; needs raw matrix and GPU"
-          }
-         ],
-         "score": 0.5,
-         "unavailable_reason": "missing: cli:cellbender"
-        }
-       ],
-       "question": "Is cell-free (ambient) RNA removed?",
-       "runner_up": null,
-       "uncertain": false
-      },
-      "batch": {
-       "best_overall": "none",
-       "blocked_by_dependency": false,
-       "chosen": "none",
-       "decision": "batch",
-       "impact": "high",
-       "options": [
-        {
-         "available": true,
-         "name": "No correction",
-         "option": "none",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": 5,
-           "refs": [],
-           "text": "single batch"
-          }
-         ],
-         "score": 5.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "Center genes per batch (regress out batch)",
-         "option": "center_per_batch",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "ComBat",
-         "option": "combat",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": false,
-         "name": "Infer per batch, combine edges",
-         "option": "per_batch_consensus",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
-        },
-        {
-         "available": false,
-         "name": "scVI denoised expression",
-         "option": "scvi_denoised",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": "missing: py:scvi"
-        },
-        {
-         "available": false,
-         "name": "Harmony / embedding-only integration",
-         "option": "harmony",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": "not applicable to GRN inference (see note)"
-        }
-       ],
-       "question": "How are batches handled?",
-       "runner_up": "center_per_batch",
-       "uncertain": false
-      },
-      "cell_calling": {
-       "best_overall": "as_provided",
-       "blocked_by_dependency": false,
-       "chosen": "as_provided",
-       "decision": "cell_calling",
-       "impact": "high",
-       "options": [
-        {
-         "available": true,
-         "name": "Use the provided (filtered) matrix",
-         "option": "as_provided",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": 3,
-           "refs": [],
-           "text": "barcode counts look already filtered to cells"
-          }
-         ],
-         "score": 3.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "Knee / inflection point",
-         "option": "knee",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": false,
-         "name": "EmptyDrops",
-         "option": "emptydrops",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": "missing: r:DropletUtils"
-        }
-       ],
-       "question": "Which barcodes are cells?",
-       "runner_up": "knee",
-       "uncertain": false
-      },
-      "cell_qc_thresholds": {
-       "best_overall": "mad",
-       "blocked_by_dependency": false,
-       "chosen": "mad",
-       "decision": "cell_qc_thresholds",
-       "impact": "high",
-       "options": [
-        {
-         "available": true,
-         "name": "MAD outliers (global)",
-         "option": "mad",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": 2,
-           "refs": [
-            "scater2017",
-            "pipecomp2020"
-           ],
-           "text": "adaptive outlier bounds per dataset"
-          }
-         ],
-         "score": 2.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "Fixed thresholds",
-         "option": "fixed",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "MAD outliers per batch",
-         "option": "mad_per_batch",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": false,
-         "name": "miQC mixture model",
-         "option": "miqc",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
-        }
-       ],
-       "question": "How are low-quality cells defined?",
-       "runner_up": "fixed",
-       "uncertain": false
-      },
-      "confounders": {
-       "best_overall": "none",
-       "blocked_by_dependency": false,
-       "chosen": "none",
-       "decision": "confounders",
-       "impact": "medium",
-       "options": [
-        {
-         "available": true,
-         "name": "No regression",
-         "option": "none",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": 2,
-           "refs": [
-            "luecken2019"
-           ],
-           "text": "regression would also remove real regulation (e.g. cell-cycle TFs)"
-          }
-         ],
-         "score": 2.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": false,
-         "name": "Regress cell-cycle scores",
-         "option": "cell_cycle",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
-        }
-       ],
-       "question": "Are nuisance signals regressed out?",
-       "runner_up": null,
-       "uncertain": false
-      },
-      "context_scope": {
-       "best_overall": "per_cell_type",
-       "blocked_by_dependency": false,
-       "chosen": "per_cell_type",
-       "decision": "context_scope",
-       "impact": "high",
-       "options": [
-        {
-         "available": true,
-         "name": "One network per cell type",
-         "option": "per_cell_type",
-         "reasons": [
-          {
-           "delta": 3,
-           "refs": [
-            "farahbod2020",
-            "retana2026"
-           ],
-           "text": "3 cell types with >= 200 cells: pooled co-expression would reflect composition"
-          }
-         ],
-         "score": 3.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "One selected cell type",
-         "option": "selected_type",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "All cells pooled",
-         "option": "pooled",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": -1,
-           "refs": [
-            "retana2026"
-           ],
-           "text": "cell-type mixing is a known failure mode of GRN inference"
-          }
-         ],
-         "score": -0.5,
-         "unavailable_reason": ""
-        }
-       ],
-       "question": "Which cells does one network come from?",
-       "runner_up": "selected_type",
-       "uncertain": false
-      },
-      "doublets": {
-       "best_overall": "scdblfinder",
-       "blocked_by_dependency": true,
-       "chosen": "scrublet",
-       "decision": "doublets",
-       "impact": "medium",
-       "options": [
-        {
-         "available": false,
-         "name": "scDblFinder",
-         "option": "scdblfinder",
-         "reasons": [
-          {
-           "delta": 2.5,
-           "refs": [
-            "imagedoubler2024",
-            "scdblfinder2021"
-           ],
-           "text": "fewest false positives on image-verified doublets"
-          }
-         ],
-         "score": 2.5,
-         "unavailable_reason": "missing: r:scDblFinder"
-        },
-        {
-         "available": true,
-         "name": "Scrublet",
-         "option": "scrublet",
-         "reasons": [
-          {
-           "delta": 2,
-           "refs": [
-            "scrublet2019",
-            "xi2021"
-           ],
-           "text": "droplet data with enough cells; per-batch calling"
-          }
-         ],
-         "score": 2.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": false,
-         "name": "DoubletFinder",
-         "option": "doubletfinder",
-         "reasons": [
-          {
-           "delta": 1.5,
-           "refs": [
-            "xi2021"
-           ],
-           "text": "best accuracy in Xi & Li 2021"
-          }
-         ],
-         "score": 1.5,
-         "unavailable_reason": "missing: r:DoubletFinder"
-        },
-        {
-         "available": false,
-         "name": "Solo",
-         "option": "solo",
-         "reasons": [
-          {
-           "delta": 1,
-           "refs": [
-            "imagedoubler2024"
-           ],
-           "text": "deep classifier; more false positives on verified data"
-          }
-         ],
-         "score": 1.0,
-         "unavailable_reason": "missing: py:scvi"
-        },
-        {
-         "available": true,
-         "name": "No removal",
-         "option": "none",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          }
-         ],
-         "score": 0.5,
-         "unavailable_reason": ""
-        }
-       ],
-       "question": "Are doublets detected and removed?",
-       "runner_up": "none",
-       "uncertain": false
-      },
-      "gene_filter": {
-       "best_overall": "min_cells",
-       "blocked_by_dependency": false,
-       "chosen": "min_cells",
-       "decision": "gene_filter",
-       "impact": "low",
-       "options": [
-        {
-         "available": true,
-         "name": "Minimum cells expressing",
-         "option": "min_cells",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": 1,
-           "refs": [
-            "luecken2019"
-           ],
-           "text": "standard minimum-detection filter"
-          }
-         ],
-         "score": 1.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "Minimum cells + drop MT-/ribosomal genes as targets",
-         "option": "min_cells_drop_qc_genes",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        }
-       ],
-       "question": "Which genes are removed before inference?",
-       "runner_up": "min_cells_drop_qc_genes",
-       "uncertain": false
-      },
-      "hvg": {
-       "best_overall": "all_genes",
-       "blocked_by_dependency": false,
-       "chosen": "all_genes",
-       "decision": "hvg",
-       "impact": "medium",
-       "options": [
-        {
-         "available": true,
-         "name": "All expressed genes",
-         "option": "all_genes",
-         "reasons": [
-          {
-           "delta": 3,
-           "refs": [],
-           "text": "only 1000 genes"
-          }
-         ],
-         "score": 3.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "TFs + top 1000 HVGs",
-         "option": "tf_plus_1000",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          }
-         ],
-         "score": 0.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "TFs + top 500 HVGs",
-         "option": "tf_plus_500",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "TFs + top 2000 HVGs",
-         "option": "tf_plus_2000",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        }
-       ],
-       "question": "Which target genes enter the network?",
-       "runner_up": "tf_plus_1000",
-       "uncertain": false
-      },
-      "identifier_mapping": {
-       "best_overall": "ensembl_to_symbol",
-       "blocked_by_dependency": true,
-       "chosen": "keep",
-       "decision": "identifier_mapping",
-       "impact": "high",
-       "options": [
-        {
-         "available": false,
-         "name": "Map Ensembl IDs to symbols",
-         "option": "ensembl_to_symbol",
-         "reasons": [
-          {
-           "delta": 3,
-           "refs": [
-            "heumos2023"
-           ],
-           "text": "gene identifiers are ensembl_only: TF lists and gold standards use symbols"
-          }
-         ],
-         "score": 3.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
-        },
-        {
-         "available": false,
-         "name": "Map to another organism's orthologs",
-         "option": "orthologs",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
-        },
-        {
-         "available": true,
-         "name": "Keep as loaded",
-         "option": "keep",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": -2,
-           "refs": [],
-           "text": "Ensembl IDs would match no TF"
-          }
-         ],
-         "score": -1.5,
-         "unavailable_reason": ""
-        }
-       ],
-       "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
-       "uncertain": false
-      },
-      "normalization": {
-       "best_overall": "cpm_log1p",
-       "blocked_by_dependency": false,
-       "chosen": "cpm_log1p",
-       "decision": "normalization",
-       "impact": "high",
-       "options": [
-        {
-         "available": true,
-         "name": "Shifted log (CPM + log1p)",
-         "option": "cpm_log1p",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": 2,
-           "refs": [
-            "ahlmann2023",
-            "beeline2020"
-           ],
-           "text": "as good as more complex transforms; the input BEELINE used"
-          }
-         ],
-         "score": 2.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": false,
-         "name": "scran pooled size factors + log",
-         "option": "scran",
-         "reasons": [
-          {
-           "delta": 1,
-           "refs": [
-            "lun2016",
-            "pipecomp2020"
-           ],
-           "text": "robust pooled size factors"
-          }
-         ],
-         "score": 1.0,
-         "unavailable_reason": "missing: r:scran"
-        },
-        {
-         "available": false,
-         "name": "sctransform (regularized NB)",
-         "option": "sctransform",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [
-            "hafemeister2019"
-           ],
-           "text": "regularized NB; weaker with heavy dropout"
-          }
-         ],
-         "score": 0.5,
-         "unavailable_reason": "missing: r:sctransform"
-        },
-        {
-         "available": true,
-         "name": "Analytic Pearson residuals",
-         "option": "pearson_residuals",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "Raw counts",
-         "option": "raw_counts",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        }
-       ],
-       "question": "How are depth differences removed?",
-       "runner_up": "pearson_residuals",
-       "uncertain": false
-      },
-      "pseudotime": {
-       "best_overall": "none",
-       "blocked_by_dependency": false,
-       "chosen": "none",
-       "decision": "pseudotime",
-       "impact": "medium",
-       "options": [
-        {
-         "available": true,
-         "name": "No pseudotime",
-         "option": "none",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": 3,
-           "refs": [],
-           "text": "no time course: static methods"
-          }
-         ],
-         "score": 3.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "Use provided pseudotime",
-         "option": "provided",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": false,
-         "name": "Diffusion pseudotime",
-         "option": "dpt",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
-        },
-        {
-         "available": false,
-         "name": "Slingshot",
-         "option": "slingshot",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": "missing: r:slingshot"
-        }
-       ],
-       "question": "Is pseudotime computed?",
-       "runner_up": "provided",
-       "uncertain": false
-      },
-      "regulators": {
-       "best_overall": "dorothea",
-       "blocked_by_dependency": false,
-       "chosen": "dorothea",
-       "decision": "regulators",
-       "impact": "high",
-       "options": [
-        {
-         "available": true,
-         "name": "DoRothEA TFs",
-         "option": "dorothea",
-         "reasons": [
-          {
-           "delta": 2,
-           "refs": [
-            "dorothea2019"
-           ],
-           "text": "organism human: curated TFs"
-          }
-         ],
-         "score": 2.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": false,
-         "name": "CollecTRI TFs",
-         "option": "collectri",
-         "reasons": [
-          {
-           "delta": 1.5,
-           "refs": [
-            "collectri2023"
-           ],
-           "text": "larger curated collection"
-          }
-         ],
-         "score": 1.5,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
-        },
-        {
-         "available": true,
-         "name": "User TF list",
-         "option": "user_file",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          }
-         ],
-         "score": 0.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "Every gene",
-         "option": "all_genes",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        }
-       ],
-       "question": "Where does the list of candidate regulators come from?",
-       "runner_up": "user_file",
-       "uncertain": false
-      },
-      "sparsity": {
-       "best_overall": "single_cells",
-       "blocked_by_dependency": false,
-       "chosen": "single_cells",
-       "decision": "sparsity",
-       "impact": "high",
-       "options": [
-        {
-         "available": true,
-         "name": "Single cells",
-         "option": "single_cells",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": 2,
-           "refs": [
-            "beeline2020"
-           ],
-           "text": "37% zeros: single cells carry enough signal"
-          }
-         ],
-         "score": 2.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "Metacells",
-         "option": "metacells",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "Pseudobulk per group",
-         "option": "pseudobulk",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": false,
-         "name": "Imputation / smoothing (MAGIC, kNN)",
-         "option": "imputation",
-         "reasons": [
-          {
-           "delta": -3,
-           "refs": [
-            "mccalla2023",
-            "andrews2018"
-           ],
-           "text": "did not improve network inference and could be detrimental"
-          }
-         ],
-         "score": -3.0,
-         "unavailable_reason": "missing: py:magic"
-        }
-       ],
-       "question": "How is sparsity handled?",
-       "runner_up": "metacells",
-       "uncertain": false
-      },
-      "subsample": {
-       "best_overall": "none",
-       "blocked_by_dependency": false,
-       "chosen": "none",
-       "decision": "subsample",
-       "impact": "low",
-       "options": [
-        {
-         "available": true,
-         "name": "All cells",
-         "option": "none",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": 3,
-           "refs": [],
-           "text": "1500 cells: no subsampling needed"
-          }
-         ],
-         "score": 3.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "Stratified subsample",
-         "option": "stratified",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "Random subsample",
-         "option": "random",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        }
-       ],
-       "question": "Are cells subsampled?",
-       "runner_up": "stratified",
-       "uncertain": false
-      }
-     }
-    },
-    "warnings": [
-     "identifier_mapping: best option 'Map Ensembl IDs to symbols' is unavailable (planned in grnbench, not implemented yet); using 'keep'.",
-     "ambient_rna: best option 'DecontX' is unavailable (missing: r:celda); using 'none'.",
-     "doublets: best option 'scDblFinder' is unavailable (missing: r:scDblFinder); using 'scrublet'."
-    ]
-   }
-  },
-  "ensembl_ids/tfs": {
-   "candidates": [
-    {
-     "changes": {},
-     "choices": {
-      "ambient_rna": "none",
-      "batch": "none",
-      "cell_calling": "as_provided",
-      "cell_qc_thresholds": "mad",
-      "confounders": "none",
-      "context_scope": "per_cell_type",
-      "doublets": "scrublet",
-      "gene_filter": "min_cells",
-      "hvg": "all_genes",
-      "identifier_mapping": "keep",
-      "normalization": "cpm_log1p",
-      "pseudotime": "none",
-      "regulators": "user_file",
-      "sparsity": "single_cells",
-      "subsample": "none"
-     },
-     "name": "recommended"
-    },
-    {
-     "changes": {
-      "context_scope": [
-       "per_cell_type",
-       "selected_type"
-      ]
-     },
-     "choices": {
-      "ambient_rna": "none",
-      "batch": "none",
-      "cell_calling": "as_provided",
-      "cell_qc_thresholds": "mad",
-      "confounders": "none",
-      "context_scope": "selected_type",
-      "doublets": "scrublet",
-      "gene_filter": "min_cells",
-      "hvg": "all_genes",
-      "identifier_mapping": "keep",
-      "normalization": "cpm_log1p",
-      "pseudotime": "none",
-      "regulators": "user_file",
-      "sparsity": "single_cells",
-      "subsample": "none"
-     },
-     "name": "context_scope=selected_type"
-    }
-   ],
-   "plan": {
-    "choices": {
-     "ambient_rna": "none",
-     "batch": "none",
-     "cell_calling": "as_provided",
-     "cell_qc_thresholds": "mad",
-     "confounders": "none",
-     "context_scope": "per_cell_type",
-     "doublets": "scrublet",
-     "gene_filter": "min_cells",
-     "hvg": "all_genes",
-     "identifier_mapping": "keep",
-     "normalization": "cpm_log1p",
-     "pseudotime": "none",
-     "regulators": "user_file",
-     "sparsity": "single_cells",
-     "subsample": "none"
-    },
-    "context": {
-     "conflicts": {},
-     "facts": [
-      {
-       "key": "organism",
-       "snippet": "100% of gene ids are ENSG*",
-       "source": "matrix",
-       "value": "human",
-       "weight": 10
-      },
-      {
-       "key": "cell_type_key",
-       "snippet": "column 'cell_type' with 3 levels",
-       "source": "metadata:obs",
-       "value": "cell_type",
-       "weight": 4
-      },
-      {
-       "key": "organism",
-       "snippet": "Single-cell RNA-seq of bone marrow (Homo sapiens), 10x Genomics Chromium v3, raw UMI counts, 1500 cells. Bat",
-       "source": "readme:README.md",
-       "value": "human",
-       "weight": 3
-      },
-      {
-       "key": "platform",
-       "snippet": "Single-cell RNA-seq of bone marrow (Homo sapiens), 10x Genomics Chromium v3, raw UMI counts, 1500 cells. Batches in column",
-       "source": "readme:README.md",
-       "value": "10x Chromium",
-       "weight": 2
-      },
-      {
-       "key": "technology",
-       "snippet": "Single-cell RNA-seq of bone marrow (Homo sapiens), 10x Genomics Chromium v3, raw UMI counts, 1500 cells. Batches in column",
-       "source": "readme:README.md",
-       "value": "umi",
-       "weight": 2
-      },
-      {
-       "key": "technology",
-       "snippet": "f bone marrow (Homo sapiens), 10x Genomics Chromium v3, raw UMI counts, 1500 cells. Batches in column `batch`, cell types i",
-       "source": "readme:README.md",
-       "value": "umi",
-       "weight": 1
-      },
-      {
-       "key": "value_type",
-       "snippet": "eq of bone marrow (Homo sapiens), 10x Genomics Chromium v3, raw UMI counts, 1500 cells. Batches in column `batch`, cell types in `cell",
-       "source": "readme:README.md",
-       "value": "raw_counts",
-       "weight": 1
-      },
-      {
-       "key": "n_cells_declared",
-       "snippet": "w (Homo sapiens), 10x Genomics Chromium v3, raw UMI counts, 1500 cells. Batches in column `batch`, cell types in `cell_type`.",
-       "source": "readme:README.md",
-       "value": "1500",
-       "weight": 1
-      },
-      {
-       "key": "technology",
-       "snippet": ", \"doublet_frac\": 0.0, \"ambient_frac\": 0.0, \"protocol\": \"umi\", \"gene_ids\": \"ensembl\", \"raw_droplets\": 0, \"readme\": \"c",
-       "source": "readme:scenario.json",
-       "value": "umi",
-       "weight": 1
-      },
-      {
-       "key": "technology",
-       "snippet": "33% of non-zero values are 1, max value 1612",
-       "source": "matrix",
-       "value": "umi",
-       "weight": 4
-      }
-     ],
-     "sources_failed": [],
-     "sources_read": [
-      "matrix",
-      "readme:README.md",
-      "readme:tfs.txt",
-      "readme:scenario.json",
-      "readme:truth_manifest.json"
-     ],
-     "summary": {
-      "accessions": [],
-      "batch_key": null,
-      "cell_type_key": "cell_type",
-      "donor_key": null,
-      "n_cells_declared": "1500",
-      "organism": "human",
-      "perturbation": null,
-      "platform": "10x Chromium",
-      "technology": "umi",
-      "time_course": null,
-      "tissue": null,
-      "value_type": "raw_counts"
-     }
-    },
-    "contexts": [
-     {
-      "name": "cell_type=type1",
-      "subset_key": "cell_type",
-      "subset_value": "type1"
-     },
-     {
-      "name": "cell_type=type2",
-      "subset_key": "cell_type",
-      "subset_value": "type2"
-     },
-     {
-      "name": "cell_type=type3",
-      "subset_key": "cell_type",
-      "subset_value": "type3"
-     }
-    ],
-    "decisions": {
-     "batch_key": {
-      "key": "batch_key",
-      "label": "Batch / donor column",
-      "options": [
-       null,
-       "cell_type",
-       "simulated_state"
-      ],
-      "reason": "no batch-like column",
-      "source": "default",
-      "value": null
-     },
-     "context_scope": {
-      "key": "context_scope",
-      "label": "Cellular context",
-      "options": [
-       "pooled",
-       "per_cell_type",
-       "selected_type"
-      ],
-      "reason": "[context_scope = per_cell_type] 3 cell types with >= 200 cells: pooled co-expression would reflect composition",
-      "source": "knowledge base",
-      "value": "per_cell_type"
-     },
-     "drop_doublets": {
-      "key": "drop_doublets",
-      "label": "Remove doublets (scrublet)",
-      "options": [
-       true,
-       false
-      ],
-      "reason": "[doublets = scrublet] droplet data with enough cells; per-batch calling",
-      "source": "knowledge base",
-      "value": true
-     },
-     "exclude_qc_genes": {
-      "key": "exclude_qc_genes",
-      "label": "Drop mitochondrial/ribosomal genes from features",
-      "options": [
-       true,
-       false
-      ],
-      "reason": "[gene_filter = min_cells] knowledge-base default; standard minimum-detection filter",
-      "source": "knowledge base",
-      "value": false
-     },
-     "force": {
-      "key": "force",
-      "label": "Proceed past failed QC gates",
-      "options": [
-       false,
-       true
-      ],
-      "reason": "no QC gate fails",
-      "source": "knowledge base",
-      "value": false
-     },
-     "group_key": {
-      "key": "group_key",
-      "label": "Pseudobulk group column",
-      "options": [
-       null,
-       "cell_type",
-       "simulated_state"
-      ],
-      "reason": "only used by 'pseudobulk'",
-      "source": "default",
-      "value": null
-     },
-     "max_counts_per_cell": {
-      "key": "max_counts_per_cell",
-      "label": "Max counts per cell",
-      "options": null,
-      "reason": "median 3025 counts/cell; upper 5-MAD bound flags 0 cells (0.0%)",
-      "source": "data",
-      "value": 18602.0
-     },
-     "max_genes_per_cell": {
-      "key": "max_genes_per_cell",
-      "label": "Max detected genes per cell",
-      "options": null,
-      "reason": "upper 5-MAD bound (gross multiplets only) flags 0 cells (0.0%)",
-      "source": "data",
-      "value": 1166
-     },
-     "max_pct_mito_cell": {
-      "key": "max_pct_mito_cell",
-      "label": "Max % mitochondrial counts",
-      "options": null,
-      "reason": "no mitochondrial genes in the matrix: filter off",
-      "source": "data",
-      "value": null
-     },
-     "min_cells_per_gene": {
-      "key": "min_cells_per_gene",
-      "label": "Min cells expressing a gene",
-      "options": null,
-      "reason": "genes seen in fewer than max(3, 0.1% of 1500 cells) = 3 cells",
-      "source": "data",
-      "value": 3
-     },
-     "min_genes_per_cell": {
-      "key": "min_genes_per_cell",
-      "label": "Min detected genes per cell",
-      "options": null,
-      "reason": "median 634 genes/cell; lower 3-MAD bound (log) = 440, floor 50: removes 10 cells (0.7%) (fixed default 200 would remove 0 cells (0.0%))",
-      "source": "data",
-      "value": 440
-     },
-     "n_hvg": {
-      "key": "n_hvg",
-      "label": "Highly variable genes (TFs always kept)",
-      "options": [
-       500,
-       1000,
-       2000,
-       5000,
-       null
-      ],
-      "reason": "[hvg = all_genes] only 1000 genes",
-      "source": "knowledge base",
-      "value": null
-     },
-     "strategy": {
-      "key": "strategy",
-      "label": "Normalization / aggregation",
-      "options": [
-       "cpm_log1p",
-       "pearson_residuals",
-       "pseudobulk",
-       "raw_counts",
-       "cpm_log1p_combat",
-       "cpm_log1p_center_batch",
-       "metacells"
-      ],
-      "reason": "normalization 'cpm_log1p'. [normalization = cpm_log1p] knowledge-base default; as good as more complex transforms; the input BEELINE used [batch = none] knowledge-base default; single batch [sparsity = single_cells] knowledge-base default; 37% zeros: single cells carry enough signal",
-      "source": "knowledge base",
-      "value": "cpm_log1p"
-     },
-     "stratify_key": {
-      "key": "stratify_key",
-      "label": "Stratify subsample / metacell purity by",
-      "options": [
-       null,
-       "cell_type",
-       "simulated_state"
-      ],
-      "reason": "cell-type column 'cell_type'",
-      "source": "metadata:obs",
-      "value": "cell_type"
-     },
-     "subsample_cells": {
-      "key": "subsample_cells",
-      "label": "Subsample cells",
-      "options": null,
-      "reason": "[subsample = none] knowledge-base default; 1500 cells: no subsampling needed",
-      "source": "knowledge base",
-      "value": null
-     },
-     "tf_source": {
-      "key": "tf_source",
-      "label": "Transcription-factor list",
-      "options": [
-       "file",
-       "dorothea:human",
-       "dorothea:mouse",
-       "none"
-      ],
-      "reason": "[regulators = user_file] knowledge-base default; TF list given: 30/30 detected in the data",
-      "source": "knowledge base",
-      "value": "file"
-     }
-    },
-    "methods": [],
-    "profile": {
-     "batch_celltype_cramers_v": null,
-     "batch_depth_ratio": 1.0,
-     "batch_key": null,
-     "batch_silhouette": null,
-     "cell_type_key": "cell_type",
-     "data_technology_hint": "umi",
-     "dependencies": {
-      "ambient_rna.cellbender": false,
-      "ambient_rna.decontx": false,
-      "ambient_rna.none": true,
-      "ambient_rna.soupx": false,
-      "batch.center_per_batch": true,
-      "batch.combat": true,
-      "batch.harmony": false,
-      "batch.none": true,
-      "batch.per_batch_consensus": false,
-      "batch.scvi_denoised": false,
-      "cell_calling.as_provided": true,
-      "cell_calling.emptydrops": false,
-      "cell_calling.knee": true,
-      "cell_qc_thresholds.fixed": true,
-      "cell_qc_thresholds.mad": true,
-      "cell_qc_thresholds.mad_per_batch": true,
-      "cell_qc_thresholds.miqc": false,
-      "confounders.cell_cycle": false,
-      "confounders.none": true,
-      "context_scope.per_cell_type": true,
-      "context_scope.pooled": true,
-      "context_scope.selected_type": true,
-      "doublets.doubletfinder": false,
-      "doublets.none": true,
-      "doublets.scdblfinder": false,
-      "doublets.scrublet": true,
-      "doublets.solo": false,
-      "gene_filter.min_cells": true,
-      "gene_filter.min_cells_drop_qc_genes": true,
-      "hvg.all_genes": true,
-      "hvg.tf_plus_1000": true,
-      "hvg.tf_plus_2000": true,
-      "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
-      "identifier_mapping.keep": true,
-      "identifier_mapping.orthologs": false,
-      "normalization.cpm_log1p": true,
-      "normalization.pearson_residuals": true,
-      "normalization.raw_counts": true,
-      "normalization.scran": false,
-      "normalization.sctransform": false,
-      "pseudotime.dpt": false,
-      "pseudotime.none": true,
-      "pseudotime.provided": true,
-      "pseudotime.slingshot": false,
-      "regulators.all_genes": true,
-      "regulators.collectri": false,
-      "regulators.dorothea": true,
-      "regulators.user_file": true,
-      "sparsity.imputation": false,
-      "sparsity.metacells": true,
-      "sparsity.pseudobulk": true,
-      "sparsity.single_cells": true,
-      "subsample.none": true,
-      "subsample.random": true,
-      "subsample.stratified": true
-     },
-     "frac_ones_among_nonzero": 0.32895031003501074,
-     "id_verdict": "ensembl_only",
-     "library_cv": 0.36204802989959717,
-     "max_count": 1612.0,
-     "median_counts_per_cell": 3025.0,
-     "median_genes_per_cell": 634.0,
-     "median_pct_mito": 0.0,
-     "min_cells_per_batch": 0,
-     "min_cells_per_type": 331,
-     "n_batches": 0,
-     "n_cell_types": 3,
-     "n_cell_types_with_enough_cells": 3,
-     "n_cells": 1500,
-     "n_genes": 1000,
-     "n_mito_genes": 0,
-     "notes": [],
-     "organism": "human",
-     "platform": "10x Chromium",
-     "raw_droplets_suspected": false,
-     "sparsity": 0.3678133333333333,
-     "technology": "umi",
-     "tf_detected": 30,
-     "tf_requested": 30,
-     "time_course": false
-    },
-    "selection": {
-     "kb_version": "2026.10.2",
-     "results": {
-      "ambient_rna": {
-       "best_overall": "decontx",
-       "blocked_by_dependency": true,
-       "chosen": "none",
-       "decision": "ambient_rna",
-       "impact": "medium",
-       "options": [
-        {
-         "available": false,
-         "name": "DecontX",
-         "option": "decontx",
-         "reasons": [
-          {
-           "delta": 2,
-           "refs": [
-            "ambient2026",
-            "decontx2020"
-           ],
-           "text": "droplet data; DecontX works without the raw matrix"
-          }
-         ],
-         "score": 2.0,
-         "unavailable_reason": "missing: r:celda"
-        },
-        {
-         "available": true,
-         "name": "No correction",
-         "option": "none",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": 1,
-           "refs": [
-            "ambient2026"
-           ],
-           "text": "no GRN-specific evidence that correction helps; avoids over-correction"
-          }
-         ],
-         "score": 1.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": false,
-         "name": "SoupX",
-         "option": "soupx",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [
-            "ambient2026",
-            "soupx2020"
-           ],
-           "text": "least over-correction; needs empty droplets from the raw matrix"
-          }
-         ],
-         "score": 0.5,
-         "unavailable_reason": "missing: r:SoupX"
-        },
-        {
-         "available": false,
-         "name": "CellBender",
-         "option": "cellbender",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [
-            "janssen2023"
-           ],
-           "text": "most precise background estimate; needs raw matrix and GPU"
-          }
-         ],
-         "score": 0.5,
-         "unavailable_reason": "missing: cli:cellbender"
-        }
-       ],
-       "question": "Is cell-free (ambient) RNA removed?",
-       "runner_up": null,
-       "uncertain": false
-      },
-      "batch": {
-       "best_overall": "none",
-       "blocked_by_dependency": false,
-       "chosen": "none",
-       "decision": "batch",
-       "impact": "high",
-       "options": [
-        {
-         "available": true,
-         "name": "No correction",
-         "option": "none",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": 5,
-           "refs": [],
-           "text": "single batch"
-          }
-         ],
-         "score": 5.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "Center genes per batch (regress out batch)",
-         "option": "center_per_batch",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "ComBat",
-         "option": "combat",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": false,
-         "name": "Infer per batch, combine edges",
-         "option": "per_batch_consensus",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
-        },
-        {
-         "available": false,
-         "name": "scVI denoised expression",
-         "option": "scvi_denoised",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": "missing: py:scvi"
-        },
-        {
-         "available": false,
-         "name": "Harmony / embedding-only integration",
-         "option": "harmony",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": "not applicable to GRN inference (see note)"
-        }
-       ],
-       "question": "How are batches handled?",
-       "runner_up": "center_per_batch",
-       "uncertain": false
-      },
-      "cell_calling": {
-       "best_overall": "as_provided",
-       "blocked_by_dependency": false,
-       "chosen": "as_provided",
-       "decision": "cell_calling",
-       "impact": "high",
-       "options": [
-        {
-         "available": true,
-         "name": "Use the provided (filtered) matrix",
-         "option": "as_provided",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": 3,
-           "refs": [],
-           "text": "barcode counts look already filtered to cells"
-          }
-         ],
-         "score": 3.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "Knee / inflection point",
-         "option": "knee",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": false,
-         "name": "EmptyDrops",
-         "option": "emptydrops",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": "missing: r:DropletUtils"
-        }
-       ],
-       "question": "Which barcodes are cells?",
-       "runner_up": "knee",
-       "uncertain": false
-      },
-      "cell_qc_thresholds": {
-       "best_overall": "mad",
-       "blocked_by_dependency": false,
-       "chosen": "mad",
-       "decision": "cell_qc_thresholds",
-       "impact": "high",
-       "options": [
-        {
-         "available": true,
-         "name": "MAD outliers (global)",
-         "option": "mad",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": 2,
-           "refs": [
-            "scater2017",
-            "pipecomp2020"
-           ],
-           "text": "adaptive outlier bounds per dataset"
-          }
-         ],
-         "score": 2.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "Fixed thresholds",
-         "option": "fixed",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "MAD outliers per batch",
-         "option": "mad_per_batch",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": false,
-         "name": "miQC mixture model",
-         "option": "miqc",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
-        }
-       ],
-       "question": "How are low-quality cells defined?",
-       "runner_up": "fixed",
-       "uncertain": false
-      },
-      "confounders": {
-       "best_overall": "none",
-       "blocked_by_dependency": false,
-       "chosen": "none",
-       "decision": "confounders",
-       "impact": "medium",
-       "options": [
-        {
-         "available": true,
-         "name": "No regression",
-         "option": "none",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": 2,
-           "refs": [
-            "luecken2019"
-           ],
-           "text": "regression would also remove real regulation (e.g. cell-cycle TFs)"
-          }
-         ],
-         "score": 2.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": false,
-         "name": "Regress cell-cycle scores",
-         "option": "cell_cycle",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
-        }
-       ],
-       "question": "Are nuisance signals regressed out?",
-       "runner_up": null,
-       "uncertain": false
-      },
-      "context_scope": {
-       "best_overall": "per_cell_type",
-       "blocked_by_dependency": false,
-       "chosen": "per_cell_type",
-       "decision": "context_scope",
-       "impact": "high",
-       "options": [
-        {
-         "available": true,
-         "name": "One network per cell type",
-         "option": "per_cell_type",
-         "reasons": [
-          {
-           "delta": 3,
-           "refs": [
-            "farahbod2020",
-            "retana2026"
-           ],
-           "text": "3 cell types with >= 200 cells: pooled co-expression would reflect composition"
-          }
-         ],
-         "score": 3.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "One selected cell type",
-         "option": "selected_type",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "All cells pooled",
-         "option": "pooled",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": -1,
-           "refs": [
-            "retana2026"
-           ],
-           "text": "cell-type mixing is a known failure mode of GRN inference"
-          }
-         ],
-         "score": -0.5,
-         "unavailable_reason": ""
-        }
-       ],
-       "question": "Which cells does one network come from?",
-       "runner_up": "selected_type",
-       "uncertain": false
-      },
-      "doublets": {
-       "best_overall": "scdblfinder",
-       "blocked_by_dependency": true,
-       "chosen": "scrublet",
-       "decision": "doublets",
-       "impact": "medium",
-       "options": [
-        {
-         "available": false,
-         "name": "scDblFinder",
-         "option": "scdblfinder",
-         "reasons": [
-          {
-           "delta": 2.5,
-           "refs": [
-            "imagedoubler2024",
-            "scdblfinder2021"
-           ],
-           "text": "fewest false positives on image-verified doublets"
-          }
-         ],
-         "score": 2.5,
-         "unavailable_reason": "missing: r:scDblFinder"
-        },
-        {
-         "available": true,
-         "name": "Scrublet",
-         "option": "scrublet",
-         "reasons": [
-          {
-           "delta": 2,
-           "refs": [
-            "scrublet2019",
-            "xi2021"
-           ],
-           "text": "droplet data with enough cells; per-batch calling"
-          }
-         ],
-         "score": 2.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": false,
-         "name": "DoubletFinder",
-         "option": "doubletfinder",
-         "reasons": [
-          {
-           "delta": 1.5,
-           "refs": [
-            "xi2021"
-           ],
-           "text": "best accuracy in Xi & Li 2021"
-          }
-         ],
-         "score": 1.5,
-         "unavailable_reason": "missing: r:DoubletFinder"
-        },
-        {
-         "available": false,
-         "name": "Solo",
-         "option": "solo",
-         "reasons": [
-          {
-           "delta": 1,
-           "refs": [
-            "imagedoubler2024"
-           ],
-           "text": "deep classifier; more false positives on verified data"
-          }
-         ],
-         "score": 1.0,
-         "unavailable_reason": "missing: py:scvi"
-        },
-        {
-         "available": true,
-         "name": "No removal",
-         "option": "none",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          }
-         ],
-         "score": 0.5,
-         "unavailable_reason": ""
-        }
-       ],
-       "question": "Are doublets detected and removed?",
-       "runner_up": "none",
-       "uncertain": false
-      },
-      "gene_filter": {
-       "best_overall": "min_cells",
-       "blocked_by_dependency": false,
-       "chosen": "min_cells",
-       "decision": "gene_filter",
-       "impact": "low",
-       "options": [
-        {
-         "available": true,
-         "name": "Minimum cells expressing",
-         "option": "min_cells",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": 1,
-           "refs": [
-            "luecken2019"
-           ],
-           "text": "standard minimum-detection filter"
-          }
-         ],
-         "score": 1.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "Minimum cells + drop MT-/ribosomal genes as targets",
-         "option": "min_cells_drop_qc_genes",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        }
-       ],
-       "question": "Which genes are removed before inference?",
-       "runner_up": "min_cells_drop_qc_genes",
-       "uncertain": false
-      },
-      "hvg": {
-       "best_overall": "all_genes",
-       "blocked_by_dependency": false,
-       "chosen": "all_genes",
-       "decision": "hvg",
-       "impact": "medium",
-       "options": [
-        {
-         "available": true,
-         "name": "All expressed genes",
-         "option": "all_genes",
-         "reasons": [
-          {
-           "delta": 3,
-           "refs": [],
-           "text": "only 1000 genes"
-          }
-         ],
-         "score": 3.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "TFs + top 1000 HVGs",
-         "option": "tf_plus_1000",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          }
-         ],
-         "score": 0.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "TFs + top 500 HVGs",
-         "option": "tf_plus_500",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "TFs + top 2000 HVGs",
-         "option": "tf_plus_2000",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        }
-       ],
-       "question": "Which target genes enter the network?",
-       "runner_up": "tf_plus_1000",
-       "uncertain": false
-      },
-      "identifier_mapping": {
-       "best_overall": "ensembl_to_symbol",
-       "blocked_by_dependency": true,
-       "chosen": "keep",
-       "decision": "identifier_mapping",
-       "impact": "high",
-       "options": [
-        {
-         "available": false,
-         "name": "Map Ensembl IDs to symbols",
-         "option": "ensembl_to_symbol",
-         "reasons": [
-          {
-           "delta": 3,
-           "refs": [
-            "heumos2023"
-           ],
-           "text": "gene identifiers are ensembl_only: TF lists and gold standards use symbols"
-          }
-         ],
-         "score": 3.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
-        },
-        {
-         "available": false,
-         "name": "Map to another organism's orthologs",
-         "option": "orthologs",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
-        },
-        {
-         "available": true,
-         "name": "Keep as loaded",
-         "option": "keep",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": -2,
-           "refs": [],
-           "text": "Ensembl IDs would match no TF"
-          }
-         ],
-         "score": -1.5,
-         "unavailable_reason": ""
-        }
-       ],
-       "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
-       "uncertain": false
-      },
-      "normalization": {
-       "best_overall": "cpm_log1p",
-       "blocked_by_dependency": false,
-       "chosen": "cpm_log1p",
-       "decision": "normalization",
-       "impact": "high",
-       "options": [
-        {
-         "available": true,
-         "name": "Shifted log (CPM + log1p)",
-         "option": "cpm_log1p",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": 2,
-           "refs": [
-            "ahlmann2023",
-            "beeline2020"
-           ],
-           "text": "as good as more complex transforms; the input BEELINE used"
-          }
-         ],
-         "score": 2.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": false,
-         "name": "scran pooled size factors + log",
-         "option": "scran",
-         "reasons": [
-          {
-           "delta": 1,
-           "refs": [
-            "lun2016",
-            "pipecomp2020"
-           ],
-           "text": "robust pooled size factors"
-          }
-         ],
-         "score": 1.0,
-         "unavailable_reason": "missing: r:scran"
-        },
-        {
-         "available": false,
-         "name": "sctransform (regularized NB)",
-         "option": "sctransform",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [
-            "hafemeister2019"
-           ],
-           "text": "regularized NB; weaker with heavy dropout"
-          }
-         ],
-         "score": 0.5,
-         "unavailable_reason": "missing: r:sctransform"
-        },
-        {
-         "available": true,
-         "name": "Analytic Pearson residuals",
-         "option": "pearson_residuals",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "Raw counts",
-         "option": "raw_counts",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        }
-       ],
-       "question": "How are depth differences removed?",
-       "runner_up": "pearson_residuals",
-       "uncertain": false
-      },
-      "pseudotime": {
-       "best_overall": "none",
-       "blocked_by_dependency": false,
-       "chosen": "none",
-       "decision": "pseudotime",
-       "impact": "medium",
-       "options": [
-        {
-         "available": true,
-         "name": "No pseudotime",
-         "option": "none",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": 3,
-           "refs": [],
-           "text": "no time course: static methods"
-          }
-         ],
-         "score": 3.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "Use provided pseudotime",
-         "option": "provided",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": false,
-         "name": "Diffusion pseudotime",
-         "option": "dpt",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
-        },
-        {
-         "available": false,
-         "name": "Slingshot",
-         "option": "slingshot",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": "missing: r:slingshot"
-        }
-       ],
-       "question": "Is pseudotime computed?",
-       "runner_up": "provided",
-       "uncertain": false
-      },
-      "regulators": {
-       "best_overall": "user_file",
-       "blocked_by_dependency": false,
-       "chosen": "user_file",
-       "decision": "regulators",
-       "impact": "high",
-       "options": [
-        {
-         "available": true,
-         "name": "User TF list",
-         "option": "user_file",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": 4,
-           "refs": [],
-           "text": "TF list given: 30/30 detected in the data"
-          }
-         ],
-         "score": 4.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "DoRothEA TFs",
-         "option": "dorothea",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": false,
-         "name": "CollecTRI TFs",
-         "option": "collectri",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
-        },
-        {
-         "available": true,
-         "name": "Every gene",
-         "option": "all_genes",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        }
-       ],
-       "question": "Where does the list of candidate regulators come from?",
-       "runner_up": "dorothea",
-       "uncertain": false
-      },
-      "sparsity": {
-       "best_overall": "single_cells",
-       "blocked_by_dependency": false,
-       "chosen": "single_cells",
-       "decision": "sparsity",
-       "impact": "high",
-       "options": [
-        {
-         "available": true,
-         "name": "Single cells",
-         "option": "single_cells",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": 2,
-           "refs": [
-            "beeline2020"
-           ],
-           "text": "37% zeros: single cells carry enough signal"
-          }
-         ],
-         "score": 2.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "Metacells",
-         "option": "metacells",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "Pseudobulk per group",
-         "option": "pseudobulk",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": false,
-         "name": "Imputation / smoothing (MAGIC, kNN)",
-         "option": "imputation",
-         "reasons": [
-          {
-           "delta": -3,
-           "refs": [
-            "mccalla2023",
-            "andrews2018"
-           ],
-           "text": "did not improve network inference and could be detrimental"
-          }
-         ],
-         "score": -3.0,
-         "unavailable_reason": "missing: py:magic"
-        }
-       ],
-       "question": "How is sparsity handled?",
-       "runner_up": "metacells",
-       "uncertain": false
-      },
-      "subsample": {
-       "best_overall": "none",
-       "blocked_by_dependency": false,
-       "chosen": "none",
-       "decision": "subsample",
-       "impact": "low",
-       "options": [
-        {
-         "available": true,
-         "name": "All cells",
-         "option": "none",
-         "reasons": [
-          {
-           "delta": 0.5,
-           "refs": [],
-           "text": "knowledge-base default"
-          },
-          {
-           "delta": 3,
-           "refs": [],
-           "text": "1500 cells: no subsampling needed"
-          }
-         ],
-         "score": 3.5,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "Stratified subsample",
-         "option": "stratified",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        },
-        {
-         "available": true,
-         "name": "Random subsample",
-         "option": "random",
-         "reasons": [],
-         "score": 0.0,
-         "unavailable_reason": ""
-        }
-       ],
-       "question": "Are cells subsampled?",
-       "runner_up": "stratified",
-       "uncertain": false
-      }
-     }
-    },
-    "warnings": [
-     "identifier_mapping: best option 'Map Ensembl IDs to symbols' is unavailable (planned in grnbench, not implemented yet); using 'keep'.",
      "ambient_rna: best option 'DecontX' is unavailable (missing: r:celda); using 'none'.",
      "doublets: best option 'scDblFinder' is unavailable (missing: r:scDblFinder); using 'scrublet'."
     ]
@@ -26589,7 +23844,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -27175,12 +24430,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -27192,7 +24447,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -27927,7 +25182,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -28513,12 +25768,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -28530,7 +25785,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -29266,7 +26521,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -29907,12 +27162,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -29924,7 +27179,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -30676,7 +27931,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -31317,12 +28572,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -31334,7 +28589,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -32080,7 +29335,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -32723,12 +29978,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -32740,7 +29995,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -33499,7 +30754,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -34142,12 +31397,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -34159,7 +31414,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -34938,7 +32193,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -35618,12 +32873,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -35635,7 +32890,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -36423,7 +33678,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -37103,12 +34358,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -37120,7 +34375,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -37868,7 +35123,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -38509,12 +35764,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -38526,7 +35781,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -39285,7 +36540,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -39926,12 +37181,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -39943,7 +37198,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -40641,7 +37896,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -41282,12 +38537,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -41299,7 +38554,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -42008,7 +39263,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -42649,12 +39904,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -42666,7 +39921,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -43418,7 +40673,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -44075,12 +41330,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -44092,7 +41347,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -44856,7 +42111,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -45513,12 +42768,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -45530,7 +42785,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -46255,7 +43510,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -46885,12 +44140,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -46902,7 +44157,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -47637,7 +44892,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -48267,12 +45522,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -48284,7 +45539,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -49015,7 +46270,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -49616,12 +46871,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -49633,7 +46888,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -50374,7 +47629,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -50975,12 +48230,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -50992,7 +48247,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -51737,7 +48992,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -52378,12 +49633,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -52395,7 +49650,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -53152,7 +50407,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -53793,12 +51048,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -53810,7 +51065,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -54551,7 +51806,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -55192,12 +52447,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -55209,7 +52464,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {
@@ -55961,7 +53216,7 @@
       "hvg.tf_plus_1000": true,
       "hvg.tf_plus_2000": true,
       "hvg.tf_plus_500": true,
-      "identifier_mapping.ensembl_to_symbol": false,
+      "identifier_mapping.ensembl_to_symbol": true,
       "identifier_mapping.keep": true,
       "identifier_mapping.orthologs": false,
       "normalization.cpm_log1p": true,
@@ -56602,12 +53857,12 @@
          "unavailable_reason": ""
         },
         {
-         "available": false,
+         "available": true,
          "name": "Map Ensembl IDs to symbols",
          "option": "ensembl_to_symbol",
          "reasons": [],
          "score": 0.0,
-         "unavailable_reason": "planned in grnbench, not implemented yet"
+         "unavailable_reason": ""
         },
         {
          "available": false,
@@ -56619,7 +53874,7 @@
         }
        ],
        "question": "How are gene identifiers made to match TF lists and gold standards?",
-       "runner_up": null,
+       "runner_up": "ensembl_to_symbol",
        "uncertain": false
       },
       "normalization": {

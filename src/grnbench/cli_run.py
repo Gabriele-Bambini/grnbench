@@ -42,6 +42,8 @@ def _build_parser() -> argparse.ArgumentParser:
     prep.add_argument("--group-key", default=None)
     prep.add_argument("--label-key", default=None)
     prep.add_argument("--label-mapping", default=None)
+    prep.add_argument("--gene-mapping", default=None,
+                      help="two-column id -> symbol table for preprocessing")
     prep.add_argument("--stratify-key", default=None)
     prep.add_argument("--batch-key", default=None)
     prep.add_argument("--min-group-cells", type=int, default=None)
@@ -119,6 +121,7 @@ def main(argv: list[str] | None = None) -> int:
         *_opt("--tf-list", args.tf_list), *_opt("--n-hvg", args.n_hvg),
         *_opt("--group-key", args.group_key), *_opt("--label-key", args.label_key),
         *_opt("--label-mapping", args.label_mapping),
+        *_opt("--gene-mapping", args.gene_mapping),
         *_opt("--stratify-key", args.stratify_key),
         *_opt("--batch-key", args.batch_key),
         *_opt("--min-group-cells", args.min_group_cells),

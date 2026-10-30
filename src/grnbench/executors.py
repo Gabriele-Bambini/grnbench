@@ -7,7 +7,8 @@ apart. An option grnbench cannot run is never chosen by the selector, and forcin
 (issue #128). Step 2b adds R executors with :func:`register_executor`, which extends
 ``PLAN_STEPS``; each one also needs its mapping in the plan.
 
-``RECORDED_ONLY`` are the options that run nothing: the plan records them and no step reads them.
+``RECORDED_ONLY`` are options that no post-ingest plan step reads.  Some run before planning
+(identifier mapping is applied while ingest loads the matrix); others only record caller choices.
 The regulators options are among them: the TF list that runs is always the caller's (issue #131).
 
 Rules every executor obeys:
@@ -30,7 +31,8 @@ FORBIDDEN_REASON = "not offered: D-002, no imputation or smoothing"
 BUILT_IN = "built into grnbench: run by pipeline.run_prep as autoprep.plan_preprocessing maps it"
 
 PLAN_STEPS: dict[str, tuple[str, ...]] = {
-    "identifier_mapping": ("keep",), "cell_calling": ("as_provided", "knee"), "ambient_rna": ("none",),
+    "identifier_mapping": ("keep", "ensembl_to_symbol"),
+    "cell_calling": ("as_provided", "knee"), "ambient_rna": ("none",),
     "cell_qc_thresholds": ("fixed", "mad", "mad_per_batch"), "doublets": ("none", "scrublet"),
     "gene_filter": ("min_cells", "min_cells_drop_qc_genes"),
     "context_scope": ("pooled", "per_cell_type", "selected_type"),
@@ -42,7 +44,8 @@ PLAN_STEPS: dict[str, tuple[str, ...]] = {
     "subsample": ("none", "stratified", "random"), "pseudotime": ("none", "provided"),
 }
 RECORDED_ONLY = frozenset({
-    ("identifier_mapping", "keep"), ("cell_calling", "as_provided"), ("ambient_rna", "none"),
+    ("identifier_mapping", "keep"), ("identifier_mapping", "ensembl_to_symbol"),
+    ("cell_calling", "as_provided"), ("ambient_rna", "none"),
     ("confounders", "none"), ("pseudotime", "none"),
     ("pseudotime", "provided"),                         # no built-in model reads pseudotime
     ("regulators", "user_file"), ("regulators", "dorothea"), ("regulators", "all_genes"),   # #131

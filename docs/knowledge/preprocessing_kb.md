@@ -71,10 +71,10 @@ TF lists and gold standards use symbols; a matrix of Ensembl IDs matches none of
   - use when: identifiers are already symbols of the right organism
   - avoid when: Ensembl IDs or mixed identifiers
   - refs: [heumos2023](https://doi.org/10.1038/s41576-023-00586-w)
-- **Map Ensembl IDs to symbols** (`ensembl_to_symbol`; evidence: consensus; planned) - Strip version suffixes, map with a gene annotation service, sum counts of duplicated symbols.
+- **Map Ensembl IDs to symbols** (`ensembl_to_symbol`; evidence: consensus; grnbench) - Use an input-carried symbol column or a fingerprinted user table, strip human/mouse version suffixes, and sum duplicated symbols.
   - use when: Ensembl or mixed identifiers
   - pros: TF lists and gold standards match
-  - cons: needs network access (mygene) or an annotation table; some IDs map to nothing or to several symbols
+  - cons: needs an input symbol column or explicit two-column table; human/mouse collision sets above measured limits are refused; case-only spellings are preserved for other or unknown organisms
   - GRN: Summing counts of IDs that map to one symbol keeps counts integer.
   - refs: [heumos2023](https://doi.org/10.1038/s41576-023-00586-w)
 - **Map to another organism's orthologs** (`orthologs`; evidence: consensus; planned) - Translate mouse symbols to human (or back) to use a TF list / gold of the other species.

@@ -290,6 +290,20 @@ def test_prep_document_uses_pre_calling_n_barcodes_for_dimensions_before():
     assert dims["after"] == {"cells": 110, "genes": 103}
 
 
+def test_prep_document_carries_identifier_provenance_verbatim():
+    manifest = _prep_manifest()
+    manifest.setdefault("ingest", {})["identifier_provenance"] = {
+        "policy": "D-027",
+        "mapping_source": {"kind": "user_table", "sha256": "a" * 64},
+        "source_to_representative": [{
+            "as_loaded": "ENSG00000141510.18", "representative": "TP53",
+            "occurrences": 1, "transformations": ["user_mapping"],
+        }],
+    }
+    entry = prep_document(manifest)["prep"]["default"]["all_cells"]
+    assert entry["identifier_provenance"] == manifest["ingest"]["identifier_provenance"]
+
+
 # --------------------------------------------------------------------------- #
 # safe_message is idempotent: every writer output passes the reader (#177, B1)
 # --------------------------------------------------------------------------- #

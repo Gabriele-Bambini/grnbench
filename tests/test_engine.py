@@ -503,6 +503,14 @@ def test_reproduction_command_always_names_the_seed():
         plan.cli_args("in.h5ad", "out")           # no command without the seed it replays at
 
 
+def test_gene_mapping_reaches_plan_kwargs_and_reproduction_command(tmp_path):
+    plan = PrepPlan()
+    mapping = tmp_path / "gene map.tsv"
+    assert plan.run_prep_kwargs(gene_mapping_path=mapping)["gene_mapping_path"] == mapping
+    argv = plan.cli_args("in.h5ad", "out", gene_mapping_path=mapping, seed=0)
+    assert argv[argv.index("--gene-mapping") + 1] == str(mapping)
+
+
 def test_one_default_seed_for_the_plan_the_prep_command_and_run_prep():
     import inspect
 

@@ -186,7 +186,7 @@ class PrepPlan:
         return Thresholds(**{k: self.value(k) for k in THRESHOLD_KEYS
                              if k in self.decisions and self.value(k) is not None})
 
-    def run_prep_kwargs(self, tf_list: list[str] | None = None) -> dict:
+    def run_prep_kwargs(self, tf_list: list[str] | None = None, *, gene_mapping_path=None) -> dict:
         kw = {k: self.value(k) for k in RUN_PREP_KEYS
               if k in self.decisions and self.value(k) is not None}
         kw["drop_doublets"] = bool(self.value("drop_doublets", False))
@@ -194,10 +194,13 @@ class PrepPlan:
         kw["thresholds"] = self.thresholds()
         if tf_list is not None:
             kw["tf_list"] = list(tf_list)
+        if gene_mapping_path is not None:
+            kw["gene_mapping_path"] = gene_mapping_path
         return kw
 
     def cli_args(self, input_path, out_dir, tf_list_path=None, *, context: dict | None = None,
-                 bounds_path=None, seed: int, force: bool | None = None) -> list[str]:
+                 bounds_path=None, gene_mapping_path=None, seed: int,
+                 force: bool | None = None) -> list[str]:
         """The ``grnbench prep`` argv that reproduces this plan (one context) exactly.
 
         ``per_batch_bounds`` travels as a JSON file: pass the path it was written
@@ -229,6 +232,8 @@ class PrepPlan:
                      f"--subset-value={context['subset_value']}"]
         if tf_list_path is not None:
             argv += ["--tf-list", str(tf_list_path)]
+        if gene_mapping_path is not None:
+            argv += ["--gene-mapping", str(gene_mapping_path)]
         return argv + ["--seed", str(seed)]
 
     def to_dict(self) -> dict:
@@ -312,12 +317,14 @@ class Diagnosis:
 
 def diagnose(path, *, orientation: str = "auto", text_files=(), urls=(),
              notes: str | None = None, fetch=fetch_url_text,
-             thresholds: Thresholds | None = None) -> Diagnosis:
+             thresholds: Thresholds | None = None,
+             gene_mapping_path=None) -> Diagnosis:
     """Load ``path`` counts-verified, read its context and run the QC gates."""
     from grnbench import hygiene as hyg
     from grnbench.ingest import load_any
 
-    adata, ing = load_any(path, orientation=orientation)
+    adata, ing = load_any(
+        path, orientation=orientation, gene_mapping_path=gene_mapping_path)
     hyg.sparsify_if_dense(adata)
     from grnbench.profile import looks_unfiltered
     cell_calling = None
@@ -834,7 +841,8 @@ def unique_folder_names(names, limit: int = 80) -> list[str]:
 
 
 def execute_plan(plan: PrepPlan, input_path, out_dir, *, tf_list: list[str] | None = None,
-                 seed: int = DEFAULT_SEED, force: bool = False) -> list[dict]:
+                 gene_mapping_path=None, seed: int = DEFAULT_SEED,
+                 force: bool = False) -> list[dict]:
     """Run ``run_prep`` once per cellular context of ``plan``.
 
     Writes ``plan.json`` (and ``per_batch_bounds.json`` when used) into
@@ -861,12 +869,14 @@ def execute_plan(plan: PrepPlan, input_path, out_dir, *, tf_list: list[str] | No
     folders = unique_folder_names([str(c["name"]) for c in plan.contexts])
     for ctx, name in zip(plan.contexts, folders):
         ctx_dir = out / name
-        kwargs = plan.run_prep_kwargs(tf_list)
+        kwargs = plan.run_prep_kwargs(tf_list, gene_mapping_path=gene_mapping_path)
         kwargs.update(subset_key=ctx.get("subset_key"), subset_value=ctx.get("subset_value"),
                       seed=seed, force=forced)
         rec = {"context": ctx["name"], "out_dir": str(ctx_dir), "processed": None, "error": None, "seed": seed,
                "cli": ["grnbench", "prep"] + plan.cli_args(input_path, ctx_dir, tf_path, context=ctx,
-                                                           bounds_path=bounds_path, seed=seed, force=forced)}
+                                                           bounds_path=bounds_path,
+                                                           gene_mapping_path=gene_mapping_path,
+                                                           seed=seed, force=forced)}
         try:
             res = run_prep(input_path, ctx_dir, **kwargs)
             rec["processed"] = str(res.processed_path)

@@ -6,12 +6,13 @@ With ``kb._have`` fixed to the environment of the registered runs (``REGISTERED_
 scvi, no magic, no CellBender), so the values do not depend on the machine, it writes:
 
 * ``option_table``: ``kb.option_table()`` (one row per option);
-* ``plans``: for every simulator preset and the demo data, with and without a TF list, the whole
+* ``plans``: for every simulator preset accepted by the current ingest policy and the demo data,
+  with and without a TF list, the whole
   ``plan.to_dict()`` (warnings, reasons, sources, selection, profile; ``option_notes`` left out)
   and the screening candidates ``select(profile).candidates(max_candidates=4, always=("context_scope",))``;
 * ``variant_candidates``: ``benchmarks/candidate_study.variant_candidates()``.
 
-``option_availability_main.json`` was regenerated on 2026-10-27 after merging main 2836485;
+``option_availability_main.json`` was regenerated on 2026-10-29 after merging main d07928b;
 ``tests/test_option_availability.py`` compares the current code with it. ``benchmarks/`` is found
 next to ``src/`` (``PYTHONPATH=src`` or an editable install, not a site-packages install).
 """
@@ -36,7 +37,12 @@ def datasets(workdir) -> dict:
     from grnbench.simulate import PRESETS, write_scenario
 
     work = Path(workdir)
-    paths = {name: write_scenario(work / name, scn) for name, scn in PRESETS.items()}
+    # The golden predates D-028.  Its ``ensembl_ids`` fixture deliberately has
+    # neither an input symbol column nor an explicit mapping, so current ingest
+    # must refuse it.  It cannot serve as an A/B plan fixture any more; the
+    # refusal and mapped paths have dedicated tests in test_ingest/test_ui.
+    paths = {name: write_scenario(work / name, scn)
+             for name, scn in PRESETS.items() if name != "ensembl_ids"}
     paths["demo"] = write_demo(work / "demo")
     return {name: (diagnose(p["counts"]), p["tfs"].read_text(encoding="utf-8").split())
             for name, p in paths.items()}

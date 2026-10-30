@@ -167,6 +167,53 @@ def test_setup_env_torch_line_survives_a_crlf_lock(tmp_path):
     assert b"--extra-index-url https://pypi.org/simple PYTHONPATH=" in calls
 
 
+def test_identifier_calibration_stages_only_the_registered_snapshot(tmp_path):
+    bash = _bash()
+    repo, data, out, scratch = (tmp_path / name for name in ("repo", "data", "out", "scratch"))
+    (repo / "experiments").mkdir(parents=True)
+    (data / "cohort").mkdir(parents=True)
+    scratch.mkdir()
+    (repo / "GIT_COMMIT").write_text("abc1234\n", encoding="utf-8")
+    (data / "cohort" / "data.h5ad").write_bytes(b"registered")
+    (data / "unrelated.h5ad").write_bytes(b"not in the snapshot")
+    snapshot = repo / "experiments" / "EXP-TEST.snapshot.tsv"
+    snapshot.write_text(
+        "path\tbytes\tsha256\tfile_date\tsource\tversion\n"
+        "cohort/data.h5ad\t10\tdigest\t2026-10-10\ttest\tv1\n",
+        encoding="utf-8",
+    )
+    env = {
+        **os.environ,
+        "CONDA_SH": _stubs(tmp_path).as_posix(),
+        "REPO_DIR": repo.as_posix(),
+        "DATA_ROOT": data.as_posix(),
+        "OUT": out.as_posix(),
+        "EXP_ID": "EXP-TEST",
+        "SNAPSHOT": snapshot.as_posix(),
+        "SLURM_TMPDIR": scratch.as_posix(),
+        "SLURM_JOB_ID": "123",
+    }
+
+    r = subprocess.run(
+        [bash, str(ROOT / "hpc" / "identifier_policy_calibration.sbatch")],
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+
+    assert r.returncode == 0, r.stdout + r.stderr
+    staged = scratch / "grnbench-EXP-TEST-123-inputs"
+    staged_data = staged / "cohort" / "data.h5ad"
+    assert staged_data.read_bytes() == b"registered"
+    if os.name != "nt":
+        assert staged_data.is_symlink()
+    assert not (staged / "unrelated.h5ad").exists()
+    assert (out / "input-snapshot.tsv").read_text(encoding="utf-8") == snapshot.read_text(encoding="utf-8")
+    calls = (tmp_path / "calls.log").read_text(encoding="utf-8")
+    assert f"data_manifest.py {staged.as_posix()} --check {snapshot.as_posix()} --require-all" in calls
+    assert f"identifier_policy_calibration.py {staged.as_posix()}" in calls
+
+
 def test_setup_pyscenic_env_uses_conda_forge_and_installs_requirements(tmp_path):
     bash = _bash()
     log = tmp_path / "calls.log"

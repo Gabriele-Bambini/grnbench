@@ -65,8 +65,9 @@ def portable_task_manifest(tasks_path: str | Path, out_path: str | Path) -> dict
     tasks, meta = load_task_manifest(tasks_path)
     portable = json.loads(json.dumps(tasks))
     for task in portable:
-        if task.get("path"):
-            task["path"] = _portable_user_path(task["path"])
+        for key in ("path", "gene_mapping_path"):
+            if task.get(key):
+                task[key] = _portable_user_path(task[key])
     payload = write_task_manifest(out_path, portable,
                                   task_type=f"{meta.get('task_type', 'real')}_portable")
     payload["source_tasks_sha256"] = meta["tasks_sha256"]
@@ -77,8 +78,9 @@ def portable_task_manifest(tasks_path: str | Path, out_path: str | Path) -> dict
 def _expand_task_paths(tasks: list[dict]) -> list[dict]:
     """Expand portable ``~/`` paths after manifest validation, without changing its hash."""
     for task in tasks:
-        if task.get("path"):
-            task["path"] = str(Path(task["path"]).expanduser())
+        for key in ("path", "gene_mapping_path"):
+            if task.get(key):
+                task[key] = str(Path(task[key]).expanduser())
     return tasks
 
 
@@ -313,8 +315,13 @@ def run_real_task(task: dict, refs: Path | None, workroot: Path, keep: bool = Fa
     shutil.rmtree(work, ignore_errors=True)
     try:
         orientation = "genes_x_cells" if task["kind"] == "beeline" else "auto"
+        gene_mapping_path = task.get("gene_mapping_path")
+        if gene_mapping_path is not None:
+            gene_mapping_path = Path(gene_mapping_path).expanduser()
         try:
-            diag = diagnose(task["path"], orientation=orientation)
+            diag = diagnose(
+                task["path"], orientation=orientation,
+                gene_mapping_path=gene_mapping_path)
         except Exception as exc:  # noqa: BLE001
             if task["truth"].get("expect_refusal"):
                 row["refused_as_expected"] = True
@@ -348,7 +355,8 @@ def run_real_task(task: dict, refs: Path | None, workroot: Path, keep: bool = Fa
             res = screen_candidates(diag, task["path"], work / "screen", tf_list=tfs,
                                     reference_pairs=pairs, max_candidates=4,
                                     extra=[{"name": "baseline", "choices": BASELINE}],
-                                    proxy_methods=EVAL_METHODS)
+                                    proxy_methods=EVAL_METHODS,
+                                    gene_mapping_path=gene_mapping_path)
             record_screening_failures(row, res["records"])
             scores = score_candidates(res["records"], res["plans"], tfs, res["reference"]["evaluation"])
             noref = res["rows"].drop(columns=[c for c in res["rows"] if c.startswith("reference_")])
@@ -395,7 +403,9 @@ def run_real_task(task: dict, refs: Path | None, workroot: Path, keep: bool = Fa
                                         models, tfs, res["reference"]["evaluation"],
                                         artifacts_dir=task_artifacts))
         else:
-            recs = execute_plan(plan, task["path"], work / "clean", tf_list=tfs)
+            recs = execute_plan(
+                plan, task["path"], work / "clean", tf_list=tfs,
+                gene_mapping_path=gene_mapping_path)
             row["contexts_ok"] = sum(1 for r in recs if r["processed"])
             row["contexts_failed"] = sum(1 for r in recs if r["error"])
             if row["contexts_failed"]:

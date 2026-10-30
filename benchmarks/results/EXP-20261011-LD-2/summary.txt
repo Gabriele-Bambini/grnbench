@@ -1,0 +1,35 @@
+path	status	input_genes	output_genes	mapping_source	organism_scope	organism_source	case_fold_action	exact_duplicate_groups	case_fold_groups	cross_convention_groups	message
+10x_pbmc3k/filtered/filtered_gene_bc_matrices/hg19	accepted	32738	32639	none	human	gene_identifiers	merge_and_guard	91	4	0	
+10x_pbmc3k/raw/raw_gene_bc_matrices/hg19	accepted	32738	32639	none	human	gene_identifiers	merge_and_guard	91	4	0	
+cellxgene/10x-3-v2/homo-sapiens/entorhinal-cortex__9f1049ac/data.h5ad	accepted	31997	31990	input_column	human	gene_identifiers	merge_and_guard	7	0	0	
+cellxgene/10x-3-v2/homo-sapiens/superior-frontal-gyrus__bdacc907/data.h5ad	accepted	31997	31990	input_column	human	gene_identifiers	merge_and_guard	7	0	0	
+cellxgene/10x-3-v2/microcebus-murinus/hypothalamus-pituitary-axis__62ec8c21/data.h5ad	accepted	16400	16392	input_column	other	gene_identifiers	preserve_and_warn	8	0	0	
+cellxgene/10x-3-v2/microcebus-murinus/uterus__f69adac8/data.h5ad	accepted	16400	16392	input_column	other	gene_identifiers	preserve_and_warn	8	0	0	
+cellxgene/10x-3-v2/mus-musculus/large-intestine__de4e7a0c/data.h5ad	accepted	17943	17941	input_column	mouse	gene_identifiers	merge_and_guard	2	0	0	
+cellxgene/10x-3-v2/mus-musculus/spinal-cord__989a76f9/data.h5ad	accepted	20210	20208	input_column	mouse	gene_identifiers	merge_and_guard	2	0	0	
+cellxgene/10x-3-v3/callithrix-jacchus/hippocampal-formation__19c78a83/data.h5ad	accepted	10981	10981	input_column	other	gene_identifiers	preserve_and_warn	0	0	0	
+cellxgene/10x-3-v3/callithrix-jacchus/primary-motor-cortex__787138a6/data.h5ad	accepted	14409	14409	input_column	other	gene_identifiers	preserve_and_warn	0	0	0	
+cellxgene/10x-3-v3/homo-sapiens/liver__d7476ae2/data.h5ad	accepted	12621	12620	input_column	human	gene_identifiers	merge_and_guard	1	0	0	
+cellxgene/10x-3-v3/homo-sapiens/prostate-gland__182f8181/data.h5ad	accepted	32397	32381	input_column	human	gene_identifiers	merge_and_guard	16	0	0	
+cellxgene/10x-3-v3/macaca-mulatta/primary-motor-cortex__1f59341c/data.h5ad	accepted	20510	18258	input_column	other	gene_identifiers	preserve_and_warn	79	0	0	
+cellxgene/10x-3-v3/mus-musculus/cervical-spinal-cord__9fcd3812/data.h5ad	accepted	30149	30140	input_column	mouse	gene_identifiers	merge_and_guard	7	0	0	
+cellxgene/10x-3-v3/mus-musculus/diencephalon__6de332e1/data.h5ad	accepted	30198	30179	input_column	mouse	gene_identifiers	merge_and_guard	17	0	0	
+cellxgene/10x-5-v1/homo-sapiens/lung__703f00e6/data.h5ad	accepted	16035	16032	input_column	human	gene_identifiers	merge_and_guard	3	0	0	
+cellxgene/10x-5-v1/homo-sapiens/lung__cdefb878/data.h5ad	accepted	19609	19604	input_column	human	gene_identifiers	merge_and_guard	5	0	0	
+cellxgene/10x-5-v2/homo-sapiens/blood__ee782eb7/data.h5ad	accepted	26015	26014	input_column	human	gene_identifiers	merge_and_guard	1	0	0	
+cellxgene/10x-5-v2/mus-musculus/caecum__0a1ad9d5/data.h5ad	accepted	19178	19172	input_column	mouse	gene_identifiers	merge_and_guard	6	0	0	
+cellxgene/10x-5-v2/mus-musculus/caecum__95dfddd0/data.h5ad	accepted	19178	19172	input_column	mouse	gene_identifiers	merge_and_guard	6	0	0	
+cellxgene/10x-gene-expression-flex/homo-sapiens/blood__95498b77/data.h5ad	accepted	18063	18063	input_column	human	gene_identifiers	merge_and_guard	0	0	0	
+cellxgene/10x-multiome/homo-sapiens/atrioventricular-node__680029ee/data.h5ad	accepted	31832	31824	input_column	human	gene_identifiers	merge_and_guard	8	0	0	
+cellxgene/bd-rhapsody-targeted-mrna/homo-sapiens/blood__d3566d6a/data.h5ad	accepted	460	460	input_column	human	gene_identifiers	merge_and_guard	0	0	0	
+cellxgene/cel-seq/homo-sapiens/epithelium-of-main-bronchus__61d327d1/data.h5ad	accepted	51976	51043	input_column	human	gene_identifiers	merge_and_guard	41	0	0	
+cellxgene/cel-seq2/homo-sapiens/left-main-bronchus__03da97e9/data.h5ad	accepted	14339	14339	input_column	human	gene_identifiers	merge_and_guard	0	0	0	
+cellxgene/modified-strt-seq/homo-sapiens/interventricular-septum__f3ee7613/data.h5ad	accepted	32118	32108	input_column	human	gene_identifiers	merge_and_guard	10	0	0	
+cellxgene/patch-seq/mus-musculus/primary-motor-cortex__8f98c236/data.h5ad	accepted	40656	40650	input_column	mouse	gene_identifiers	merge_and_guard	5	0	0	
+cellxgene/sci-rna-seq3/danio-rerio/endocrine-pancreas__e2309842/data.h5ad	accepted	32031	27614	input_column	other	gene_identifiers	preserve_and_warn	1719	91	91	
+cellxgene/sci-rna-seq3/macaca-mulatta/brodmann-1909-area-19__885d325f/data.h5ad	accepted	29060	23281	input_column	other	gene_identifiers	preserve_and_warn	118	0	0	
+cellxgene/sci-rna-seq3/mus-musculus/embryo__0bcda669/data.h5ad	accepted	45525	45494	input_column	mouse	gene_identifiers	merge_and_guard	29	0	0	
+cellxgene/smart-seq2/homo-sapiens/islet-of-langerhans__66d15835/data.h5ad	accepted	20084	20084	input_column	human	gene_identifiers	merge_and_guard	0	0	0	
+cellxgene/smart-seq2/mus-musculus/aorta__0380ddce/data.h5ad	accepted	21025	21025	input_column	mouse	gene_identifiers	merge_and_guard	0	0	0	
+scanpy_paul15/paul15.h5ad	accepted	3451	3450	none	mouse	symbol_casing	merge_and_guard	0	1	1	
+files: 33, accepted: 33, policy refused: 0, other ingest refused: 0, errors: 0

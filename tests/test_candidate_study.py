@@ -130,6 +130,25 @@ def test_clean_copy_gives_the_same_plan_and_profile_as_the_original(tmp_path):
         assert plans[0].profile.get(key) == plans[1].profile.get(key)
 
 
+def test_degraded_copy_applies_an_explicit_gene_mapping(tmp_path):
+    ids = [f"ENSG{i:011d}" for i in range(20)]
+    src = tmp_path / "ensembl.h5ad"
+    ad.AnnData(
+        sp.csr_matrix(np.ones((10, len(ids)), dtype=np.float32)),
+        var=pd.DataFrame(index=ids),
+    ).write_h5ad(src)
+    mapping = tmp_path / "mapping.tsv"
+    mapping.write_text(
+        "id\tsymbol\n" + "".join(f"{gene_id}\tGENE{i}\n" for i, gene_id in enumerate(ids)),
+        encoding="utf-8",
+    )
+
+    copy = cs.write_degraded_copy(
+        src, "clean", 0, tmp_path / "copy", gene_mapping_path=mapping)
+
+    assert list(ad.read_h5ad(copy).var_names) == [f"GENE{i}" for i in range(20)]
+
+
 def test_make_tasks_lists_cellxgene_datasets_times_conditions(tmp_path):
     for sub in ("a/human/x__1", "b/mouse/y__2"):
         d = tmp_path / "cellxgene" / sub

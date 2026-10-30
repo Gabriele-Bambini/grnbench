@@ -11,8 +11,10 @@ logged in ``adata.uns["grnbench_ingest"]``.
 """
 from __future__ import annotations
 
+import hashlib
 import re
 import warnings
+from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -22,7 +24,7 @@ import pandas as pd
 import scanpy as sc
 import scipy.sparse as sp
 
-ENSEMBL_VERSION_RE = re.compile(r"^(ENSG\d+)\.\d+$")
+ENSEMBL_VERSION_RE = re.compile(r"^((?:ENSG|ENSMUSG)\d+)\.\d+$")
 ENSEMBL_ANY_RE = re.compile(r"^ENS[A-Z]{0,4}G\d+(\.\d+)?$")
 # var columns that carry gene symbols next to Ensembl IDs (CELLxGENE, 10x, scanpy)
 SYMBOL_COLUMNS = ("feature_name", "gene_symbols", "gene_symbol", "gene_name", "gene_names",
@@ -34,6 +36,15 @@ GENE_SYMBOL_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_.-]{0,19}$")
 BARCODE_RE = re.compile(r"^(?:[A-Za-z0-9]+[:_])?[ACGTNacgtn]{8,}(?:[-_]\d+)?$")
 MITO_PREFIXES = ("MT-", "MT.", "Mt-", "mt-")
 RIBO_PREFIXES = ("RPS", "RPL", "rps", "rpl")
+CASE_COLLISION_MAX_FRACTION = 0.01
+CROSS_CONVENTION_MAX_FRACTION = 0.001
+CROSS_CONVENTION_MIN_GROUPS = 2
+_ORF_TOKEN_RE = re.compile(r"(?<=[0-9XY])orf(?=[0-9])")
+_MAPPING_ID_HEADERS = {"id", "gene_id", "ensembl_id", "feature_id"}
+_MAPPING_SYMBOL_HEADERS = {"symbol", "gene_symbol", "gene_name", "feature_name"}
+_ORGANISM_ID_COLUMNS = (
+    "gene_ids", "gene_id", "feature_id", "ensembl_id", "gene_id_as_loaded",
+)
 
 # Count plausibility (issue #42). An integer, non-negative matrix is not always raw
 # counts: rounded normalize_total/CPM output and binarized 0/1 matrices pass
@@ -56,6 +67,10 @@ class IngestError(ValueError):
     """Raised when input data cannot be safely interpreted as raw counts."""
 
 
+class IdentifierPolicyError(IngestError):
+    """Raised when D-028 refuses an unsafe identifier set."""
+
+
 @dataclass
 class IngestReport:
     path: str
@@ -70,13 +85,16 @@ class IngestReport:
     count_plausibility: dict = field(default_factory=dict)
     # loud-but-not-fatal findings; run_prep copies them into manifest["warnings"]
     warnings: list[str] = field(default_factory=list)
+    # D-027: portable, path-free source-to-representative audit.
+    identifier_provenance: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return self.__dict__.copy()
 
 
 def load_any(path: str | Path,
-             orientation: str = "auto") -> tuple[ad.AnnData, IngestReport]:
+             orientation: str = "auto",
+             gene_mapping_path: str | Path | None = None) -> tuple[ad.AnnData, IngestReport]:
     """Load ``path`` into a counts-backed AnnData.
 
     Supported: ``.h5ad``, 10x ``.h5``, 10x MTX directory, ``.loom``,
@@ -96,10 +114,14 @@ def load_any(path: str | Path,
         raise
     except (OSError, ValueError, KeyError, TypeError) as exc:    # the reader's own text is jargon: say what to do
         raise _unreadable(p, exc) from exc
+    gene_mapping = mapping_source = None
+    if gene_mapping_path is not None:
+        gene_mapping, mapping_source = load_gene_mapping(gene_mapping_path)
     _ensure_counts_backed(adata, rep)
     _assert_finite(adata.X)
     _check_count_plausibility(adata.X, rep)
-    adata = _clean_gene_names(adata, rep)
+    adata = _clean_gene_names(
+        adata, rep, gene_mapping=gene_mapping, mapping_source=mapping_source)
     return adata, rep
 
 
@@ -534,94 +556,390 @@ def _check_count_plausibility(X, rep: IngestReport) -> None:
         warnings.warn(msg, RuntimeWarning, stacklevel=3)
 
 
-def _clean_gene_names(adata: ad.AnnData, rep: IngestReport) -> ad.AnnData:
-    """Strip Ensembl versions and aggregate duplicate genes by sum.
+def load_gene_mapping(path: str | Path) -> tuple[dict[str, str], dict]:
+    """Read a deterministic two-column ``id -> symbol`` table.
 
-    Returns the (possibly rebuilt) AnnData: duplicates change the matrix
-    shape, so the object is reconstructed rather than partially mutated. Gene
-    matching elsewhere in grnbench is case-insensitive, therefore identifiers
-    that differ only by case are duplicates under the same contract and are
-    aggregated here too. The first loaded spelling is retained and the
-    case-fold merge is reported separately. Every layer uses the same mapping.
+    The table may be comma- or tab-separated and may have an ``id/symbol``
+    header.  Conflicting targets for one identifier are refused.  Only the
+    content digest and row counts are returned as provenance; the local path is
+    deliberately never copied into a manifest or portable diagnostic.
     """
-    names = pd.Index(adata.var_names.astype(str))
-    if names.str.match(ENSEMBL_ANY_RE).mean() > 0.9:
-        for col in SYMBOL_COLUMNS:
-            if col not in adata.var.columns:
-                continue
-            sym = adata.var[col].astype(str)
-            usable = (sym.str.len() > 0) & ~sym.str.lower().isin({"nan", "none", ""}) \
-                & ~sym.str.match(ENSEMBL_ANY_RE)
-            if usable.mean() > 0.5:
-                adata.var["gene_id_as_loaded"] = names.to_numpy()
-                names = pd.Index(np.where(usable.to_numpy(), sym.to_numpy(), names.to_numpy()))
-                rep.notes.append(f"Ensembl IDs mapped to symbols from var['{col}'] "
-                                 f"({int(usable.sum())}/{len(names)} genes; IDs kept in "
-                                 "var['gene_id_as_loaded'])")
-                break
+    source = Path(path)
+    if not source.is_file():
+        raise IngestError(f"gene mapping table does not exist: {source}")
+    raw = source.read_bytes()
+    try:
+        frame = pd.read_csv(source, sep=None, engine="python", header=None, dtype=str,
+                            keep_default_na=False, comment="#")
+    except Exception as exc:  # noqa: BLE001 - turn parser internals into user advice
+        raise IngestError(f"could not read gene mapping table: {exc}") from exc
+    if frame.shape[1] != 2:
+        raise IngestError(
+            f"gene mapping table must have exactly two columns (id, symbol); found {frame.shape[1]}")
+    frame = frame.apply(lambda column: column.astype(str).str.strip())
+    if len(frame):
+        first = (frame.iat[0, 0].casefold(), frame.iat[0, 1].casefold())
+        if first[0] in _MAPPING_ID_HEADERS and first[1] in _MAPPING_SYMBOL_HEADERS:
+            frame = frame.iloc[1:].reset_index(drop=True)
+    if frame.empty or (frame == "").any(axis=None):
+        raise IngestError("gene mapping table contains no mappings or has an empty id/symbol")
+
+    mapping: dict[str, str] = {}
+    for source_id, symbol in frame.itertuples(index=False, name=None):
+        previous = mapping.get(source_id)
+        if previous is not None and previous != symbol:
+            raise IngestError(
+                "gene mapping table maps one identifier to multiple symbols: "
+                f"{source_id!r} -> {previous!r}/{symbol!r}")
+        mapping[source_id] = symbol
+    metadata = {
+        "kind": "user_table",
+        "sha256": hashlib.sha256(raw).hexdigest(),
+        "rows": int(len(frame)),
+        "unique_ids": int(len(mapping)),
+    }
+    return mapping, metadata
+
+
+def _strip_supported_ensembl_version(name: str) -> str:
+    match = ENSEMBL_VERSION_RE.match(name)
+    return match.group(1) if match else name
+
+
+def _symbol_is_usable(value: str) -> bool:
+    return bool(value) and value.casefold() not in {"nan", "none"} \
+        and not bool(ENSEMBL_ANY_RE.match(value))
+
+
+def _name_convention(name: str) -> str | None:
+    """Measured D-027 spelling class after removing the ``C1orf112`` token."""
+    without_orf = _ORF_TOKEN_RE.sub("", name)
+    letters = "".join(char for char in without_orf if char.isalpha())
+    if not letters:
+        return None
+    if letters.isupper():
+        return "upper"
+    if letters.islower():
+        return "lower"
+    return "mixed"
+
+
+def _organism_label(value: object) -> str:
+    """Portable organism label for the identifier policy, including ontology IDs."""
+    label = " ".join(str(value).strip().lower().split())
+    if label in {"human", "homo sapiens", "ncbitaxon:9606", "9606"}:
+        return "human"
+    if label in {"mouse", "mus musculus", "ncbitaxon:10090", "10090"}:
+        return "mouse"
+    return label
+
+
+def _identifier_organism_policy(adata: ad.AnnData, names: pd.Index) -> dict:
+    """Determine whether human/mouse case-fold merging is safe under D-028.
+
+    Curated organism metadata wins.  Human/mouse Ensembl identifiers are the
+    next strongest evidence, followed by the existing symbol-casing hint.  A
+    named third organism or ambiguous input is never coerced into the
+    human/mouse namespace: distinct case-only spellings are preserved.
+    """
+    if "organism" in adata.obs.columns and len(adata.obs):
+        values = {
+            _organism_label(value)
+            for value in pd.unique(adata.obs["organism"].dropna().astype(str))
+            if _organism_label(value) not in {"", "nan", "none"}
+        }
+        if values:
+            if values == {"human"}:
+                scope, label = "human", "human"
+            elif values == {"mouse"}:
+                scope, label = "mouse", "mouse"
+            elif values <= {"human", "mouse"}:
+                scope, label = "human_mouse", "human+mouse"
+            else:
+                scope, label = "other", ", ".join(sorted(values))[:120]
+            return {
+                "scope": scope,
+                "label": label,
+                "source": "metadata:obs['organism']",
+                "case_fold_action": "merge_and_guard" if scope != "other" else "preserve_and_warn",
+            }
+
+    id_collections = [names]
+    for column in _ORGANISM_ID_COLUMNS:
+        if column in adata.var.columns:
+            id_collections.append(pd.Index(adata.var[column].astype(str)))
+    for identifiers in id_collections:
+        human = float(identifiers.str.match(r"^ENSG\d+(?:\.\d+)?$").mean())
+        mouse = float(identifiers.str.match(r"^ENSMUSG\d+(?:\.\d+)?$").mean())
+        other_ensembl = float(
+            (identifiers.str.match(ENSEMBL_ANY_RE)
+             & ~identifiers.str.match(r"^(?:ENSG|ENSMUSG)\d+(?:\.\d+)?$")).mean())
+        if human > 0.5:
+            return {"scope": "human", "label": "human", "source": "gene_identifiers",
+                    "case_fold_action": "merge_and_guard"}
+        if mouse > 0.5:
+            return {"scope": "mouse", "label": "mouse", "source": "gene_identifiers",
+                    "case_fold_action": "merge_and_guard"}
+        if other_ensembl > 0.5:
+            return {"scope": "other", "label": "non-human/mouse Ensembl",
+                    "source": "gene_identifiers", "case_fold_action": "preserve_and_warn"}
+
+    from grnbench.hygiene import organism_hint
+    hint = organism_hint(names)
+    if hint in {"human-like", "mouse-like"}:
+        scope = hint.removesuffix("-like")
+        return {"scope": scope, "label": scope, "source": "symbol_casing",
+                "case_fold_action": "merge_and_guard"}
+    return {"scope": "unknown", "label": None, "source": "insufficient_evidence",
+            "case_fold_action": "preserve_and_warn"}
+
+
+def _portable_ingest_summary(rep: IngestReport) -> dict:
+    """Small AnnData ``uns`` copy; complete mappings live in run artifacts."""
+    value = rep.to_dict()
+    provenance = value.pop("identifier_provenance", {}) or {}
+    if provenance:
+        value["identifier_summary"] = {
+            "policy": provenance.get("policy"),
+            "input_gene_count": provenance.get("input_gene_count"),
+            "output_gene_count": provenance.get("output_gene_count"),
+            "organism_policy": provenance.get("organism_policy"),
+            "mapping_source": provenance.get("mapping_source"),
+            "mapping_outcome": provenance.get("mapping_outcome"),
+            "collision_summary": provenance.get("collision_summary"),
+        }
+    return value
+
+
+def _clean_gene_names(
+    adata: ad.AnnData,
+    rep: IngestReport,
+    *,
+    gene_mapping: dict[str, str] | None = None,
+    mapping_source: dict | None = None,
+) -> ad.AnnData:
+    """Map, audit and safely aggregate gene identifiers under D-028.
+
+    Input-carried symbols or an explicit, fingerprinted two-column mapping are
+    the only mapping sources.  Exact duplicates are always summed.  Distinct
+    spellings are summed only for confidently identified human/mouse inputs and
+    while the measured case-fold and cross-convention guardrails remain below
+    their refusal thresholds.  For another or unknown organism, distinct
+    case-only spellings are preserved and reported.  Exact duplicates are
+    always summed, and every layer uses the same mapping.
+    """
+    loaded_names = pd.Index(adata.var_names.astype(str))
+    names = loaded_names.copy()
+    input_ensembl_fraction = float(loaded_names.str.match(ENSEMBL_ANY_RE).mean())
+    applied_mapping = np.zeros(len(names), dtype=bool)
+    source_info: dict = {"kind": "none"}
+    mapping_transformation = None
+
+    if gene_mapping is not None:
+        mapped_names = []
+        for name in loaded_names:
+            target = gene_mapping.get(name)
+            if target is None:
+                target = gene_mapping.get(_strip_supported_ensembl_version(name))
+            if target is not None and _symbol_is_usable(target):
+                mapped_names.append(target)
+                applied_mapping[len(mapped_names) - 1] = target != name
+            else:
+                mapped_names.append(name)
+        names = pd.Index(mapped_names)
+        source_info = dict(mapping_source or {"kind": "user_table"})
+        mapping_transformation = "user_mapping"
+    elif input_ensembl_fraction > 0.9:
+        # Several producers carry more than one symbol-like column.  A sparse
+        # early column must not hide a complete later one merely because it has
+        # one usable value: select the column with the greatest usable share.
+        candidates = []
+        for column in SYMBOL_COLUMNS:
+            if column in adata.var.columns:
+                symbols = adata.var[column].astype(str).str.strip()
+                usable = symbols.map(_symbol_is_usable).to_numpy(dtype=bool)
+                candidates.append((int(usable.sum()), column, symbols, usable))
+        if candidates:
+            _, column, symbols, usable = max(candidates, key=lambda item: item[0])
+            if usable.any():
+                names = pd.Index(np.where(usable, symbols.to_numpy(), loaded_names.to_numpy()))
+                applied_mapping = usable & (names.to_numpy() != loaded_names.to_numpy())
+                source_info = {"kind": "input_column", "column": str(column)}
+                mapping_transformation = "input_symbol_mapping"
     padded = names.str.strip() != names
     if padded.any():            # ' TP53' and 'TP53\xa0' match no TF list and no gene set: say so and fix them
         rep.notes.append(f"{int(padded.sum())} gene name(s) had leading or trailing whitespace and were "
                          f"stripped (e.g. {names[padded][0]!r})")
-        names = names.str.strip()
-    stripped = names.str.match(ENSEMBL_VERSION_RE)
-    if stripped.any():
-        names = pd.Index([
-            ENSEMBL_VERSION_RE.match(n).group(1) if m else n
-            for n, m in zip(names, stripped)
-        ])
-        rep.version_suffixes_stripped = int(stripped.sum())
+        names = pd.Index(names.str.strip())
 
-    exact_duplicates = int(names.duplicated(keep="first").sum())
-    folded = pd.Index([name.casefold() for name in names])
-    folded_dup_mask = folded.duplicated(keep="first")
-    if not folded_dup_mask.any():
-        adata.var.index = names
-        if rep.version_suffixes_stripped:
-            rep.notes.append(
-                f"{rep.version_suffixes_stripped} Ensembl version suffixes stripped."
-            )
-        adata.uns["grnbench_ingest"] = rep.to_dict()
-        return adata
+    if applied_mapping.any():
+        adata.var["gene_id_as_loaded"] = loaded_names.to_numpy()
+        source_label = ("a supplied table" if source_info["kind"] == "user_table"
+                        else f"var['{source_info['column']}']")
+        rep.notes.append(
+            f"gene identifiers mapped to symbols from {source_label} "
+            f"({int(applied_mapping.sum())}/{len(names)} features; IDs kept in "
+            "var['gene_id_as_loaded'])")
 
-    unique_folded = pd.Index(pd.unique(folded))
-    codes = pd.Categorical(folded, categories=unique_folded).codes
-    ind = sp.csr_matrix(
-        (
-            np.ones(len(names), dtype=np.float32),
-            (codes, np.arange(len(names))),
-        ),
-        shape=(len(unique_folded), len(names)),
+    remaining_ensembl_fraction = float(names.str.match(ENSEMBL_ANY_RE).mean())
+    if input_ensembl_fraction > 0.9 and remaining_ensembl_fraction > 0.9:
+        raise IdentifierPolicyError(
+            "more than 90% of input gene names are Ensembl IDs and no usable symbol source "
+            "mapped enough of them. Supply a two-column id-to-symbol table with "
+            "--gene-mapping, or export the input with a feature_name/gene_symbol column; "
+            "keeping Ensembl IDs would produce no overlap with symbol-based references.")
+
+    before_strip = names.copy()
+    names = pd.Index([_strip_supported_ensembl_version(name) for name in names])
+    stripped_mask = names.to_numpy() != before_strip.to_numpy()
+    rep.version_suffixes_stripped = int(stripped_mask.sum())
+
+    organism_policy = _identifier_organism_policy(adata, names)
+    merge_casefold = organism_policy["case_fold_action"] == "merge_and_guard"
+    spelling_counts = Counter(map(str, names))
+    folded_spellings: dict[str, list[str]] = {}
+    for name in map(str, names):
+        spellings = folded_spellings.setdefault(name.casefold(), [])
+        if name not in spellings:
+            spellings.append(name)
+    case_groups_raw = [spellings for spellings in folded_spellings.values() if len(spellings) > 1]
+    case_groups = []
+    n_cross = 0
+    for spellings in case_groups_raw:
+        conventions = {_name_convention(name) for name in spellings} - {None}
+        cross = len(conventions) >= 2
+        n_cross += int(cross)
+        case_groups.append({
+            "representative": spellings[0] if merge_casefold else None,
+            "spellings": spellings,
+            "method": "sum" if merge_casefold else "preserve",
+            "cross_convention": cross,
+        })
+
+    n_features = len(names)
+    cross_convention_limit = max(
+        CROSS_CONVENTION_MIN_GROUPS,
+        CROSS_CONVENTION_MAX_FRACTION * n_features,
     )
+    if merge_casefold and n_cross > cross_convention_limit:
+        raise IdentifierPolicyError(
+            f"identifier hygiene found {n_cross} cross-convention case-fold groups among "
+            f"{n_features} genes, above the max(2 groups, 0.1%) safety limit. This can indicate mixed "
+            "human/mouse annotation; provide one organism's corrected identifiers.")
+    if merge_casefold and len(case_groups) > CASE_COLLISION_MAX_FRACTION * n_features:
+        raise IdentifierPolicyError(
+            f"identifier hygiene found {len(case_groups)} distinct-spelling case-fold groups "
+            f"among {n_features} genes, above the 1% safety limit. This looks like an "
+            "annotation collision set; provide a corrected id-to-symbol table instead of "
+            "silently merging it.")
 
-    def _agg(m):
-        return ((ind @ sp.csr_matrix(m).T).T).tocsr()
+    aggregation_keys = pd.Index(
+        [name.casefold() for name in names] if merge_casefold else list(map(str, names)))
+    duplicate_mask = aggregation_keys.duplicated(keep="first")
+    unique_keys = pd.Index(pd.unique(aggregation_keys))
+    representative_by_key: dict[str, str] = {}
+    for name, key in zip(names, aggregation_keys):
+        representative_by_key.setdefault(str(key), str(name))
 
-    first = ~folded_dup_mask
-    new_var = adata.var.loc[first].copy()
-    representative_names = names[first]
-    new_var.index = pd.Index(representative_names, name=new_var.index.name)
+    mapping_rows: dict[tuple[str, str, tuple[str, ...]], int] = {}
+    for position, (loaded, mapped, stripped, fold) in enumerate(
+            zip(loaded_names, before_strip, names, aggregation_keys)):
+        transformations = []
+        if applied_mapping[position] and mapping_transformation:
+            transformations.append(mapping_transformation)
+        if mapped != stripped:
+            transformations.append("strip_ensembl_version")
+        representative = representative_by_key[str(fold)]
+        if merge_casefold and str(stripped) != representative:
+            transformations.append("case_fold_merge")
+        key = (str(loaded), representative, tuple(transformations))
+        mapping_rows[key] = mapping_rows.get(key, 0) + 1
 
-    rebuilt = ad.AnnData(
-        X=_agg(adata.X),
-        obs=adata.obs.copy(),
-        var=new_var,
-        # anndata>=0.13 aliases X as layers[None]; skip it when rebuilding
-        layers={k: _agg(v) for k, v in adata.layers.items() if k is not None},
-    )
-    rebuilt.uns = dict(adata.uns)
-    rep.n_duplicates_merged = int(folded_dup_mask.sum())
-    rep.n_case_duplicates_merged = rep.n_duplicates_merged - exact_duplicates
+    exact_groups = [
+        {"representative": name, "occurrences": int(count), "method": "sum"}
+        for name, count in spelling_counts.items() if count > 1
+    ]
+    exact_duplicates = sum(group["occurrences"] - 1 for group in exact_groups)
+    rep.n_duplicates_merged = int(duplicate_mask.sum())
+    rep.n_case_duplicates_merged = (
+        rep.n_duplicates_merged - int(exact_duplicates) if merge_casefold else 0)
+    rep.identifier_provenance = {
+        "policy": "D-028",
+        "input_gene_count": int(len(loaded_names)),
+        "output_gene_count": int(len(unique_keys)),
+        "aggregation_method": "sum",
+        "organism_policy": organism_policy,
+        "mapping_source": source_info,
+        "mapping_outcome": {
+            "mapped_features": int(applied_mapping.sum()),
+            "unchanged_features": int(len(names) - applied_mapping.sum()),
+            "input_ensembl_fraction": round(input_ensembl_fraction, 6),
+            "remaining_ensembl_fraction": round(remaining_ensembl_fraction, 6),
+        },
+        "version_suffixes_stripped": rep.version_suffixes_stripped,
+        "source_to_representative": [
+            {
+                "as_loaded": loaded,
+                "representative": representative,
+                "occurrences": occurrences,
+                "transformations": list(transformations),
+            }
+            for (loaded, representative, transformations), occurrences in mapping_rows.items()
+        ],
+        "exact_duplicate_groups": exact_groups,
+        "case_fold_groups": case_groups,
+        "collision_summary": {
+            "case_fold_groups": int(len(case_groups)),
+            "case_fold_fraction": round(len(case_groups) / n_features, 6),
+            "case_fold_limit": CASE_COLLISION_MAX_FRACTION,
+            "cross_convention_groups": int(n_cross),
+            "cross_convention_fraction": round(n_cross / n_features, 6),
+            "cross_convention_limit": CROSS_CONVENTION_MAX_FRACTION,
+            "cross_convention_min_groups": CROSS_CONVENTION_MIN_GROUPS,
+            "case_fold_action": organism_policy["case_fold_action"],
+        },
+    }
+
     if exact_duplicates:
-        rep.notes.append(f"{exact_duplicates} duplicate gene names aggregated by sum.")
+        rep.notes.append(f"{exact_duplicates} exact duplicate gene names aggregated by sum.")
     if rep.n_case_duplicates_merged:
         rep.notes.append(
             f"{rep.n_case_duplicates_merged} case-insensitive duplicate gene names "
-            "aggregated by sum; first loaded spelling retained."
-        )
+            "aggregated by sum; first loaded spelling retained.")
+    elif case_groups and not merge_casefold:
+        message = (
+            f"{len(case_groups)} distinct-spelling case-fold group(s) preserved because "
+            f"the organism scope is {organism_policy['scope']!r}, not confidently human/mouse.")
+        rep.notes.append(message)
+        rep.warnings.append(message)
     if rep.version_suffixes_stripped:
         rep.notes.append(
-            f"{rep.version_suffixes_stripped} Ensembl version suffixes stripped."
-        )
-    rebuilt.uns["grnbench_ingest"] = rep.to_dict()
+            f"{rep.version_suffixes_stripped} human/mouse Ensembl version suffixes stripped.")
+
+    if not duplicate_mask.any():
+        adata.var.index = names
+        adata.uns["grnbench_ingest"] = _portable_ingest_summary(rep)
+        return adata
+
+    codes = pd.Categorical(aggregation_keys, categories=unique_keys).codes
+    indicator = sp.csr_matrix(
+        (np.ones(len(names), dtype=np.float32), (codes, np.arange(len(names)))),
+        shape=(len(unique_keys), len(names)),
+    )
+
+    def _aggregate(matrix):
+        return ((indicator @ sp.csr_matrix(matrix).T).T).tocsr()
+
+    first = ~duplicate_mask
+    new_var = adata.var.loc[first].copy()
+    new_var.index = pd.Index(names[first], name=new_var.index.name)
+    rebuilt = ad.AnnData(
+        X=_aggregate(adata.X),
+        obs=adata.obs.copy(),
+        var=new_var,
+        # anndata>=0.13 aliases X as layers[None]; skip it when rebuilding
+        layers={key: _aggregate(value) for key, value in adata.layers.items() if key is not None},
+    )
+    rebuilt.uns = dict(adata.uns)
+    rebuilt.uns["grnbench_ingest"] = _portable_ingest_summary(rep)
     return rebuilt

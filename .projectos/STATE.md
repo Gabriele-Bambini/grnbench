@@ -2,17 +2,19 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-10-29 (EXP-20261016-LM-1 registered, LM's agent); 2026-10-29 (EXP-20261018-LD-1 current-main alignment, LD); 2026-10-28 (EXP-20261022-GB-1
-results, GB's agent); 2026-10-22 (EXP-20261016-LM-1 draft PR, LM's agent); 2026-10-16 (D-026 accepted, D-018 active,
+Updated: 2026-10-29 (#58 review fixes and current-main alignment, LD; EXP-20261016-LM-1
+registered, LM's agent; EXP-20261018-LD-1 current-main alignment, LD); 2026-10-28
+(EXP-20261022-GB-1 results, GB's agent); 2026-10-22 (EXP-20261016-LM-1 draft PR, LM's agent);
+2026-10-16 (D-026 accepted, D-018 active,
 D-029 proposed, "two-sided" wording errata, LM's agent); 2026-10-26 (retention ledger, GB's agent);
 2026-10-25 (#167 full-suite baseline fixes, LD); 2026-10-25 (#169 empty stratification pool, LD);
 2026-10-25 (#172 leading-dash context replay, LD); 2026-10-26 (#183 test registry isolation, LD);
 2026-10-24 (#149/#116 silent behaviours made loud, GB's agent); 2026-10-25 (#164 context/batch and
 HVG guards, LD); 2026-10-23 (ARACNe3 branch: main merged in, relative binary path fixed, GB's
 agent); 2026-10-22 (Block 6, 200-dataset pool registered, GB's agent); 2026-10-22 (#132 plan/runtime
-truth, LD);
-2026-10-18 (ARACNe3 HPC build and smoke run, EXP-20261018-GB-1, issue #109, GB's agent); 2026-10-17 (ARACNe3 adapter, issue #105, GB's agent);
-2026-10-15 (#87, #71, #69 merged at GB's request, GB's agent); 2026-10-10
+truth, LD); 2026-10-18 (ARACNe3 HPC build and smoke run, EXP-20261018-GB-1, issue #109, GB's agent);
+2026-10-17 (ARACNe3 adapter, issue #105, GB's agent); 2026-10-15 (#87, #71, #69 merged at GB's
+request, GB's agent); 2026-10-11 (issue #58 identifier provenance and calibration, LD); 2026-10-10
 (issue #59, LD; interface branch merged with main after #55, GB's agent); 2026-10-09
 (interface redesign; tool end to end, GB's agent); 2026-10-07 (interface explorer, GB's agent);
 2026-10-06 (EXP-20261003-GB-1: review fixes and record note 2.1 on PR #55, agent);
@@ -166,6 +168,24 @@ pre-registered experiments (D-017).
   the independent agent review (AGENTS.md section 5), GB merges and launches, and section 2.2 of the
   record adds LM's note 7 (C6 and C4 combine only with T1-T3 run on at least 15 analysed datasets each).
   #86 and #88 must not be in the commit the job runs (LM holds them until it has run).
+- Issue #58 (LD, `ld/identifier-provenance`): D-028 identifier provenance and organism-aware refusal
+  guards are implemented with focused regressions. EXP-20261010-LD-1 / issue #90 failed before
+  ingest because its preregistered preflight compared the broad dynamic cache with the cumulative
+  registry (0 matrices inspected; outcome preserved). EXP-20261010-LD-2 / issue #91 fixed the
+  design with an exact 33-input snapshot and fully completed: 32 accepted, no loader/other-ingest
+  errors, but the human/mouse-oriented cross-convention heuristic falsely refused one `Danio rerio`
+  input (91 groups / 32,031 genes). The owner chose the safe correction: merge/guard case-only
+  spellings only for confidently identified human/mouse data; preserve and warn for another or
+  unknown organism. EXP-20261011-LD-1 / issue #96 completed on the same exact snapshot but still
+  accepted only 32/33: the zebrafish file lacks cell-level organism metadata, and D-028 v1 failed
+  to recognise its non-human/mouse Ensembl IDs before the symbol-casing fallback. Preserve that
+  negative result. The missing evidence step now has a real-shape regression. EXP-20261011-LD-2 /
+  issue #97 then passed the identical snapshot: 33/33 accepted, zero refusals/errors; zebrafish was
+  `other` from gene identifiers with all 91 groups preserved, while human/mouse retained their
+  guarded merge. The 2026-10-24 review fixes make symbol-column selection coverage-aware, restore
+  the two-group small-panel boundary, register the executable KB option and thread explicit mapping
+  through diagnosis, screening, benchmarks, UI, cleaning and reproduction commands. #58 awaits
+  renewed review, not merged.
 - Issue #56 (LD, `ld/portable-diagnostics`): schema-v1 `diagnostics.json` gives prep, screening and
   model outcomes one portable structure for reports/UI, with bounded messages, before/after
   dimensions, effective-vs-requested strategy, real subset context labels and recursive privacy

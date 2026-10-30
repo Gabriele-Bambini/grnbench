@@ -5,11 +5,13 @@ import numpy as np
 import pandas as pd
 import pytest
 import anndata as ad
+import scipy.sparse as sp
 
 from grnbench.ingest import (
     IngestError,
     IngestReport,
     _clean_gene_names,
+    load_gene_mapping,
     load_any,
     looks_like_counts,
 )
@@ -77,17 +79,19 @@ def test_duplicate_genes_aggregated_by_sum():
 
 def test_case_insensitive_duplicate_genes_are_aggregated_and_reported():
     """Regression for #30: case-fold collisions must be resolved before TF matching."""
+    first = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
     a = ad.AnnData(
-        X=np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]),
-        var=pd.DataFrame(index=["LPCAT4", "Lpcat4", "Gata1"]),
+        X=np.hstack([first, np.zeros((2, 999))]),
+        var=pd.DataFrame(index=["LPCAT4", "Lpcat4", "Gata1",
+                                *[f"Gene{i}" for i in range(999)]]),
     )
     rep = IngestReport(path="test", fmt="synthetic")
 
     a = _clean_gene_names(a, rep)
 
-    assert list(a.var_names) == ["LPCAT4", "Gata1"]
+    assert list(a.var_names[:2]) == ["LPCAT4", "Gata1"]
     dense = a.X.toarray() if hasattr(a.X, "toarray") else np.asarray(a.X)
-    assert np.allclose(dense, [[3.0, 3.0], [9.0, 6.0]])
+    assert np.allclose(dense[:, :2], [[3.0, 3.0], [9.0, 6.0]])
     assert rep.n_case_duplicates_merged == 1
     assert any("case-insensitive" in note for note in rep.notes)
 
@@ -148,14 +152,17 @@ def test_10x_h5_without_duplicates_is_untouched(tmp_path):
     assert rep.n_duplicates_merged == 0
 
 
-def test_ensembl_version_suffixes_stripped():
+def test_human_and_mouse_ensembl_version_suffixes_are_stripped_consistently():
     a = ad.AnnData(
-        X=np.array([[1.0, 2.0]]),
-        var=pd.DataFrame(index=["ENSG00000141510.12", "ENSG00000000003.19"]),
+        X=np.ones((1, 12)),
+        var=pd.DataFrame(index=[
+            "ENSG00000141510.12", "ENSMUSG00000059552.7",
+            *[f"GENE{i}" for i in range(10)],
+        ]),
     )
     rep = IngestReport(path="test", fmt="synthetic")
     a = _clean_gene_names(a, rep)
-    assert list(a.var_names) == ["ENSG00000141510", "ENSG00000000003"]
+    assert list(a.var_names[:2]) == ["ENSG00000141510", "ENSMUSG00000059552"]
     assert rep.version_suffixes_stripped == 2
 
 
@@ -228,6 +235,276 @@ def test_ensembl_ids_are_mapped_to_symbols_from_a_var_column():
     assert list(a.var_names) == ["TP53", "MYC"]
     assert np.allclose(np.asarray(a.X.todense()), [[1.0, 5.0]])
     assert any("mapped to symbols" in n for n in rep.notes)
+
+
+def test_ensembl_mapping_chooses_the_input_column_with_most_usable_symbols():
+    ids = [f"ENSG{i:011d}" for i in range(20)]
+    sparse = [f"OLD{i}" if i < 3 else "" for i in range(20)]
+    complete = [f"GENE{i}" for i in range(20)]
+    a = ad.AnnData(
+        X=np.ones((1, len(ids))),
+        var=pd.DataFrame(
+            {"feature_name": sparse, "gene_symbols": complete}, index=ids),
+    )
+    rep = IngestReport(path="test", fmt="synthetic")
+
+    out = _clean_gene_names(a, rep)
+
+    assert list(out.var_names) == complete
+    assert rep.identifier_provenance["mapping_source"] == {
+        "kind": "input_column", "column": "gene_symbols"}
+    assert rep.identifier_provenance["mapping_outcome"]["mapped_features"] == 20
+
+
+def test_ensembl_dominant_input_without_symbol_source_is_refused():
+    names = [f"ENSG{i:011d}" for i in range(19)] + ["TP53"]
+    a = ad.AnnData(X=np.ones((1, len(names))), var=pd.DataFrame(index=names))
+    rep = IngestReport(path="test", fmt="synthetic")
+
+    with pytest.raises(IngestError, match=r"more than 90%.*--gene-mapping"):
+        _clean_gene_names(a, rep)
+
+
+def test_user_gene_mapping_is_hashed_applied_and_fully_recorded(tmp_path):
+    mapping_path = tmp_path / "ids.tsv"
+    mapping_path.write_text(
+        "id\tsymbol\nENSG00000141510\tTP53\nENSMUSG00000059552\tTrp53\n",
+        encoding="utf-8",
+    )
+    mapping, metadata = load_gene_mapping(mapping_path)
+    a = ad.AnnData(
+        X=np.array([[2.0, 3.0]]),
+        var=pd.DataFrame(index=["ENSG00000141510.18", "ENSMUSG00000059552.7"]),
+    )
+    rep = IngestReport(path="test", fmt="synthetic")
+
+    a = _clean_gene_names(a, rep, gene_mapping=mapping, mapping_source=metadata)
+
+    assert list(a.var_names) == ["TP53", "Trp53"]
+    provenance = rep.identifier_provenance
+    assert provenance["mapping_source"] == {
+        "kind": "user_table",
+        "sha256": metadata["sha256"],
+        "rows": 2,
+        "unique_ids": 2,
+    }
+    assert provenance["mapping_outcome"]["mapped_features"] == 2
+    assert provenance["source_to_representative"] == [
+        {
+            "as_loaded": "ENSG00000141510.18", "representative": "TP53",
+            "occurrences": 1, "transformations": ["user_mapping"],
+        },
+        {
+            "as_loaded": "ENSMUSG00000059552.7", "representative": "Trp53",
+            "occurrences": 1, "transformations": ["user_mapping"],
+        },
+    ]
+
+
+def test_conflicting_user_gene_mapping_is_refused(tmp_path):
+    mapping_path = tmp_path / "bad.tsv"
+    mapping_path.write_text("id\tsymbol\nENSG1\tTP53\nENSG1\tTrp53\n", encoding="utf-8")
+    with pytest.raises(IngestError, match="maps one identifier to multiple symbols"):
+        load_gene_mapping(mapping_path)
+
+
+def test_paul15_sized_single_case_group_is_accepted_and_recorded():
+    names = ["LPCAT4", "Lpcat4", *[f"Gene{i}" for i in range(3449)]]
+    a = ad.AnnData(X=np.ones((1, len(names))), var=pd.DataFrame(index=names))
+    rep = IngestReport(path="test", fmt="synthetic")
+
+    out = _clean_gene_names(a, rep)
+
+    assert out.n_vars == 3450
+    assert rep.identifier_provenance["case_fold_groups"] == [{
+        "representative": "LPCAT4",
+        "spellings": ["LPCAT4", "Lpcat4"],
+        "method": "sum",
+        "cross_convention": True,
+    }]
+
+
+def test_many_exact_duplicates_are_accepted_summed_and_recorded():
+    names = ["Y_RNA"] * 733 + [f"GENE{i}" for i in range(51_976 - 733)]
+    a = ad.AnnData(X=np.ones((1, len(names))), var=pd.DataFrame(index=names))
+    rep = IngestReport(path="test", fmt="synthetic")
+
+    out = _clean_gene_names(a, rep)
+
+    assert out.n_vars == 51_244
+    assert float(out[:, "Y_RNA"].X[0, 0]) == 733.0
+    assert rep.identifier_provenance["exact_duplicate_groups"] == [{
+        "representative": "Y_RNA",
+        "occurrences": 733,
+        "method": "sum",
+    }]
+    assert rep.identifier_provenance["collision_summary"]["case_fold_groups"] == 0
+
+
+def test_tp53_and_trp53_are_not_a_case_fold_collision():
+    a = ad.AnnData(X=np.ones((1, 2)), var=pd.DataFrame(index=["TP53", "Trp53"]))
+    rep = IngestReport(path="test", fmt="synthetic")
+    out = _clean_gene_names(a, rep)
+    assert list(out.var_names) == ["TP53", "Trp53"]
+    assert rep.identifier_provenance["case_fold_groups"] == []
+
+
+def test_human_mouse_mixed_symbol_fixture_is_refused():
+    human = ["ACTB", "GAPDH", "MYC", "SOX2", "JUN", "FOS"]
+    mouse = ["Actb", "Gapdh", "Myc", "Sox2", "Jun", "Fos"]
+    a = ad.AnnData(
+        X=np.ones((1, 12)),
+        obs=pd.DataFrame({"organism": ["Homo sapiens"]}, index=["cell"]),
+        var=pd.DataFrame(index=human + mouse),
+    )
+    with pytest.raises(IngestError, match="mixed human/mouse annotation"):
+        _clean_gene_names(a, IngestReport(path="test", fmt="synthetic"))
+
+
+def test_measured_orf_token_does_not_create_a_false_cross_convention_group():
+    names = ["C1orf112", "C1ORF112", *[f"GENE{i}" for i in range(1_000)]]
+    a = ad.AnnData(X=np.ones((1, len(names))), var=pd.DataFrame(index=names))
+    rep = IngestReport(path="test", fmt="synthetic")
+    _clean_gene_names(a, rep)
+    assert rep.identifier_provenance["case_fold_groups"][0]["cross_convention"] is False
+
+
+def _cross_convention_fixture(n_genes, n_groups):
+    names = []
+    for i in range(n_groups):
+        names.extend([f"GENE{i}", f"Gene{i}"])
+    names.extend(f"FILLER{i}" for i in range(n_genes - len(names)))
+    return ad.AnnData(
+        X=np.ones((1, n_genes)),
+        obs=pd.DataFrame({"organism": ["Homo sapiens"]}, index=["cell"]),
+        var=pd.DataFrame(index=names),
+    )
+
+
+def test_cross_convention_boundary_accepts_two_of_2000_and_refuses_three():
+    accepted = _cross_convention_fixture(2_000, 2)
+    rep = IngestReport(path="test", fmt="synthetic")
+    _clean_gene_names(accepted, rep)
+    assert rep.identifier_provenance["collision_summary"]["cross_convention_groups"] == 2
+
+    refused = _cross_convention_fixture(2_000, 3)
+    with pytest.raises(IngestError, match=r"3 cross-convention.*0.1%"):
+        _clean_gene_names(refused, IngestReport(path="test", fmt="synthetic"))
+
+
+def test_cross_convention_boundary_has_a_two_group_floor_for_small_panels():
+    accepted = _cross_convention_fixture(200, 2)
+    rep = IngestReport(path="test", fmt="synthetic")
+    _clean_gene_names(accepted, rep)
+    summary = rep.identifier_provenance["collision_summary"]
+    assert summary["cross_convention_groups"] == 2
+    assert summary["cross_convention_min_groups"] == 2
+
+    refused = _cross_convention_fixture(200, 3)
+    with pytest.raises(IngestError, match=r"3 cross-convention.*max\(2 groups, 0.1%\)"):
+        _clean_gene_names(refused, IngestReport(path="test", fmt="synthetic"))
+
+
+def test_distinct_spelling_case_groups_over_one_percent_are_refused():
+    names = ["Abc", "aBc", "Def", "dEf", *[f"GENE{i}" for i in range(96)]]
+    a = ad.AnnData(
+        X=np.ones((1, 100)),
+        obs=pd.DataFrame({"organism": ["Homo sapiens"]}, index=["cell"]),
+        var=pd.DataFrame(index=names),
+    )
+    with pytest.raises(IngestError, match=r"2 distinct-spelling.*1%"):
+        _clean_gene_names(a, IngestReport(path="test", fmt="synthetic"))
+
+
+def test_third_organism_preserves_case_variants_and_sums_only_exact_duplicates():
+    names = ["NTM", "ntm", "zgc:1", "zgc:1", *[f"gene{i}" for i in range(100)]]
+    a = ad.AnnData(
+        X=np.ones((1, len(names))),
+        obs=pd.DataFrame({"organism": ["Danio rerio"]}, index=["cell"]),
+        var=pd.DataFrame(index=names),
+    )
+    rep = IngestReport(path="test", fmt="synthetic")
+
+    out = _clean_gene_names(a, rep)
+
+    assert list(out.var_names[:3]) == ["NTM", "ntm", "zgc:1"]
+    assert float(out[:, "zgc:1"].X[0, 0]) == 2.0
+    assert rep.n_duplicates_merged == 1
+    assert rep.n_case_duplicates_merged == 0
+    assert rep.identifier_provenance["policy"] == "D-028"
+    assert rep.identifier_provenance["organism_policy"] == {
+        "scope": "other",
+        "label": "danio rerio",
+        "source": "metadata:obs['organism']",
+        "case_fold_action": "preserve_and_warn",
+    }
+    assert rep.identifier_provenance["case_fold_groups"] == [{
+        "representative": None,
+        "spellings": ["NTM", "ntm"],
+        "method": "preserve",
+        "cross_convention": True,
+    }]
+    assert any("preserved" in warning for warning in rep.warnings)
+
+
+def test_zebrafish_scale_case_groups_are_preserved_instead_of_refused():
+    symbols = []
+    for i in range(91):
+        symbols.extend([f"ZGC{i}", f"zgc{i}"])
+    symbols.extend(f"gene{i}" for i in range(32_031 - len(symbols)))
+    identifiers = [f"ENSDARG{i:011d}" for i in range(32_031)]
+    a = ad.AnnData(
+        X=sp.csr_matrix(np.ones((1, len(symbols)))),
+        var=pd.DataFrame({"feature_name": symbols}, index=identifiers),
+    )
+    rep = IngestReport(path="test", fmt="synthetic")
+
+    out = _clean_gene_names(a, rep)
+
+    assert out.n_vars == 32_031
+    assert rep.identifier_provenance["mapping_source"] == {
+        "kind": "input_column", "column": "feature_name"}
+    assert rep.identifier_provenance["organism_policy"] == {
+        "scope": "other",
+        "label": "non-human/mouse Ensembl",
+        "source": "gene_identifiers",
+        "case_fold_action": "preserve_and_warn",
+    }
+    assert rep.identifier_provenance["collision_summary"]["cross_convention_groups"] == 91
+    assert rep.identifier_provenance["collision_summary"]["case_fold_action"] == \
+        "preserve_and_warn"
+    assert rep.n_case_duplicates_merged == 0
+
+
+def test_unknown_organism_preserves_case_variants_conservatively():
+    a = ad.AnnData(X=np.ones((1, 2)), var=pd.DataFrame(index=["ABC", "abc"]))
+    rep = IngestReport(path="test", fmt="synthetic")
+
+    out = _clean_gene_names(a, rep)
+
+    assert list(out.var_names) == ["ABC", "abc"]
+    assert rep.identifier_provenance["organism_policy"]["scope"] == "unknown"
+    assert rep.identifier_provenance["collision_summary"]["case_fold_action"] == \
+        "preserve_and_warn"
+
+
+def test_human_metadata_keeps_casefold_merge_and_guard_policy():
+    names = ["ABC", "abc", *[f"FILLER{i}" for i in range(998)]]
+    a = ad.AnnData(
+        X=np.array([[2.0, 3.0, *([1.0] * 998)]]),
+        obs=pd.DataFrame({"organism": ["NCBITaxon:9606"]}, index=["cell"]),
+        var=pd.DataFrame(index=names),
+    )
+    rep = IngestReport(path="test", fmt="synthetic")
+
+    out = _clean_gene_names(a, rep)
+
+    assert out.var_names[0] == "ABC"
+    assert out.n_vars == 999
+    assert float(out.X[0, 0]) == 5.0
+    assert rep.identifier_provenance["organism_policy"]["scope"] == "human"
+    assert rep.identifier_provenance["collision_summary"]["case_fold_action"] == \
+        "merge_and_guard"
 
 
 # --------------------------------------------------------------------------- #

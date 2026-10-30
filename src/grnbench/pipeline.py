@@ -117,6 +117,7 @@ def run_prep(
     group_key: str | None = None,
     label_key: str | None = None,
     label_mapping: dict[str, str] | None = None,
+    gene_mapping_path: str | Path | None = None,
     stratify_key: str | None = None,
     batch_key: str | None = None,
     min_group_cells: int | None = None,
@@ -160,6 +161,7 @@ def run_prep(
     execution_params = {
         'strategy': strategy, 'n_hvg': n_hvg, 'group_key': group_key,
         'label_key': label_key, 'label_mapping': label_mapping,
+        'gene_mapping_supplied': gene_mapping_path is not None,
         'stratify_key': stratify_key, 'batch_key': batch_key,
         'min_group_cells': min_group_cells, 'downcast': downcast,
         'thresholds': dataclasses.asdict(t), 'subsample_cells': subsample_cells,
@@ -181,7 +183,8 @@ def run_prep(
     ledger = RetentionLedger(tf_list or None, subset_key=subset_key, subset_value=subset_value)
 
     # -- 1. ingest (counts-verified) ---------------------------------------- #
-    adata, ingest_rep = load_any(input_path, orientation=orientation)
+    adata, ingest_rep = load_any(
+        input_path, orientation=orientation, gene_mapping_path=gene_mapping_path)
     steps.append({"step": "ingest",
                   "detail": f"format={ingest_rep.fmt}, counts_source={ingest_rep.counts_source}"})
     warnings_list.extend(ingest_rep.warnings)  # e.g. counts that look non-raw (issue #42)

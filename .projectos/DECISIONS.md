@@ -321,6 +321,54 @@ STATUS: PROPOSED | ACTIVE | SUPERSEDED by D-xxx | REVERTED
   online), so a preprint needs the same care in what it claims; the status labels are how a reader sees which
   claims a second person has checked.
 - alternatives: a preprint with only `reproduced` claims; any status, unlabelled.
+### D-027 | 2026-10-10 | codex (for LD) | SUPERSEDED by D-028 | Trace identifier transforms and refuse measured unsafe collision sets
+- decision: v1 maps gene identifiers only from a symbol column carried by the input or an explicit
+  two-column `id -> symbol` table whose SHA256 is recorded; it never performs a live MyGene lookup.
+  Supported human and mouse Ensembl version suffixes are stripped. Exact duplicates are summed and
+  recorded but do not count as collision groups. Every distinct-spelling case-fold group keeps the
+  first loaded spelling as representative and is aggregated by sum. Ingest refuses when such groups
+  exceed 1% of input features, or when groups spanning spelling conventions (upper, mixed, lower,
+  classified after removing the measured `orf` token) exceed 0.1%. An input with more than 90%
+  Ensembl identifiers is refused if an input column or supplied table cannot reduce that share to
+  90% or below. The complete source-to-representative audit is written to the manifest and portable
+  diagnostics without paths, barcodes or expression values.
+- why: #34 measured zero cross-convention groups in the separate approved human, mouse and reference
+  lists, but 18.7% in their full join. A rule on all duplicate positions would falsely reject the
+  bronchus dataset's 733 repeated `Y_RNA` entries; a rule on any single case group would falsely
+  reject paul15's `LPCAT4/Lpcat4`. The boundary accepts two cross-convention groups in 2,000 features
+  and refuses three. The mapping boundary makes runs reproducible and prevents silent zero overlap
+  with symbol-based TF lists and references.
+- alternatives: live MyGene mapping (network-dependent, does not resolve the measured unmatched
+  reference genes); always merge every case-fold collision (can silently combine mixed-species
+  annotations); refuse every duplicate (rejects valid repeated features); drop colliding genes
+  (changes counts and task scope without a traceable representative).
+
+### D-028 | 2026-10-11 | codex (for LD) | ACTIVE | Case-only identifier merging is human/mouse-specific
+- decision: D-027's mapping, Ensembl, exact-duplicate and provenance rules remain. Case-insensitive
+  merging and its 1% / 0.1% refusal guards apply only when the input is confidently identified as
+  human or mouse, using curated `obs['organism']` metadata first, human/mouse or other recognised
+  Ensembl gene identifiers second and the existing symbol-casing hint last. A non-human/mouse
+  Ensembl prefix establishes the `other` scope. For a named third organism or an organism that
+  cannot be established, exact duplicate names are still summed, but distinct case-only spellings
+  remain separate features; every group and convention is recorded and a warning explains why it
+  was preserved. Human+mouse metadata remains inside the guarded scope.
+- why: exact-snapshot calibration EXP-20261010-LD-2 accounted for 33/33 approved real inputs but
+  D-027 falsely refused the `Danio rerio` input (91 cross-convention groups among 32,031 genes).
+  Upper/mixed/lower casing is species nomenclature, not a universal equivalence relation. Merging
+  zebrafish spellings under a human/mouse rule can combine distinct identifiers; preserving them is
+  the reversible safe action. Unknown inputs are treated conservatively for the same reason.
+- alternatives: merge but merely disable the refusal outside human/mouse (irreversibly combines
+  potentially distinct genes); invent thresholds for every organism from one zebrafish dataset
+  (uncalibrated); drop all case variants (loses counts); refuse every non-human/mouse input (blocks
+  approved data without evidence of corruption).
+- compatibility: Inputs that remain more than 90% Ensembl identifiers without a usable symbol source
+  stop before QC, because symbol-based references cannot score them. This supersedes #149's
+  pure-Ensembl mitochondrial-QC warning; that warning remains applicable and tested for mixed inputs
+  with 5-90% Ensembl identifiers.
+- status: ACTIVE since 2026-10-28 (GB, on #98); the hard refusal remains after review against the
+  loud-QC behaviour, while the proposed double-lock override remains a separate design preference.
+- supersedes: D-027.
+
 ### D-031 | 2026-10-21 | claude (for GB) | ACTIVE | An option is available only if its dependencies are installed and grnbench can run it
 - decision: availability is decided per (decision, option) (`DecisionPoint.availability`). An option is
   available only when its dependencies are installed AND `executors.PLAN_STEPS` maps it onto the

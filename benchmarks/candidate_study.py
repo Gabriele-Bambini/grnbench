@@ -139,14 +139,15 @@ def degrade(adata, condition: str, seed: int = 0):
     return ad.AnnData(X, obs=obs, var=adata.var.copy())
 
 
-def write_degraded_copy(path, condition: str, seed: int, dest: Path) -> Path:
+def write_degraded_copy(path, condition: str, seed: int, dest: Path,
+                        *, gene_mapping_path=None) -> Path:
     """Load ``path`` as the pipeline does, degrade, write ``dest/<name>.h5ad`` and copy the text
     files the context detector reads, so context detection is unchanged."""
     from grnbench.context import discover_text_files
     from grnbench.ingest import load_any
 
     dest.mkdir(parents=True, exist_ok=True)
-    adata, _ = load_any(path)
+    adata, _ = load_any(path, gene_mapping_path=gene_mapping_path)
     out = dest / (Path(path).stem + ".h5ad")
     degrade(adata, condition, seed).write_h5ad(out)
     for f in discover_text_files(path):
@@ -250,7 +251,12 @@ def run_study_task(task: dict, refs: Path | None, workroot: Path) -> dict:
     try:
         # task lists from real_bench.make_tasks hold portable "~/..." paths since #29
         src = Path(task["path"]).expanduser()
-        path = write_degraded_copy(src, task["condition"], task["seed"], work / "data")
+        gene_mapping_path = task.get("gene_mapping_path")
+        if gene_mapping_path is not None:
+            gene_mapping_path = Path(gene_mapping_path).expanduser()
+        path = write_degraded_copy(
+            src, task["condition"], task["seed"], work / "data",
+            gene_mapping_path=gene_mapping_path)
         diag = diagnose(path)
         row["n_cells_in"], row["n_genes_in"] = int(diag.adata.n_obs), int(diag.adata.n_vars)
         pairs = real_bench._reference(refs, task["truth"].get("organism"), diag.adata.var_names)

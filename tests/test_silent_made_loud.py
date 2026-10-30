@@ -18,18 +18,12 @@ import scipy.sparse as sp
 from grnbench.autoprep import diagnose, plan_preprocessing
 from grnbench.cli import main as prep_main
 from grnbench.demo import write_demo
+from grnbench.ingest import IdentifierPolicyError
 from grnbench.pipeline import run_prep
 from grnbench.qc import Thresholds
 from grnbench.simulate import Scenario, write_scenario
 
 MITO_NOTE = "mitochondrial genes are found only by symbol (MT- prefix): none was found"
-
-
-@pytest.fixture(scope="module")
-def ensembl(tmp_path_factory):
-    """Ensembl identifiers, no symbol column: 0 mitochondrial genes found by name."""
-    paths = write_scenario(tmp_path_factory.mktemp("ensembl"), Scenario("ens", gene_ids="ensembl", n_cells=600))
-    return paths, diagnose(paths["counts"])
 
 
 @pytest.fixture(scope="module")
@@ -40,26 +34,17 @@ def demo(tmp_path_factory):
 
 # -- #149 item 1: Ensembl identifiers switch mito QC off --------------------------------------------------- #
 
-def test_ensembl_ids_without_mito_genes_say_why_the_mito_filter_and_gate_are_off(ensembl):
-    _, diag = ensembl
-    assert diag.qc.metrics["n_mito_genes"] == 0 and diag.id_verdict["verdict"] == "ensembl_only"
-    plan = plan_preprocessing(diag, methods=[])
-    d = plan.decisions["max_pct_mito_cell"]
-    assert d.value is None
-    assert "100% of the gene identifiers are Ensembl IDs" in d.reason and MITO_NOTE in d.reason, d.reason
-    assert "per-cell mito filter is off and the dataset mito gate always passes" in d.reason
-    assert not any("Ensembl IDs" in w and "mitochondrial" in w for w in plan.warnings)
-    fixed = plan_preprocessing(diag, methods=[], choices={"cell_qc_thresholds": "fixed"})
-    assert fixed.value("max_pct_mito_cell") is None and MITO_NOTE in fixed.decisions["max_pct_mito_cell"].reason
+def test_unmapped_ensembl_ids_are_refused_before_mito_qc(tmp_path):
+    """D-028 supersedes the old pure-Ensembl warning: symbol references cannot score this input."""
+    paths = write_scenario(tmp_path, Scenario("ens", gene_ids="ensembl", n_cells=600))
+    with pytest.raises(IdentifierPolicyError, match="more than 90%.*Ensembl IDs"):
+        diagnose(paths["counts"])
 
 
-def test_ensembl_ids_per_batch_bounds_carry_the_mito_note(tmp_path):
+def test_unmapped_ensembl_ids_are_refused_before_per_batch_bounds(tmp_path):
     paths = write_scenario(tmp_path, Scenario("ens_b", gene_ids="ensembl", n_cells=600, n_batches=2))
-    plan = plan_preprocessing(diagnose(paths["counts"]), methods=[],
-                              choices={"cell_qc_thresholds": "mad_per_batch"})
-    bounds = plan.decisions["per_batch_bounds"]
-    assert all(b["max_pct_mito_cell"] is None for b in bounds.value.values())
-    assert MITO_NOTE in bounds.reason, bounds.reason
+    with pytest.raises(IdentifierPolicyError, match="more than 90%.*Ensembl IDs"):
+        diagnose(paths["counts"])
 
 
 def test_mixed_identifiers_without_mito_genes_give_the_real_ensembl_share(demo, tmp_path):
@@ -77,9 +62,13 @@ def test_symbols_with_mito_genes_get_no_mito_note(demo):
     assert all(MITO_NOTE not in d.reason for d in plan.decisions.values())
 
 
-def test_ensembl_ids_without_mito_genes_warn_at_run_time(ensembl, tmp_path):
-    paths, _ = ensembl
-    res = run_prep(paths["counts"], tmp_path / "run", force=True)
+def test_mixed_identifiers_without_mito_genes_warn_at_run_time(demo, tmp_path):
+    paths, _, _ = demo
+    adata = ad.read_h5ad(paths["counts"])
+    adata.var_names = [f"ENSG{i:011d}" if i >= 450 else g for i, g in enumerate(adata.var_names)]
+    mixed = tmp_path / "mixed.h5ad"
+    adata.write_h5ad(mixed)
+    res = run_prep(mixed, tmp_path / "run", force=True)
     notes = [w for w in res.manifest["warnings"] if MITO_NOTE in w]
     assert len(notes) == 1 and "per-cell mito filter removes no cell" in notes[0], res.manifest["warnings"]
     assert notes[0] in (tmp_path / "run" / "report.md").read_text(encoding="utf-8")

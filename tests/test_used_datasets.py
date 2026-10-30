@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sys
+from types import SimpleNamespace
 from pathlib import Path
 
 import pytest
@@ -36,11 +37,39 @@ def test_scan_reads_folder_suffixes_in_results_and_bare_prefixes_in_exclusion_li
     assert "0bcda669" in records_only                                 # bare line of an excluded_ids file
 
 
-def test_scan_skips_the_given_paths():
-    # the pool's own files are left out too, as the real call does with --skip
-    assert "0bcda669" not in used_datasets.scan(
+def test_scan_passes_the_given_skip_pathspecs_to_git(monkeypatch):
+    """Do not tie skip semantics to which datasets later experiments mention."""
+    commands = []
+
+    def fake_run(cmd, **_kwargs):
+        commands.append(cmd)
+        return SimpleNamespace(returncode=1, stdout="", stderr="")
+
+    monkeypatch.setattr(used_datasets.subprocess, "run", fake_run)
+    assert used_datasets.scan(
         ["HEAD"], paths=("experiments",),
-        skip=("experiments/*.excluded_ids.txt", "experiments/EXP-20261022-GB*"))
+        skip=("experiments/*.excluded_ids.txt", "experiments/EXP-20261022-GB*")) == set()
+    assert len(commands) == 2
+    for cmd in commands:
+        assert cmd[-3:] == [
+            "experiments",
+            ":!experiments/*.excluded_ids.txt",
+            ":!experiments/EXP-20261022-GB*",
+        ]
+
+
+def test_scan_skip_pathspecs_change_the_real_git_result():
+    """Keep a behavioural check after #58 added snapshots that mention an already-used dataset."""
+    records = used_datasets.scan(
+        ["HEAD"],
+        paths=("experiments",),
+        skip=(
+            "experiments/*.snapshot.tsv",
+            "experiments/*.excluded_ids.txt",
+            "experiments/EXP-20261022-GB*",
+        ),
+    )
+    assert "0bcda669" not in records
 
 
 def test_scan_refuses_an_unknown_ref():

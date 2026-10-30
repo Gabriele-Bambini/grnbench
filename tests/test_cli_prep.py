@@ -8,6 +8,7 @@ could ever catch it.
 from __future__ import annotations
 
 import json
+import hashlib
 
 import numpy as np
 import pandas as pd
@@ -172,6 +173,43 @@ def test_max_doublet_rate_flag_reaches_thresholds(tmp_path):
     manifest = json.loads((out / "manifest.json").read_text())
     assert manifest["args"]["thresholds"]["doublet_rate_max"] == 0.5
     assert manifest["args"]["thresholds"]["min_genes_per_cell"] == 200  # untouched
+
+
+def test_gene_mapping_reaches_manifest_and_portable_diagnostics_without_path(tmp_path):
+    rng = np.random.default_rng(4)
+    src = tmp_path / "ensembl.h5ad"
+    ids = [f"ENSG{i:011d}.1" for i in range(400)]
+    symbols = [f"GENE{i}" for i in range(400)]
+    ad.AnnData(
+        X=sp.csr_matrix(rng.poisson(3.0, size=(100, 400)).astype(np.float32)),
+        var=pd.DataFrame(index=ids),
+    ).write_h5ad(src)
+    mapping = tmp_path / "private-gene-map.tsv"
+    mapping.write_text(
+        "id\tsymbol\n" + "".join(
+            f"{gene_id.removesuffix('.1')}\t{symbol}\n"
+            for gene_id, symbol in zip(ids, symbols)
+        ),
+        encoding="utf-8",
+    )
+    expected_sha = hashlib.sha256(mapping.read_bytes()).hexdigest()
+    out = tmp_path / "mapped"
+
+    assert main([
+        str(src), "--out", str(out), "--gene-mapping", str(mapping),
+        "--min-genes-per-cell", "0", "--min-cells-per-gene", "0",
+    ]) == 0
+
+    manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+    diagnostic_text = (out / "diagnostics.json").read_text(encoding="utf-8")
+    diagnostics = json.loads(diagnostic_text)
+    provenance = manifest["ingest"]["identifier_provenance"]
+    assert provenance["mapping_source"]["sha256"] == expected_sha
+    assert provenance["mapping_outcome"]["mapped_features"] == 400
+    portable = diagnostics["prep"]["default"]["all_cells"]["identifier_provenance"]
+    assert portable == provenance
+    assert str(mapping) not in diagnostic_text
+    assert "private-gene-map.tsv" not in diagnostic_text
 
 
 @pytest.mark.parametrize("extra, message", [

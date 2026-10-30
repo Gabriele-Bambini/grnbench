@@ -103,6 +103,33 @@ def test_run_without_gold_stops_after_inference(tmp_path, dataset, capsys):
     assert "no --gold" in capsys.readouterr().out
 
 
+def test_run_forwards_explicit_gene_mapping_to_preprocessing(tmp_path, synthetic_adata):
+    source = synthetic_adata.copy()
+    source.var_names = [f"ENSG{i:011d}.1" for i in range(source.n_vars)]
+    src = tmp_path / "ensembl.h5ad"
+    source.write_h5ad(src)
+    mapping = tmp_path / "mapping.tsv"
+    mapping.write_text(
+        "id\tsymbol\n" + "".join(
+            f"ENSG{i:011d}\tGENE{i}\n" for i in range(source.n_vars)
+        ),
+        encoding="utf-8",
+    )
+    tfs = tmp_path / "tfs.txt"
+    tfs.write_text("GENE100\nGENE200\nGENE300\n", encoding="utf-8")
+    out = tmp_path / "mapped-run"
+
+    rc = run_main([
+        "--data", str(src), "--out", str(out), "--tf-list", str(tfs),
+        "--gene-mapping", str(mapping), "--methods", "spearman_signed",
+    ])
+
+    assert rc == 0
+    prep = json.loads((out / "prep" / "manifest.json").read_text(encoding="utf-8"))
+    assert prep["ingest"]["identifier_provenance"]["mapping_outcome"]["mapped_features"] \
+        == source.n_vars
+
+
 def test_run_forwards_explicit_subsample_mode_to_prep(tmp_path, dataset):
     src, tfs = dataset
     out = tmp_path / "run_subsample"

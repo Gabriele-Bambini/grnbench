@@ -351,6 +351,9 @@ def prep_entry_from_manifest(manifest: dict) -> dict:
         "dimensions": {"before": before, "after": after},
         "steps": steps,
     }
+    identifier_provenance = (manifest.get("ingest") or {}).get("identifier_provenance")
+    if isinstance(identifier_provenance, dict) and identifier_provenance:
+        entry["identifier_provenance"] = identifier_provenance
     if isinstance(manifest.get("retention"), list):
         entry["retention"] = _portable_retention(manifest["retention"])
     return entry
