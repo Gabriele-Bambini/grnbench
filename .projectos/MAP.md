@@ -73,6 +73,9 @@ Updated: 2026-10-25.
 - `benchmarks/results/EXP-20261001-LD-1/real/`: complete 40-task accounting, portable task/data
   manifests, generated report, global visualization summary and LaTeX source; the full per-dataset
   visualizations and 144 MB of artifacts remain on HPC.
+- `benchmarks/results/EXP-20261022-GB-1/`: 119 of 120 rows (the error row stays on HPC), `REPORT_REAL.md`
+  (`--partial`), `PARTIAL.json`, `SUBGROUPS.md`, `latex/`, viz index and aggregate figures, `SHA256SUMS`,
+  `ARTIFACTS_SHA256SUMS`; per-dataset figures and 1.9 GB of artifacts remain on HPC.
 - Reproductions: section 4 of the record; `benchmarks/compare_runs.py COMMITTED RERUN --record <record>` compares a rerun with the committed results.
 - Paper: `paper/` (claims ledger, checklist, CRediT log, `make_figures.py`, `build/` LaTeX draft).
 - Non-run attempts (debugging, libraries tried): `.projectos/ATTEMPTS.md`. History: `docs/history/`, `audit/`.

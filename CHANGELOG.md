@@ -9,6 +9,11 @@
   runs in a separate pinned Python 3.10 environment (`hpc/setup_pyscenic_env.sh` bootstraps pip 23.3.2 via conda-forge);
   the primary final supported-pair endpoint is not met, while the separately exported union of
   activating-module pairs matches exactly (Jaccard 1.0). Production model code is unchanged (#110).
+- EXP-20261022-GB-1 results (#139): on 119 of the 120 confirmatory datasets of the D-057 pool the motif
+  prior lifts Pearson's EPR in the auto arm by +0.149 [+0.067, +0.230], p_Holm 0.000424 (H1 supported);
+  T3 not run; one dataset missing under rule (e) (the #169 error); report generated with `--partial`
+  (record section 3, three dated deviations for GB to accept). Rows, reports and hashes in
+  `benchmarks/results/EXP-20261022-GB-1/`; artifacts stay on the cluster.
 - The full suite is green again after separating three baseline failures from unrelated planner work:
   the R bridge now gives R the normalized relative output path it already validates, its conda PATH test
   follows the platform-specific layout, README text is normalised across LF/CRLF before evidence snippets

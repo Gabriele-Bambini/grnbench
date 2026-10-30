@@ -2,8 +2,8 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-10-29 (EXP-20261018-LD-1 current-main alignment, LD); 2026-10-22
-(EXP-20261016-LM-1 draft PR, LM's agent); 2026-10-16 (D-026 accepted, D-018 active,
+Updated: 2026-10-29 (EXP-20261018-LD-1 current-main alignment, LD); 2026-10-28 (EXP-20261022-GB-1
+results, GB's agent); 2026-10-22 (EXP-20261016-LM-1 draft PR, LM's agent); 2026-10-16 (D-026 accepted, D-018 active,
 D-029 proposed, "two-sided" wording errata, LM's agent); 2026-10-26 (retention ledger, GB's agent);
 2026-10-25 (#167 full-suite baseline fixes, LD); 2026-10-25 (#169 empty stratification pool, LD);
 2026-10-25 (#172 leading-dash context replay, LD); 2026-10-26 (#183 test registry isolation, LD);
@@ -84,12 +84,17 @@ pre-registered experiments (D-017).
 - 200-dataset pool (GB, `gb/pool-200`, D-057 ACTIVE since GB's go of 2026-10-23; data issue #141): 200 never-used CELLxGENE
   datasets, one per study and none from a study used before (174 human / 26 mouse, 21 assays, 105.9 GB), split by seed 42 into 120
   confirmatory and 80 exploratory before any download. Registered and revised after LM's and LD's reviews (pool redrawn without EXP-20261001-LD-1's
-  datasets, data snapshots, T3 added); nothing scored yet:
-  EXP-20261022-GB-1 (confirmatory, #139: EPR lift of the motif prior for Pearson, family of one pair,
-  planned power 0.865 for +0.10 at n = 120) and EXP-20261022-GB-2 (exploratory stress test, #140:
-  `candidate_study` under clean / doublets / damaged cells). Next, only after GB's go for the cluster:
-  download on the login node, data snapshots `EXP-20261022-GB-{1,2}.data.tsv`, pilot job on 3 exploratory
-  datasets, then GB-1, then GB-2 (QOS `stud`: one job at a time).
+  datasets, data snapshots, T3 added).
+  EXP-20261022-GB-1 (confirmatory, #139) **done 2026-10-28** (jobs 720251 TIMEOUT, resubmission 722096
+  with JOBS=4; code 7e4bcb6): H1 supported, EPR lift of the motif prior for Pearson in the auto arm
+  +0.149 [+0.067, +0.230], n = 119, p_Holm 0.000424; T3 not run (needs a registered-set entry in
+  `motif_sensitivity.py` and its own job, GB's go). One dataset (bone-marrow 965386e9) missing under
+  rule (e) after the #169 ZeroDivisionError; the report was generated with `--partial`. Results PR on
+  `gb/exp-20261022-gb-1-results`: GB accepts or rejects the three dated deviations of record section 3
+  before merge; any claim proposal goes to GB first (record section 5; `paper/CLAIMS.md` untouched).
+  Artifacts (1.9 GB) stay on the cluster in `~/gb_runs/EXP-20261022-GB-1`.
+  EXP-20261022-GB-2 (exploratory stress test, #140: `candidate_study` under clean / doublets / damaged
+  cells) is in flight: see its `running` issue.
 - Preprocessing engine step 2 (GB, issues #128 and #135): option availability (#133, D-031 ACTIVE) and
   the optional R bridge (#136, D-032 ACTIVE) are on `main` since 2026-10-23. An option is available only
   with its dependencies and a grnbench executor (`executors.PLAN_STEPS`); `grnbench.rbridge` finds an
