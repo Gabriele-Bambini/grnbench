@@ -2,7 +2,7 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-10-29 (EXP-20261018-LD-1 current-main alignment, LD); 2026-10-28 (EXP-20261022-GB-1
+Updated: 2026-10-29 (EXP-20261016-LM-1 registered, LM's agent); 2026-10-29 (EXP-20261018-LD-1 current-main alignment, LD); 2026-10-28 (EXP-20261022-GB-1
 results, GB's agent); 2026-10-22 (EXP-20261016-LM-1 draft PR, LM's agent); 2026-10-16 (D-026 accepted, D-018 active,
 D-029 proposed, "two-sided" wording errata, LM's agent); 2026-10-26 (retention ledger, GB's agent);
 2026-10-25 (#167 full-suite baseline fixes, LD); 2026-10-25 (#169 empty stratification pool, LD);
@@ -44,11 +44,11 @@ pre-registered experiments (D-017).
   `pipeline.subsample_cells` and `profile.py` are still positional.
 - Issue #75 (LM, `lm/screen-subset-rule`): D-023 PROPOSED, screening ranks a one-context candidate after a
   non-failed candidate that covers its contexts (failed or non-finite candidates are unrankable); records of EXP-20260925-LM-2, EXP-20260926-LM-1, EXP-20261002-LM-1 noted. Awaits GB review.
-- EXP-20261016-LM-1 (LM, branch `lm/knockdown-registration`, draft PR opened 2026-10-22): DRAFT knockdown
+- EXP-20261016-LM-1 (LM, issue #192, branch `lm/knockdown-register`): REGISTERED 2026-10-29, confirmatory knockdown
   validation (RPE1 design, K562 genome-wide replication, TF = unit; 73 and 109 usable TFs, 41 in both). Evaluator
-  `grnbench.eval.knockdown`, runner `knockdown_bench.py` + `knockdown_score.py`, job `hpc/knockdown_run.sbatch`,
-  D-020 snapshot `experiments/EXP-20261016-LM-1.snapshot.tsv` (data root checked, job 713087). Checks P1-P7 and
-  P9-P12 closed; it registers when D-022 is ACTIVE (#79, check P8). No network has been scored against a responder.
+  `grnbench.eval.knockdown`, runner `knockdown_bench.py` + `knockdown_score.py`, job `hpc/knockdown_run.sbatch`
+  (one job for both screens), D-020 snapshot `experiments/EXP-20261016-LM-1.snapshot.tsv`. Checks P1-P12 closed
+  (P8: D-022 ACTIVE on main). Launched on the cluster at registration; the job id is on #192.
 - Retention ledger (#176, GB, `gb/retention-ledger`): `grnbench.retention`; every cell- or
   gene-removing step of `run_prep` records cells, genes and the named TFs it removed (manifest
   `retention`, portable diagnostics, report table), and a gene filter that drops a TF detected in the
