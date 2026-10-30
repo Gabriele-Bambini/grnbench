@@ -39,7 +39,9 @@ OUT="${OUT:?set OUT to the results directory holding tasks.json}"
 CHUNK="${CHUNK:-8}"
 JOBS="${JOBS:-${SLURM_CPUS_PER_TASK:-8}}"
 MAX_ATTEMPTS="${MAX_ATTEMPTS:-2}"
-WORK="${TMPDIR:-/tmp}/gb_engine_${SLURM_ARRAY_JOB_ID:-0}_${SLURM_ARRAY_TASK_ID:-0}"
+# one work folder per job: a plain (non-array) job has no SLURM_ARRAY_JOB_ID, and two of them sharing
+# TMPDIR once removed each other's folder at exit (#139)
+WORK="${TMPDIR:-/tmp}/gb_engine_${SLURM_ARRAY_JOB_ID:-${SLURM_JOB_ID:-0}}_${SLURM_ARRAY_TASK_ID:-0}"
 
 # shellcheck disable=SC1090
 source "$CONDA_SH" && conda activate "$ENV_NAME" || {
@@ -59,7 +61,8 @@ EXTRA=()
 mkdir -p "$OUT"
 [ -f GIT_COMMIT ] && cp GIT_COMMIT "$OUT/CODE_COMMIT"
 echo "code $(cat GIT_COMMIT 2>/dev/null || echo unknown)  python $(python --version 2>&1)  models ${MODELS:-default}"
-python "$SCRIPT" run --tasks "$TASKS" --out "$OUT" "${EXTRA[@]}" \
+# ${EXTRA[@]+...}: an empty array under set -u is an error on Bash 3.2 (macOS).
+python "$SCRIPT" run --tasks "$TASKS" --out "$OUT" ${EXTRA[@]+"${EXTRA[@]}"} \
        --index "${SLURM_ARRAY_TASK_ID:-0}" --chunk "$CHUNK" --jobs "$JOBS" --workroot "$WORK" \
        --max-attempts "$MAX_ATTEMPTS"
 status=$?

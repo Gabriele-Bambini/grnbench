@@ -52,6 +52,54 @@ def test_sbatch_passes_models_artifacts_and_records_the_commit(tmp_path):
     assert f"PYTHONPATH={repo.as_posix()}/src" in call
 
 
+def test_two_jobs_sharing_tmpdir_get_their_own_work_folders(tmp_path):
+    """Without --array both jobs had work folder gb_engine_0_0, and the first to end removed it under
+    the other (the 2026-10-23 pool pilot: FileNotFoundError writing a manifest.json, #139)."""
+    bash = _bash()
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "GIT_COMMIT").write_text("abc1234\n")
+    roots = []
+    for job in ("715093", "715094"):
+        env = {k: v for k, v in os.environ.items() if not k.startswith("SLURM_ARRAY")}
+        env.update({"CONDA_SH": _stubs(tmp_path).as_posix(), "REPO_DIR": repo.as_posix(),
+                    "OUT": (tmp_path / f"out{job}").as_posix(), "SCRIPT": "benchmarks/real_bench.py",
+                    "CHUNK": "100000", "SLURM_CPUS_PER_TASK": "2", "TMPDIR": tmp_path.as_posix(),
+                    "SLURM_JOB_ID": job})
+        r = subprocess.run([bash, str(ROOT / "hpc" / "engine_bench.sbatch")], env=env,
+                           capture_output=True, text=True)
+        assert r.returncode == 0, r.stdout + r.stderr
+        call = [line for line in (tmp_path / "calls.log").read_text().splitlines() if " run " in line][-1]
+        roots.append(call.split("--workroot ")[1].split()[0])
+    assert roots[0] != roots[1] and all(job in root for job, root in zip(("715093", "715094"), roots))
+
+
+def test_sbatch_extra_arguments_are_safe_empty_and_keep_spaces(tmp_path):
+    """An empty EXTRA under set -u stops Bash 3.2 (macOS) with 'EXTRA[@]: unbound variable', which a
+    newer Bash does not show, so the expansion must be the guarded form; a path with a space stays
+    one argument."""
+    text = (ROOT / "hpc" / "engine_bench.sbatch").read_text(encoding="utf-8")
+    assert text.count('"${EXTRA[@]}"') == text.count('${EXTRA[@]+"${EXTRA[@]}"}') == 1
+    bash = _bash()
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    log = tmp_path / "args.log"
+    profile = tmp_path / "conda.sh"
+    profile.write_text(
+        'conda() { if [ "$1" = "env" ]; then echo test-env; fi; return 0; }\n'
+        f'python() {{ for a in "$@"; do printf "[%s]" "$a"; done >> "{log.as_posix()}"; echo >> "{log.as_posix()}"; }}\n',
+        encoding="utf-8")
+    env = {**os.environ, "CONDA_SH": profile.as_posix(), "REPO_DIR": repo.as_posix(),
+           "OUT": (tmp_path / "out").as_posix(), "SCRIPT": "benchmarks/real_bench.py",
+           "REFS": "/data/my refs", "CHUNK": "100000", "SLURM_CPUS_PER_TASK": "2",
+           "TMPDIR": tmp_path.as_posix()}
+    r = subprocess.run([bash, str(ROOT / "hpc" / "engine_bench.sbatch")], env=env,
+                       capture_output=True, text=True)
+    assert r.returncode == 0, r.stdout + r.stderr
+    call = [line for line in log.read_text().splitlines() if "[run]" in line][0]
+    assert "[--refs][/data/my refs]" in call
+
+
 @pytest.mark.parametrize("script", ["grnbench.sbatch", "beeline_backtest.sbatch", "engine_bench.sbatch"])
 def test_spooled_sbatch_resolves_the_submit_dir_checkout(tmp_path, script):
     """sbatch runs a copy of the script from the node's spool directory, so a REPO_DIR derived

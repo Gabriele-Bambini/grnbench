@@ -481,6 +481,10 @@
   Windows ssh-agent: `StartupType Automatic` once, no per-reboot step.
 
 ### Fixed
+- `hpc/engine_bench.sbatch`: a plain (non-array) job's work folder carries its Slurm job id
+  (`gb_engine_<job>_0`). Every plain job used `gb_engine_0_0` under the same TMPDIR, so the first job to end
+  removed the other's folder: the 2026-10-23 pool pilot lost a dataset to `FileNotFoundError` when the
+  candidate-study pilot ended (#139). No output depends on the folder's name. An empty argument list no longer stops the script on Bash 3.2 (macOS) under `set -u`.
 - High-mitochondrial tissues are matched by whole words (#149 item 2; audit 2026-09-27): the fragments
   `renal`, `atri`, `ventric`, `septum`, `cardi`, `hepat` matched inside other words, so adrenal gland,
   "pediatric"/"psychiatric", brain ventricles, the lateral septum, the cardia of the stomach and the
