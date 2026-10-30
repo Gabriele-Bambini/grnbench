@@ -42,6 +42,8 @@ def make_repo(tmp_path):
     for d in ("paper/tables", "experiments", ".projectos"):
         (repo / d).mkdir(parents=True)
     subprocess.run(["git", "-C", str(repo), "init", "-q"], check=True)
+    (repo / "pyproject.toml").write_text('[project]\nname = "grnbench"\n')
+    (repo / ".projectos/STATE.md").write_text("# State\n")
     (repo / "paper/CLAIMS.md").write_text(CLAIMS.format("draft"))
     (repo / ".projectos/DECISIONS.md").write_text(DECISIONS)
     commit(repo, "old", "2026-01-01T12:00:00")

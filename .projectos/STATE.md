@@ -2,18 +2,17 @@
 
 Keep it short: every PR that changes focus, in-progress work or next steps updates this file.
 Live runs are NOT tracked here: they are GitHub issues labelled `running` (see `python -m grnbench.board`).
-Updated: 2026-10-29 (#58 review fixes and current-main alignment, LD; EXP-20261016-LM-1
-registered, LM's agent; EXP-20261018-LD-1 current-main alignment, LD); 2026-10-28
-(EXP-20261022-GB-1 results, GB's agent); 2026-10-22 (EXP-20261016-LM-1 draft PR, LM's agent);
-2026-10-16 (D-026 accepted, D-018 active,
-D-029 proposed, "two-sided" wording errata, LM's agent); 2026-10-26 (retention ledger, GB's agent);
-2026-10-25 (#167 full-suite baseline fixes, LD); 2026-10-25 (#169 empty stratification pool, LD);
-2026-10-25 (#172 leading-dash context replay, LD); 2026-10-26 (#183 test registry isolation, LD);
-2026-10-24 (#149/#116 silent behaviours made loud, GB's agent); 2026-10-25 (#164 context/batch and
-HVG guards, LD); 2026-10-23 (ARACNe3 branch: main merged in, relative binary path fixed, GB's
-agent); 2026-10-22 (Block 6, 200-dataset pool registered, GB's agent); 2026-10-22 (#132 plan/runtime
-truth, LD); 2026-10-18 (ARACNe3 HPC build and smoke run, EXP-20261018-GB-1, issue #109, GB's agent);
-2026-10-17 (ARACNe3 adapter, issue #105, GB's agent); 2026-10-15 (#87, #71, #69 merged at GB's
+Updated: 2026-10-30 (#58 identifier provenance merged; #101 wheel resource safety aligned, LD);
+2026-10-29 (EXP-20261016-LM-1 registered, LM's agent; EXP-20261018-LD-1 current-main alignment,
+LD); 2026-10-28 (EXP-20261022-GB-1 results, GB's agent); 2026-10-26 (retention ledger, GB's agent;
+#183 test registry isolation, LD); 2026-10-25 (#167 full-suite baseline fixes, #169 empty
+stratification pool, #172 leading-dash context replay and #164 context/batch and HVG guards, LD);
+2026-10-24 (#149/#116 silent behaviours made loud, GB's agent); 2026-10-23 (ARACNe3 branch: main
+merged in, relative binary path fixed, GB's agent); 2026-10-22 (EXP-20261016-LM-1 draft PR, LM's
+agent; Block 6, 200-dataset pool registered, GB's agent; #132 plan/runtime truth, LD); 2026-10-18
+(ARACNe3 HPC build and smoke run, EXP-20261018-GB-1, issue #109, GB's agent); 2026-10-17
+(ARACNe3 adapter, issue #105, GB's agent); 2026-10-16 (D-026 accepted, D-018 active, D-029
+proposed, "two-sided" wording errata, LM's agent); 2026-10-15 (#87, #71, #69 merged at GB's
 request, GB's agent); 2026-10-11 (issue #58 identifier provenance and calibration, LD); 2026-10-10
 (issue #59, LD; interface branch merged with main after #55, GB's agent); 2026-10-09
 (interface redesign; tool end to end, GB's agent); 2026-10-07 (interface explorer, GB's agent);
@@ -28,17 +27,14 @@ comparison, published as a tool with a paper. Headline claims from real data (D-
 pre-registered experiments (D-017).
 
 ## In progress
-- EXP-20261018-LD-1 (LD, issue #110, `ld/pyscenic-comparison`): exploratory two-dataset,
-  cross-species reference comparison of grnbench cisTarget pruning against the unmodified official
-  pySCENIC 0.12.1 `ctx` CLI on identical expression matrices and full GRNBoost2 adjacencies.
-  Completed on HPC (jobs 707418, 707419, exit code 0:0); portable artifacts and reports committed
-  in `benchmarks/results/EXP-20261018-LD-1/`. The primary endpoint was not met: final
-  motif-supported pairs differ (Jaccard 0.4291 human, 0.5778 mouse). The secondary union of
-  activating-module pairs matches exactly (Jaccard 1.0000; 20,974 human and 27,596 mouse pairs),
-  but it comes from a separate module-export call and does not validate final `ctx` equivalence.
-  The reported precision treats pySCENIC as the reference set, not biological truth; the descriptive
-  CollecTRI AUPRC ratios are not evidence of biological superiority. Awaiting review; any motif-pruning
-  diagnosis belongs in a focused follow-up issue before production model code changes.
+- Packaging and wheel resource safety (LD, `ld/wheel-install-resources`, issue #101):
+  `grnbench.project` discovers project root across parent directories using the team state plus a
+  grnbench-specific source or `pyproject.toml` identity marker; neutral `grnbench.declared_pairs`
+  unbundles `DECLARED_PAIRS` so reports run outside checkouts without `real_bench.py`; `board`,
+  including its digest and claims modes, `report <EXP-ID>`, and `report --paper` return exit code 2
+  and clean error messages when repository context is missing. Covered by focused unit tests and
+  offline non-editable wheel install regression tests with pinned build tools in the Python 3.11 lock;
+  Luca's review findings are addressed and the PR awaits re-review.
 - D-024 (LM, `lm/stable-subsample`, PROPOSED): cell subsampling for screening/scoring is keyed by
   barcode hash. The 3,000-cell cap changes only above 3,000 cells; the 150-cell halves of
   `edge_stability` change on every sufficiently large matrix, below the cap too. New runs do not reproduce

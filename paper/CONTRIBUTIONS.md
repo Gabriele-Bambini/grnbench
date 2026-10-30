@@ -20,6 +20,7 @@ Agents are tools, not contributors: log the person who directed the agent.
 | 2026-10-08 | GB | Validation, Investigation | second-person rerun of EXP-20260925-LM-2 on the Bocconi HPC (record section 4b; verdict DIFFERENT); issue #24 |
 | 2026-10-09 | GB | Software, Visualization | interface redesign: screens, menu, theme and plain-language summaries (`grnbench ui`); branch `gb/ui-explorer` |
 | 2026-10-09 | GB | Software, Validation | end-to-end test of the integrated tool and fixes of the input-guard, CLI, ingest and viz defects it found; issue #74 |
+| 2026-10-15 | LD | Software | wheel install resource safety: project root discovery, canonical DECLARED_PAIRS packaging, and standalone reporting; issue #101 |
 | 2026-10-09 | LM | Visualization, Software | main figures for C4-C7 (`paper/figures/fig_motif_lift`, `fig_reference_free`, `paper/make_figures.py`); PR #62 |
 | 2026-10-10/11 | LD | Methodology, Software, Validation | identifier provenance, organism-aware collision-refusal guards and exact-snapshot approved-data calibrations; issue #58, EXP-20261010-LD-1/2, EXP-20261011-LD-1 |
 | 2026-10-18 | LD | Conceptualization, Methodology, Software, Validation, Investigation, Formal analysis | official pySCENIC 0.12.1 reference comparison design, isolated runner, execution and analysis; EXP-20261018-LD-1, issue #110 |

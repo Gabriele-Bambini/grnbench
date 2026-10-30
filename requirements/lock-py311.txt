@@ -1,5 +1,5 @@
 # Pinned environment for grnbench, Python 3.11 (the cluster env and the reference dev env).
-# Produced by: pip freeze of the env where the suite ran (2026-09-25). Install:
+# Produced by: pip freeze of the env where the suite ran (2026-09-25); updated 2026-10-15 with pinned Hatchling build tools for offline wheel builds (issue #101). Install:
 #   python -m pip install -r requirements/lock-py311.txt && python -m pip install --no-deps -e .
 # Optional RegDiffusion model (CPU torch, not in this lock):
 #   python -m pip install regdiffusion==0.2.3 torch==2.14.0 --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
@@ -33,6 +33,7 @@ fsspec==2026.9.0
 google-crc32c==1.9.0
 h11==0.16.0
 h5py==3.16.0
+hatchling==1.32.4
 httptools==0.8.0
 idna==3.20
 imageio==2.37.4
@@ -71,6 +72,7 @@ packaging==26.3
 pandas==2.3.3
 parso==0.8.7
 partd==1.4.2
+pathspec==1.1.1
 patsy==1.0.3
 pillow==12.3.0
 platformdirs==4.11.12
@@ -112,10 +114,12 @@ tblib==3.2.2
 threadpoolctl==3.7.0
 tifffile==2026.3.3
 toml==0.10.2
+tomlkit==0.15.1
 toolz==1.1.0
 tornado==6.5.10
 tqdm==4.70.1
 traitlets==5.16.1
+trove-classifiers==2026.9.21.13
 typing_extensions==4.16.0
 tzdata==2026.4
 umap-learn==0.5.12
@@ -124,6 +128,7 @@ uvicorn==0.53.0
 watchdog==6.0.0
 wcwidth==0.9.1
 websockets==16.1.1
+wheel==0.48.0
 wrapt==2.4.1
 xyzservices==2026.9.1
 zarr==3.1.6

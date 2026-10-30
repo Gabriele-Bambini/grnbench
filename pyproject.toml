@@ -7,7 +7,7 @@ name = "grnbench"
 version = "0.7.0"
 description = "GRN benchmarking with explicit candidate universes, provenance and calibrated comparison tools"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "The grnbench authors" }]
 dependencies = [

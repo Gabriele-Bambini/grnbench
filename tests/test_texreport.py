@@ -188,6 +188,35 @@ def test_primary_comparison_note_with_semicolon_is_not_a_second_hypothesis(tmp_p
     assert "No machine-readable primary comparison" not in tex
 
 
+def test_direct_run_dir_reporting_without_repo(tmp_path):
+    """A direct run directory report works standalone without a repository checkout."""
+    run, mean_diff = _run(tmp_path / "standalone_run")
+    out = tmp_path / "latex_out"
+    tex = texreport.build_report(str(run), out=out, compile_pdf=False)
+    assert tex.exists()
+    assert (out / "values.tex").exists()
+    assert (out / "tables" / "configuration.tex").exists()
+    assert "\\begin{document}" in tex.read_text()
+
+
+def test_exp_id_outside_checkout_fails_cleanly(tmp_path, monkeypatch):
+    """Resolving an EXP ID outside a repository checkout raises a clean FileNotFoundError."""
+    import pytest
+
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(FileNotFoundError, match="not a folder and grnbench repository root not found"):
+        texreport.resolve_input("EXP-20261001-LD-1")
+
+
+def test_paper_outside_checkout_fails_cleanly(tmp_path, monkeypatch):
+    """Running build_paper outside a repository checkout raises a clean FileNotFoundError."""
+    import pytest
+
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(FileNotFoundError, match="requires a grnbench repository checkout"):
+        texreport.build_paper(out=tmp_path / "out", compile_pdf=False)
+
+
 def test_report_input_ignores_text_after_the_quoted_path(tmp_path):
     """EXP-20261002-LM-1's record ends the path with '`.'; the template adds prose after it."""
     root = tmp_path / "repo"

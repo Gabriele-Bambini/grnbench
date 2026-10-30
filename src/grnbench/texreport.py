@@ -31,14 +31,14 @@ import os
 import re
 import shutil
 import subprocess
-import sys
 from datetime import datetime
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[2]
+from grnbench.project import find_project_root
+
 METRICS = {"auprc_ratio": "AUPRC ratio", "epr": "EPR"}
 ARMS = ("auto", "baseline")
 
@@ -145,8 +145,7 @@ def model_matrix(df: pd.DataFrame, arm: str, metric: str) -> pd.DataFrame:
 
 
 def declared_pairs() -> list[tuple[str, str]]:
-    sys.path.insert(0, str(ROOT / "benchmarks"))
-    from real_bench import DECLARED_PAIRS  # the family declared in code before a run
+    from grnbench.declared_pairs import DECLARED_PAIRS
     return list(DECLARED_PAIRS)
 
 
@@ -185,8 +184,11 @@ def table_from_dict(data: dict, caption: str) -> str:
 
 # --------------------------------------------------------------------------- experiment record
 
-def find_record(exp: str, root: Path = ROOT) -> Path | None:
-    p = root / "experiments" / f"{exp}.md"
+def find_record(exp: str, root: Path | None = None) -> Path | None:
+    project_root = root if root is not None else find_project_root()
+    if project_root is None:
+        return None
+    p = project_root / "experiments" / f"{exp}.md"
     return p if p.exists() else None
 
 
@@ -218,13 +220,16 @@ def _plain_record_value(value: str) -> str:
     return re.sub(r"[*_`]", "", str(value)).strip().rstrip(".")
 
 
-def resolve_input(target: str, root: Path = ROOT) -> tuple[Path, str | None]:
+def resolve_input(target: str, root: Path | None = None) -> tuple[Path, str | None]:
     """A run directory, or an EXP id whose record names its `report input:` folder."""
     p = Path(target)
     if p.is_dir():
         exp = next((part for part in p.resolve().parts[::-1] if part.startswith("EXP-")), None)
         return p, exp
-    rec = find_record(target, root)
+    project_root = root if root is not None else find_project_root()
+    if project_root is None:
+        raise FileNotFoundError(f"{target}: not a folder and grnbench repository root not found")
+    rec = find_record(target, project_root)
     if rec is None:
         raise FileNotFoundError(f"{target}: not a folder and no experiments/{target}.md")
     f = record_fields(rec)
@@ -234,7 +239,7 @@ def resolve_input(target: str, root: Path = ROOT) -> tuple[Path, str | None]:
     folder = quoted.group(1).strip() if quoted else value.strip()
     if not folder:
         folder = f"benchmarks/results/{target}"
-    return root / folder, target
+    return project_root / folder, target
 
 
 # --------------------------------------------------------------------------- build
@@ -458,10 +463,12 @@ def _retention_tex(view: dict) -> str:
 
 
 def build_report(target: str, exp: str | None = None, out: Path | None = None,
-                 root: Path = ROOT, compile_pdf: bool = True) -> Path:
-    run_dir, exp_found = resolve_input(target, root)
+                 root: Path | None = None, compile_pdf: bool = True) -> Path:
+    project_root = root if root is not None else find_project_root()
+    run_dir, exp_found = resolve_input(target, project_root)
     exp = exp or exp_found or run_dir.name
-    fields = record_fields(find_record(exp, root))
+    rec = find_record(exp, project_root) if project_root else None
+    fields = record_fields(rec)
     df = load_rows(run_dir)
     from grnbench.diagnostics import read_diagnostics
     diagnostics = read_diagnostics(run_dir)
@@ -476,7 +483,7 @@ def build_report(target: str, exp: str | None = None, out: Path | None = None,
               "arms": ", ".join(ARMS), "code": fields.get("code"),
               "code commit (run folder)": commit_file.read_text(encoding="utf-8").strip() if commit_file else None,
               "environment": fields.get("environment"), "machine": fields.get("machine"),
-              "seeds": fields.get("seeds"), "run folder": _rel(run_dir, root),
+              "seeds": fields.get("seeds"), "run folder": _rel(run_dir, project_root),
               "generated": datetime.now().strftime("%Y-%m-%d %H:%M")}
     (out / "tables" / "configuration.tex").write_text(
         table_from_dict(config, "Configuration of the run, from the experiment record and the run folder."),
@@ -493,8 +500,8 @@ def build_report(target: str, exp: str | None = None, out: Path | None = None,
     status = (f"Experiment {tex_escape(exp)}, type: {tex_escape(kind)}. "
               f"Record status: {tex_escape(status_value)}. "
               f"Reproduced by: {tex_escape(reproduced)}.")
-    title = next((l[2:].strip() for l in (find_record(exp, root).read_text(encoding="utf-8").splitlines()
-                                            if find_record(exp, root) else []) if l.startswith("# ")), exp)
+    title = next((l[2:].strip() for l in (rec.read_text(encoding="utf-8").splitlines()
+                                            if rec else []) if l.startswith("# ")), exp)
     tex = (REPORT_TEMPLATE.replace("<<TITLE>>", tex_escape(title)).replace("<<EXP>>", tex_escape(exp))
            .replace("<<STATUS>>", status).replace("<<METHODS>>", _methods(fields, df))
            .replace("<<DIAGNOSTICS>>", _diagnostics_tex(diagnostics))
@@ -509,7 +516,9 @@ def build_report(target: str, exp: str | None = None, out: Path | None = None,
     return main
 
 
-def _rel(path: Path, root: Path) -> str:
+def _rel(path: Path, root: Path | None) -> str:
+    if root is None:
+        return Path(path).name
     try:
         return Path(path).resolve().relative_to(Path(root).resolve()).as_posix()
     except ValueError:
@@ -550,11 +559,16 @@ def write_bib(path: Path) -> int:
     return len(entries)
 
 
-def build_paper(out: Path | None = None, root: Path = ROOT, compile_pdf: bool = True) -> Path:
+def build_paper(out: Path | None = None, root: Path | None = None, compile_pdf: bool = True) -> Path:
     """One draft from the confirmatory experiments listed in paper/CLAIMS.md."""
-    out = Path(out or root / "paper" / "build")
+    project_root = root if root is not None else find_project_root()
+    if project_root is None or not (project_root / "paper" / "CLAIMS.md").exists():
+        raise FileNotFoundError(
+            "grnbench report --paper requires a grnbench repository checkout (paper/CLAIMS.md not found)"
+        )
+    out = Path(out or project_root / "paper" / "build")
     out.mkdir(parents=True, exist_ok=True)
-    claims = (root / "paper" / "CLAIMS.md").read_text(encoding="utf-8")
+    claims = (project_root / "paper" / "CLAIMS.md").read_text(encoding="utf-8")
     exps = []
     for line in claims.splitlines():
         cells = [c.strip() for c in line.split("|")]
@@ -562,10 +576,10 @@ def build_paper(out: Path | None = None, root: Path = ROOT, compile_pdf: bool = 
             exps += [e for e in re.findall(r"EXP-[\w-]+", cells[3]) if e not in exps]
     sections = []
     for exp in exps:
-        fields = record_fields(find_record(exp, root))
+        fields = record_fields(find_record(exp, project_root))
         if not fields.get("type", "").lower().startswith(("confirmatory", "**confirmatory")):
             continue
-        sub = build_report(exp, out=out / exp, root=root, compile_pdf=False)
+        sub = build_report(exp, out=out / exp, root=project_root, compile_pdf=False)
         # every experiment defines the same macro names: prefix them per experiment
         # (\gbDiff... -> \gbEXP...LMTwoDiff...) so sections do not redefine each other's numbers
         tag = macro_name(exp)[2:]

@@ -3,6 +3,14 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- Packaging and CLI safety in non-editable wheel installs (#101): add `grnbench.project` for
+  project-root discovery by walking parents for specific repository markers; move the canonical
+  real-benchmark `DECLARED_PAIRS` to `grnbench.declared_pairs`; allow direct run-directory reporting
+  without a checkout; fail `board`, `report <EXP-ID>`, and `report --paper` with exit code 2 and concise
+  stderr messages without tracebacks or private install paths when repository-only context is absent;
+  pin reference development build tools (`hatchling`, `pathspec`, `tomlkit`, `trove-classifiers`, `wheel`)
+  in `requirements/lock-py311.txt` for reproducible offline wheel tests; declare Python 3.11 as the
+  supported package floor, matching the locked project environment and the standard-library use of `tomllib`.
 - EXP-20261016-LM-1 registered (confirmatory knockdown validation, RPE1 design and K562 replication, TF as the unit under D-022; claim issue #192): draft banner removed after check P8 closed, then launched on the cluster.
 - Register EXP-20261018-LD-1 and add a fail-loud, resumable comparison of grnbench's cisTarget
   pruning with the unmodified official pySCENIC 0.12.1 `ctx` CLI on identical expression matrices,

@@ -4,8 +4,9 @@ Keep this short and current: update it in any PR that adds, moves or removes a m
 Updated: 2026-10-25.
 
 ## Run it
-- Tests: `python -m pytest -q -p no:cacheprovider` (floor in AGENTS.md section 4). Golden values frozen
-  from main for A/B tests, with the script that wrote them: `tests/golden/`.
+- Tests: `python -m pytest -q -p no:cacheprovider` (floor in AGENTS.md section 4;
+  `tests/test_wheel_install.py` tests non-editable wheel installs offline; A/B golden values and their
+  generating scripts are in `tests/golden/`).
 - Board (session start): `python -m grnbench.board`; `--digest` weekly digest, `--claims` claims status table.
 - GUI: `grnbench ui` (Streamlit, `.claude/launch.json` config `grnbench-ui`). Demo data: `grnbench demo --out d`.
 - One dataset end to end: `grnbench run --data d.h5ad --out runs/x --gold dorotheaABC`.
@@ -54,14 +55,9 @@ Updated: 2026-10-25.
 | cleaning engine | `kb` (stages, options, evidence, references), `executors` (`PLAN_STEPS`: which options grnbench can run, which are recorded only; refuses imputation, D-002), `context` (what the data are), `profile`, `selector` (rules), `autoprep` (plan, execute), `screen` (candidate pipelines on the data, reference split) |
 | R bridge (optional) | `rbridge` (find an Rscript, cached probe, `run_r` / `run_external`, `requirement_status`, `environment_report` / `environment_status`), `r/_wrapper.R` (seed, RNG kind, `session.json`), `r/_probe.R` (versions as one JSON line); `kb` availability asks it for `r:` packages when `GRNBENCH_R_BRIDGE=1` (`kb.r_bridge_on`) |
 | inference | `infer/` (`base` contract + registry, `correlation`, `classical`, `tree_methods` GENIE3/GRNBoost2, `aracne3`, `regdiffusion_adapter`, `cistarget` motif prior / pruning, `association` bicor/WGCNA/propr/ARACNe-style/MRNET, `regression` TIGRESS/BBSR/pcNet/extra-trees/boosting, `community` rank aggregation), `plugins` (bring your own model); what is built in and what is not: `docs/models_catalog.md` |
-| evaluation + statistics | `eval/` (`metrics`, `gold`, `universe`, `nulls`, `stability`, `comparison` = `compare_units` paired t + Holm, `knockdown` = TF-as-unit scoring against knockdown responders with propensity controls and a TF-label permutation null) |
-| evaluation + statistics | `eval/` (`metrics`, `gold`, `universe`, `nulls`, `stability`, `comparison` = `compare_units` paired t + Holm, `power` = power and needed n of that t, for planning) |
-| evaluation + statistics | `eval/` (`metrics`, `gold`, `universe`, `nulls`, `stability`, `comparison` = `compare_units` paired t + Holm) |
-| reporting | `diagnostics` (portable schema, strict reader and shared normalized report rows), `report` + `html_report` (per run), `viz` + `viz.mplstyle` (figures), `texreport` (LaTeX), `board` (team board) |
+| evaluation + statistics | `eval/` (`metrics`, `gold`, `universe`, `nulls`, `stability`, `comparison` = `compare_units` paired t + Holm, `power` = power and needed n of that t, for planning, `knockdown` = TF-as-unit scoring against knockdown responders with propensity controls and a TF-label permutation null), `declared_pairs` (canonical real-benchmark comparison family) |
+| reporting + environment | `diagnostics` (portable schema, strict reader and shared normalized report rows), `report` + `html_report` (per run), `viz` + `viz.mplstyle` (figures), `explore` (exploratory TF atlas, figures and evidence cards), `texreport` (LaTeX), `board` (team board, digest and claims), `project` (repository root discovery) |
 | seeds | `seeds` (`DEFAULT_SEED`, `derive` named child seeds, `SeedPlan`, `LEGACY` = the seeds each entry point uses today, read back from the code by `tests/test_seeds_legacy.py`; nothing calls it yet, #126) |
-| reporting | `report` + `html_report` (per run), `viz` + `viz.mplstyle` (figures), `explore` (exploratory TF atlas, figures and evidence cards from run artifacts), `texreport` (LaTeX), `board` (team board) |
-| interface | `ui/app.py` (Streamlit), `ui/logic.py` (tested logic), CLIs `cli_*.py` dispatched by `cli_main.py` |
-| reporting | `diagnostics` (portable schema shared by prep/screen/models), `report` + `html_report` (per run), `viz` + `viz.mplstyle` (figures), `texreport` (LaTeX), `board` (team board) |
 | interface | `ui/app.py` (Streamlit pages: Quick run, steps 1-7, Explore data, Explore results), `ui/steps.py` (the list of screens and their headlines), `ui/logic.py` (tested logic and plain-language summaries), `ui/catalog.py` (model families, speeds, presets), `ui/style.py` + `ui/theme.py` (stylesheet and the Streamlit options `grnbench ui` passes), CLIs `cli_*.py` dispatched by `cli_main.py` |
 | simulation | `simulate` (shared + per-cell-type planted truth and degradations), `demo` |
 

@@ -147,10 +147,7 @@ COMBINERS = ("_motif", "_cistarget")
 # Pre-declared comparison family for the report (declared 2026-09-25 before the run):
 # does the motif prior add to each base model, does expression add to the prior alone,
 # and do the newer models beat the Pearson default?
-DECLARED_PAIRS = [("pearson_motif", "pearson_signed"), ("grnboost2_motif", "grnboost2"),
-                  ("regdiffusion_motif", "regdiffusion"), ("grnboost2_cistarget", "grnboost2"),
-                  ("pearson_motif", "motif_prior"), ("grnboost2", "pearson_signed"),
-                  ("regdiffusion", "pearson_signed")]
+from grnbench.declared_pairs import DECLARED_PAIRS
 
 
 BASE_ALIAS = {"pearson": "pearson_signed", "spearman": "spearman_signed"}

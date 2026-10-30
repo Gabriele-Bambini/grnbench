@@ -24,12 +24,38 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+from grnbench.project import find_project_root
 
 
-def _gh(gh: list[str], args: list[str]) -> list[dict] | str:
+def _split_command(value: str, *, posix: bool | None = None) -> list[str]:
+    """Split an executable override without corrupting Windows paths.
+
+    ``shlex`` uses POSIX escaping by default, so a value such as
+    ``C:\\Users\\me\\bin\\gh.cmd`` loses every backslash.  Non-POSIX mode
+    preserves the path but retains wrapping quotes; remove only matching
+    outer quotes because ``subprocess`` receives an argument list.
+    """
+    use_posix = os.name != "nt" if posix is None else posix
+    parts = shlex.split(value, posix=use_posix)
+    if not use_posix:
+        parts = [
+            part[1:-1]
+            if len(part) >= 2 and part[0] == part[-1] and part[0] in {"'", '"'}
+            else part
+            for part in parts
+        ]
+    return parts
+
+
+def _gh(gh: list[str], args: list[str], cwd: Path | None = None) -> list[dict] | str:
     try:
-        res = subprocess.run(gh + args, capture_output=True, text=True, timeout=60)
+        res = subprocess.run(
+            gh + args,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=str(cwd) if cwd is not None else None,
+        )
     except (OSError, subprocess.TimeoutExpired) as exc:
         return f"gh not usable ({type(exc).__name__}: {exc})"
     if res.returncode != 0:
@@ -53,11 +79,18 @@ def _who(issue: dict) -> str:
 
 
 def board(gh: list[str] | None = None, root: Path | None = None) -> str:
-    gh = gh or shlex.split(os.environ.get("GRNBENCH_GH", "gh"))
-    root = root or (Path.cwd() if (Path.cwd() / ".projectos").is_dir() else ROOT)
+    gh = gh or _split_command(os.environ.get("GRNBENCH_GH", "gh"))
+    resolved_root = Path(root).resolve() if root is not None else find_project_root()
+    if resolved_root is None:
+        raise FileNotFoundError(
+            "repository root not found (must be run within the grnbench repository)"
+        )
     lines = ["# grnbench board", "", "## In flight (issues labelled `running`)"]
-    running = _gh(gh, ["issue", "list", "--label", "running", "--state", "open",
-                       "--json", "number,title,assignees,updatedAt,url"])
+    running = _gh(
+        gh,
+        ["issue", "list", "--label", "running", "--state", "open", "--json", "number,title,assignees,updatedAt,url"],
+        cwd=resolved_root,
+    )
     if isinstance(running, str):
         lines.append(f"- ? {running}")
     elif not running:
@@ -65,15 +98,22 @@ def board(gh: list[str] | None = None, root: Path | None = None) -> str:
     for i in running if isinstance(running, list) else []:
         lines.append(f"- #{i['number']} {i['title']} ({_who(i)}, updated {i.get('updatedAt', '?')[:16]})")
     lines += ["", "## Claimed experiments (issues labelled `experiment`, not yet `running`)"]
-    claimed = _gh(gh, ["issue", "list", "--label", "experiment", "--state", "open",
-                       "--json", "number,title,assignees,labels"])
+    claimed = _gh(
+        gh,
+        ["issue", "list", "--label", "experiment", "--state", "open", "--json", "number,title,assignees,labels"],
+        cwd=resolved_root,
+    )
     if isinstance(claimed, str):
         lines.append(f"- ? {claimed}")
     else:
         claimed = [i for i in claimed if "running" not in {lb.get("name") for lb in i.get("labels", [])}]
         lines += [f"- #{i['number']} {i['title']} ({_who(i)})" for i in claimed] or ["- none"]
     lines += ["", "## Open pull requests"]
-    prs = _gh(gh, ["pr", "list", "--state", "open", "--json", "number,title,author,headRefName,isDraft"])
+    prs = _gh(
+        gh,
+        ["pr", "list", "--state", "open", "--json", "number,title,author,headRefName,isDraft"],
+        cwd=resolved_root,
+    )
     if isinstance(prs, str):
         lines.append(f"- ? {prs}")
     elif not prs:
@@ -82,7 +122,7 @@ def board(gh: list[str] | None = None, root: Path | None = None) -> str:
         draft = " [draft]" if p.get("isDraft") else ""
         lines.append(f"- #{p['number']} {p['title']} ({p.get('author', {}).get('login', '?')}, "
                      f"{p.get('headRefName', '?')}){draft}")
-    state = root / ".projectos" / "STATE.md"
+    state = resolved_root / ".projectos" / "STATE.md"
     text = state.read_text(encoding="utf-8") if state.exists() else ""
     for title in ("In progress", "Next steps", "Blockers"):
         sec = _section(text, title)
@@ -121,8 +161,12 @@ def _lines(res: list[dict] | str, fmt) -> list[str]:
 
 
 def digest(since: str | None = None, gh: list[str] | None = None, root: Path | None = None) -> str:
-    gh = gh or shlex.split(os.environ.get("GRNBENCH_GH", "gh"))
-    root = root or (Path.cwd() if (Path.cwd() / ".projectos").is_dir() else ROOT)
+    gh = gh or _split_command(os.environ.get("GRNBENCH_GH", "gh"))
+    root = Path(root).resolve() if root is not None else find_project_root()
+    if root is None:
+        raise FileNotFoundError(
+            "repository root not found (must be run within the grnbench repository)"
+        )
     since = since or (datetime.date.today() - datetime.timedelta(days=7)).isoformat()
     login = lambda p: p.get("author", {}).get("login", "?")
     base = _base(root)
@@ -167,7 +211,11 @@ def digest(since: str | None = None, gh: list[str] | None = None, root: Path | N
 
 
 def claims_table(root: Path | None = None) -> str:
-    root = root or (Path.cwd() if (Path.cwd() / ".projectos").is_dir() else ROOT)
+    root = Path(root).resolve() if root is not None else find_project_root()
+    if root is None:
+        raise FileNotFoundError(
+            "repository root not found (must be run within the grnbench repository)"
+        )
     outputs = [p for d in ("tables", "figures") for p in sorted((root / "paper" / d).glob("*")) if p.is_file()]
     texts = {p: p.name + (p.read_text(encoding="utf-8", errors="ignore") if p.suffix in (".md", ".tex", ".csv") else "")
              for p in outputs}
@@ -188,19 +236,28 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--claims", action="store_true", help="claims status table")
     ap.add_argument("--post", metavar="ISSUE", help="with --digest: also post it as a comment on this issue")
     args = ap.parse_args(argv)
-    if args.claims:
-        print(claims_table())
-    elif args.digest or args.post:
-        text = digest(args.since)
-        print(text)
-        if args.post:
-            gh = shlex.split(os.environ.get("GRNBENCH_GH", "gh"))
-            res = subprocess.run(gh + ["issue", "comment", args.post, "--body-file", "-"], input=text,
-                                 capture_output=True, text=True, encoding="utf-8")
-            print(res.stdout.strip() or res.stderr.strip(), file=sys.stderr)
-            return res.returncode
-    else:
-        print(board())
+    try:
+        if args.claims:
+            print(claims_table())
+        elif args.digest or args.post:
+            text = digest(args.since)
+            print(text)
+            if args.post:
+                gh = _split_command(os.environ.get("GRNBENCH_GH", "gh"))
+                res = subprocess.run(
+                    gh + ["issue", "comment", args.post, "--body-file", "-"],
+                    input=text,
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                )
+                print(res.stdout.strip() or res.stderr.strip(), file=sys.stderr)
+                return res.returncode
+        else:
+            print(board())
+    except (OSError, ValueError) as exc:
+        print(f"grnbench board: {exc}", file=sys.stderr)
+        return 2
     return 0
 
 
