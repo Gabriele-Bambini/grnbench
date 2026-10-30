@@ -36,7 +36,9 @@ _QUOTED_PATH = re.compile(
     re.IGNORECASE,
 )
 _PATH_TOKEN = re.compile(
-    r"(?<![\w.+:/-])(?:file://[^\s'\"<>]+|[A-Za-z]:[\\/][^\s'\"<>]+|"
+    # Not glued to a word char, '+', '-' or '/'; a '.' only blocks './' and '../' (relative); a ':' is
+    # allowed ('failed:/x', 'failed:D:\x') unless it opens '//' (a URL such as 'https://host/a').
+    r"(?<![\w+/-])(?<!(?<!\w)\.)(?:(?<!:)|(?!//))(?:file://[^\s'\"<>]+|[A-Za-z]:[\\/][^\s'\"<>]+|"
     r"\\\\[^\\\s'\"<>]+\\[^\s'\"<>]+|~[\\/][^\s'\"<>]+|"
     r"/[^\s'\"<>]+)",
     re.IGNORECASE,

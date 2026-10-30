@@ -132,6 +132,43 @@ def test_portability_validator_rejects_paths_and_identity_fields(bad):
         validate_portable(bad)
 
 
+# An absolute path glued after ':' or '.' is redacted like one after a space or '=' (#179)
+_GLUED = [
+    ("dir:/scratch/alice/run1", "dir:<path>"),
+    ("open failed:/home/alice/secret.h5ad", "open failed:<path>"),
+    ("open failed:D:\\Data\\alice\\secret.h5ad", "open failed:<path>"),
+    ("x./home/alice/y", "x.<path>"),
+    ("input=/home/alice/x", "input=<path>"),
+]
+# Not paths: ratios, http(s) URLs, versions, relative './' and '../'
+_NOT_PATHS = [
+    "kept 3 /4", "kept 3/4", "ratio 3 /4 of cells", "https://example.org/a/b", "see https://example.org/a/b.",
+    "numpy 1.9/2.0", "CD4+/CD8+", "a/b/c", "open ./data/x", "open ../data/x",
+]
+
+
+@pytest.mark.parametrize(("message", "expected"), _GLUED)
+def test_safe_message_redacts_paths_glued_after_colon_dot_or_equals(message, expected):
+    assert safe_message(message) == expected
+
+
+@pytest.mark.parametrize("message", [m for m, _ in _GLUED])
+def test_validate_portable_refuses_paths_glued_after_colon_dot_or_equals(message):
+    with pytest.raises(DiagnosticPrivacyError):
+        validate_portable({"message": message})
+
+
+@pytest.mark.parametrize("message", _NOT_PATHS)
+def test_glued_path_fix_keeps_ratios_urls_versions_and_relative_paths(message):
+    assert safe_message(message) == message
+    validate_portable({"message": message})
+
+
+def test_file_uri_is_still_a_path_and_collapse_is_kept():
+    assert safe_message("see file:///x now") == "see <path> now"
+    assert safe_message("failed:/a/b:/c/d") == "failed:<path>"
+
+
 def test_writer_is_deterministic_and_refuses_unsafe_content(tmp_path):
     doc = prep_document(_prep_manifest())
     first = write_diagnostics(tmp_path / "a.json", doc).read_bytes()
