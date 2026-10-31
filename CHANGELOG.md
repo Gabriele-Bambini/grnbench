@@ -521,6 +521,7 @@
   Windows ssh-agent: `StartupType Automatic` once, no per-reboot step.
 
 ### Fixed
+- `benchmarks/knockdown_bench.py` `usable_cells` runs under pandas 3: the in-place `ok &= ...` on the array of `Series.to_numpy()` raised `ValueError: output array is read-only` (copy-on-write); now `ok = ok & ...`. Output under the locked pandas 2.3.3 is unchanged.
 - Diagnostics redaction (#179): an absolute path glued after ':' or '.' (`dir:/scratch/x`, `failed:D:\Data\x`, `x./home/y`) is now redacted by `safe_message` and refused by `validate_portable`; ratios, `https://` URLs, versions and `./`, `../` are kept.
 - `hpc/engine_bench.sbatch`: a plain (non-array) job's work folder carries its Slurm job id
   (`gb_engine_<job>_0`). Every plain job used `gb_engine_0_0` under the same TMPDIR, so the first job to end

@@ -89,7 +89,7 @@ def usable_cells(obs: pd.DataFrame, perturbation_col: str) -> np.ndarray:
     """Boolean mask of cells that carry at most one perturbation (nperts > 1 dropped when the column exists)."""
     ok = obs[perturbation_col].notna().to_numpy()
     if "nperts" in obs.columns:
-        ok &= (pd.to_numeric(obs["nperts"], errors="coerce").fillna(1) <= 1).to_numpy()
+        ok = ok & (pd.to_numeric(obs["nperts"], errors="coerce").fillna(1) <= 1).to_numpy()
     return ok
 
 
