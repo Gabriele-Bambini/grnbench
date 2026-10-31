@@ -50,3 +50,4 @@ Agents are tools, not contributors: log the person who directed the agent.
 | 2026-10-10 | GB | Investigation, Formal analysis, Data curation | EXP-20261003-GB-1 run on the HPC, results and record section 3; issue #52 |
 | 2026-10-25 | LD | Software, Validation | all-missing stratification pools fail per context without aborting the remaining contexts; issue #169 |
 | 2026-10-30 | LM | Software | knockdown truth step runs under pandas 3 (read-only array in `usable_cells`) |
+| 2026-10-30 | GB | Software | quiet the scanpy "already log-transformed" false alarm in feature selection (the stale `uns['log1p']` marker on the scratch copy; cleaned matrix and manifest unchanged); issue #202 |

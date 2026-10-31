@@ -13,6 +13,10 @@
   (`RUN_CONFIG.json` `negative_control_draws`, candidate_study rows `negative_control.draws`); the text no
   longer says the seed is never taken from `--seed` (`grnbench infer`/`run` pass it); one fixed draw per
   universe, so arms that share a gene set show identical control scores.
+- Quiet log (#202): scanpy no longer prints "adata.X seems to be already log-transformed" from `features.select_features`.
+  The cleaning strategy leaves `uns['log1p']` on the object and the scratch copy, whose X is rebuilt from counts,
+  carried it; the marker is dropped on the copy only. A false alarm: the selected genes, the cleaned matrix and the
+  manifest (non-timing fields) are identical before and after on a synthetic prep and a synthetic plan-then-execute run.
 - Packaging and CLI safety in non-editable wheel installs (#101): add `grnbench.project` for
   project-root discovery by walking parents for specific repository markers; move the canonical
   real-benchmark `DECLARED_PAIRS` to `grnbench.declared_pairs`; allow direct run-directory reporting

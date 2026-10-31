@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import collections
 import json
+import logging
+from contextlib import contextmanager
 from pathlib import Path
 
 import numpy as np
@@ -40,6 +42,81 @@ def test_select_features_without_tf_list(synthetic_adata):
     assert out.n_vars <= 101
     assert rep["tfs_requested"] == 0
     assert rep["n_hvg_selected"] >= 1
+
+
+@contextmanager
+def _scanpy_log():
+    """Record what scanpy's own logger prints (it does not go through ``warnings``)."""
+    from scanpy._settings import settings
+
+    class _Rec(logging.Handler):
+        def __init__(self):
+            super().__init__(level=logging.NOTSET)
+            self.messages: list[str] = []
+
+        def emit(self, record):
+            self.messages.append(record.getMessage())
+
+    rec, root, previous = _Rec(), settings._root_logger, settings.verbosity
+    settings.verbosity = "warning"      # another test may have lowered it; the line is a warning
+    root.addHandler(rec)
+    try:
+        yield rec.messages
+    finally:
+        root.removeHandler(rec)
+        settings.verbosity = previous
+
+
+def _dense(x) -> np.ndarray:
+    return np.asarray(x.toarray() if sparse.issparse(x) else x)
+
+
+def test_the_recorder_sees_scanpys_already_log_transformed_line(synthetic_adata):
+    """Guard for the two tests below: if scanpy changes this line they must not pass vacuously."""
+    import scanpy as sc
+    from grnbench.strategies import cpm_log1p
+
+    marked = cpm_log1p(synthetic_adata)
+    assert "log1p" in marked.uns
+    with _scanpy_log() as messages:
+        sc.pp.log1p(marked.copy())
+    assert any("already log-transformed" in m for m in messages)
+
+
+@pytest.mark.parametrize("x_is_counts", [False, True],
+                         ids=["log-normalised X with a counts layer", "raw counts in X"])
+def test_select_features_does_not_print_scanpys_false_log_warning(synthetic_adata, x_is_counts):
+    """The scratch copy carried ``uns['log1p']`` (from the cleaning strategy, or stale) while
+    ``select_features`` rebuilt X from raw counts, so scanpy printed "adata.X seems to be already
+    log-transformed" once per call although it is not (hundreds of lines per run)."""
+    from grnbench.strategies import cpm_log1p
+
+    if x_is_counts:
+        data = synthetic_adata.copy()
+        data.uns["log1p"] = {"base": None}          # a stale marker on a matrix that is raw counts
+    else:
+        data = cpm_log1p(synthetic_adata)           # X = log1p(CPM), layers['counts'], uns['log1p']
+    assert "log1p" in data.uns
+    x_before = _dense(data.X).copy()
+    with _scanpy_log() as messages:
+        select_features(data, n_hvg=100, tf_list=["GENE100"])
+    assert [m for m in messages if "already log-transformed" in m] == []
+    assert "log1p" in data.uns                      # the input is never changed
+    assert np.array_equal(_dense(data.X), x_before)
+
+
+def test_select_features_result_does_not_depend_on_the_log1p_marker(synthetic_adata):
+    """Dropping the marker on the scratch copy changes the log, never the selection or the report."""
+    from grnbench.strategies import cpm_log1p
+
+    marked = cpm_log1p(synthetic_adata)
+    unmarked = marked.copy()
+    del unmarked.uns["log1p"]
+    kept_a, report_a = select_features(marked, n_hvg=100, tf_list=["GENE100"])
+    kept_b, report_b = select_features(unmarked, n_hvg=100, tf_list=["GENE100"])
+    assert list(kept_a.var_names) == list(kept_b.var_names)
+    assert report_a == report_b
+    assert np.array_equal(_dense(kept_a.X), _dense(kept_b.X))
 
 
 def test_end_to_end_run(tmp_path, synthetic_adata):

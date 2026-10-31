@@ -41,10 +41,14 @@ def select_features(adata: ad.AnnData, n_hvg: int = 3000,
 
     scratch = adata.copy()
     ok, why = looks_like_counts(scratch.X)
+    # X is rebuilt from counts below, so a log1p marker left by an earlier step is stale: drop it on the
+    # copy, or scanpy warns "already log-transformed" about a matrix that is not
     if ok:
+        scratch.uns.pop("log1p", None)
         sc.pp.normalize_total(scratch, target_sum=1e4)
         sc.pp.log1p(scratch)
     elif "counts" in scratch.layers:  # normalized X, but counts available
+        scratch.uns.pop("log1p", None)
         scratch.X = scratch.layers["counts"].copy()
         sc.pp.normalize_total(scratch, target_sum=1e4)
         sc.pp.log1p(scratch)
