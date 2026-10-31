@@ -56,6 +56,19 @@ Combining with the motif prior: `benchmarks/real_bench.py --models` resolves a `
 `_cistarget` suffix on any registered base method (for example `mrnet_motif`), so every extra
 method can be tried with the sequence prior without a new registration.
 
+### Negative control (D-037)
+
+`random_baseline` gives every candidate TF-target pair (the regulators of the TF list x every gene, as the
+correlation baselines) a uniform random weight, so its AUPRC ratio and EPR are the empirical null. That null
+is close to 1 only with many evaluation positives (higher and noisier with tens), so read it as a check for a
+gross universe or evaluation error, not as a test against 1; both reports print the positives next to it. The
+benchmark runners pass no seed, so there it draws with `seeds.RANDOM_BASELINE_SEED` (one fixed draw per
+universe, recorded in the run record with its draw rule); `grnbench infer` and `grnbench run` pass `--seed` as
+for any model. It is registered with `default=False`, and no interface preset
+ticks it. `real_bench.py` and `candidate_study.py` score it on every task planned since D-037 (the task
+carries `negative_controls`) and report it in a separate "Negative control (random)" table; it is never in
+`DECLARED_PAIRS`, `CONFIRM_FAMILY` or any Holm family. Task lists planned before D-037 run and report as before.
+
 ## 3. Not included, and why
 
 | method | reason |

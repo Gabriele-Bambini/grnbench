@@ -304,6 +304,7 @@ from grnbench.infer.association import (  # noqa: E402
     wgcna_tom,
 )
 from grnbench.infer.community import community, community_availability  # noqa: E402
+from grnbench.infer.random_baseline import random_baseline  # noqa: E402
 from grnbench.infer.regression import (  # noqa: E402
     bbsr,
     extra_trees,
@@ -439,5 +440,11 @@ REGISTRY: dict[str, MethodSpec] = {
         MethodSpec("community",
                    "Mean-rank aggregate of spearman_signed, clr, ppcor, lasso, mrnet, bicor (Marbach et al. 2012)",
                    community, takes="adata", probe=community_availability, default=False),
+
+        # --- negative control (D-037): an empirical null next to the scores, never in a comparison family;
+        # default=False, so `--methods available` and the interface's default set are unchanged.
+        MethodSpec("random_baseline",
+                   "Negative control: a seeded uniform random weight for every candidate TF-target pair (an empirical null, D-037)",
+                   random_baseline, default=False),
     ]
 }

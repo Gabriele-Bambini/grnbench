@@ -42,7 +42,9 @@ from engine_bench import (BASELINE, EVAL_METHODS, MAX_SCORE_CELLS, RETRYABLE_STA
                           _atomic_json, _normalise_status, enforce_completeness, keep_awake,
                           pool_results, ensure_run_config, load_task_manifest, score_candidates,
                           write_task_manifest)  # noqa: E402
+from grnbench.infer.random_baseline import DRAW_RULE as RANDOM_BASELINE_DRAW  # noqa: E402
 from grnbench.screen import CELL_SAMPLING  # noqa: E402
+from grnbench.seeds import RANDOM_BASELINE_SEED  # noqa: E402
 
 MIN_REFERENCE_EDGES = 50
 # Regulators scored: the TFs with the most reference targets present in the data. Evaluation
@@ -120,7 +122,31 @@ def make_tasks(data_root: Path) -> list[dict]:
         tasks.append({"id": f"beeline__{expr.parent.name}", "path": _portable_user_path(expr),
                       "kind": "beeline",
                       "truth": {"expect_refusal": "not raw counts (BEELINE inputs are normalized)"}})
+    for task in tasks:              # new plans carry the negative control (D-037); old task lists do not
+        task["negative_controls"] = list(NEGATIVE_CONTROLS)
     return tasks
+
+
+def scientific_config(models: list[str] | None, controls: list[str], refs) -> dict:
+    """The ``scientific_config`` of RUN_CONFIG.json. Only a task list planned with D-037 adds the controls, their
+    seed and their draw rule, so older RUN_CONFIG.json files stay valid."""
+    config = {"models": models or [], "screen_methods": EVAL_METHODS, "max_tfs": MAX_TFS,
+              "max_score_cells": MAX_SCORE_CELLS, "cell_sampling": CELL_SAMPLING,
+              "min_reference_edges": MIN_REFERENCE_EDGES, "reference_split": "within_tf_half",
+              "reference_sha256": reference_fingerprints(refs)}
+    if controls:
+        config["negative_controls"] = list(controls)
+        config["negative_control_draws"] = {c: dict(NEGATIVE_CONTROL_DRAWS[c]) for c in controls}
+    return config
+
+
+def task_controls(task: dict) -> list[str]:
+    """The negative controls a task was planned with (D-037); none for a task list planned before it."""
+    controls = list(task.get("negative_controls") or [])
+    unknown = [c for c in controls if c not in NEGATIVE_CONTROLS]
+    if unknown:
+        raise ValueError(f"task {task.get('id')}: unknown negative control(s) {unknown}; known: {NEGATIVE_CONTROLS}")
+    return controls
 
 
 def _reference(refs: Path | None, organism: str | None, genes) -> set[tuple[str, str]]:
@@ -149,6 +175,13 @@ COMBINERS = ("_motif", "_cistarget")
 # and do the newer models beat the Pearson default?
 from grnbench.declared_pairs import DECLARED_PAIRS
 
+
+# Negative controls (D-037): scored on the same candidate pairs as the models, reported apart (``nc_`` columns,
+# "Negative control (random)"), never in DECLARED_PAIRS or any Holm family. Recorded per task by ``plan``
+# (``negative_controls``), so a task list planned before D-037 runs and reports exactly as before.
+NEGATIVE_CONTROLS = ("random_baseline",)
+# How each control draws, for the run record: the runners pass no seed, so the control's default seed applies.
+NEGATIVE_CONTROL_DRAWS = {"random_baseline": {"seed": RANDOM_BASELINE_SEED, "draw": RANDOM_BASELINE_DRAW}}
 
 BASE_ALIAS = {"pearson": "pearson_signed", "spearman": "spearman_signed"}
 
@@ -216,10 +249,12 @@ def _write_edges_artifact(edges: pd.DataFrame, path: Path) -> None:
 
 
 def score_models(records_by_cand, plans, arms: dict, methods: list[str], tfs, eval_pairs,
-                 artifacts_dir: Path | None = None) -> dict:
+                 artifacts_dir: Path | None = None, support: bool = False) -> dict:
     """AUPRC ratio + EPR of every method on the arms' candidates, mean over contexts.
 
-    Returns ``{f"m_{method}_{arm}_{metric}": value}`` plus per-method seconds.
+    Returns ``{f"m_{method}_{arm}_{metric}": value}`` plus per-method seconds. ``support=True`` (the
+    negative controls only, D-037) adds ``n_pos_min`` / ``n_pos_max``: the fewest and most evaluation
+    positives in the candidate universe over the arm's contexts, the number the null level depends on.
 
     ``artifacts_dir``, when given, writes per arm/context the top-scored edges
     of every model (``<arm>/ctx<i>/<model>.tsv.gz``) and the processed AnnData
@@ -244,7 +279,7 @@ def score_models(records_by_cand, plans, arms: dict, methods: list[str], tfs, ev
                 out[k.replace("__ARM__", arm)] = v
             continue
         assume = plans[cand].value("strategy") != "raw_counts"
-        vals = {m: {"auprc_ratio": [], "epr": [], "seconds": 0.0} for m in methods}
+        vals = {m: {"auprc_ratio": [], "epr": [], "seconds": 0.0, "n_pos": []} for m in methods}
         for i, rec in enumerate(records_by_cand[cand]):
             if not rec.get("processed"):
                 continue
@@ -282,6 +317,7 @@ def score_models(records_by_cand, plans, arms: dict, methods: list[str], tfs, ev
                     r = evaluate_ranking(edges, gi, with_curve=False, universe=universe)
                     vals[m]["auprc_ratio"].append(float(r.get("auprc_ratio", np.nan)))
                     vals[m]["epr"].append(float(r.get("epr", np.nan)))
+                    vals[m]["n_pos"].append(int(r["n_gold_in_universe"]))
                 except Exception as exc:  # noqa: BLE001 - a failing method is recorded, not fatal
                     vals[m]["auprc_ratio"].append(np.nan)
                     vals[m]["epr"].append(np.nan)
@@ -293,10 +329,21 @@ def score_models(records_by_cand, plans, arms: dict, methods: list[str], tfs, ev
                 x = [y for y in v[metric] if np.isfinite(y)]
                 block[f"m_{m}___ARM___{metric}"] = float(np.mean(x)) if x else np.nan
             block[f"m_{m}___ARM___seconds"] = round(v["seconds"], 1)
+            if support:
+                block[f"m_{m}___ARM___n_pos_min"] = min(v["n_pos"]) if v["n_pos"] else None
+                block[f"m_{m}___ARM___n_pos_max"] = max(v["n_pos"]) if v["n_pos"] else None
         done[cand] = block
         for k, v in block.items():
             out[k.replace("__ARM__", arm)] = v
     return out
+
+
+def score_controls(records_by_cand, plans, arms: dict, controls: list[str], tfs, eval_pairs) -> dict:
+    """``score_models`` for the negative controls, under their own ``nc_`` prefix: no model table, comparison or
+    figure that reads ``m_`` columns ever sees them (D-037). They also carry the number of evaluation positives
+    (``n_pos_min`` / ``n_pos_max``), which the report prints next to the control's mean."""
+    out = score_models(records_by_cand, plans, arms, controls, tfs, eval_pairs, support=True)
+    return {"nc_" + k[len("m_"):]: v for k, v in out.items()}
 
 
 def run_real_task(task: dict, refs: Path | None, workroot: Path, keep: bool = False,
@@ -399,6 +446,11 @@ def run_real_task(task: dict, refs: Path | None, workroot: Path, keep: bool = Fa
                                         {"baseline": "baseline", "auto": res["best"]},
                                         models, tfs, res["reference"]["evaluation"],
                                         artifacts_dir=task_artifacts))
+            controls = task_controls(task)
+            if controls:
+                row.update(score_controls(res["records"], res["plans"],
+                                          {"baseline": "baseline", "auto": res["best"]},
+                                          controls, tfs, res["reference"]["evaluation"]))
         else:
             recs = execute_plan(
                 plan, task["path"], work / "clean", tf_list=tfs,
@@ -454,14 +506,54 @@ def _model_matrix(df: pd.DataFrame, arm: str, metric: str) -> pd.DataFrame:
     return mat
 
 
+def controls_section(df: pd.DataFrame) -> list[str]:
+    """The negative controls' scores (``nc_`` columns, D-037), apart from the models; [] when none was run."""
+    names = sorted({c[len("nc_"):-len("_auto_auprc_ratio")] for c in df
+                    if c.startswith("nc_") and c.endswith("_auto_auprc_ratio")})
+    if not names:
+        return []
+    lines = ["### Negative control (random)", "",
+             "Not a comparison: a seeded uniform random weight on the same candidate pairs as the models (D-037); "
+             "it is in no declared comparison and no Holm family. How to read it: its AUPRC ratio and EPR are the "
+             "empirical null, whose level depends on the number of evaluation positives (close to 1 with hundreds, "
+             "higher and noisier with tens), so it checks for a gross universe or evaluation error and is not a "
+             "test against 1. It is one fixed draw per universe: when the auto and baseline arms share a gene set "
+             "their control scores are identical, not two independent nulls. Positives = evaluation pairs in the "
+             "candidate universe per context, min-max over the datasets.", "",
+             "| control | n | mean AUPRC ratio auto | median auto | mean AUPRC ratio baseline | mean EPR auto | "
+             "mean EPR baseline | positives auto (min-max) | positives baseline (min-max) |",
+             "|---|---|---|---|---|---|---|---|---|"]
+    num = lambda c: pd.to_numeric(df[c], errors="coerce") if c in df else pd.Series(np.nan, index=df.index)  # noqa: E731
+
+    def span(lo: pd.Series, hi: pd.Series) -> str:
+        lo, hi = lo.dropna(), hi.dropna()
+        return f"{int(lo.min())}-{int(hi.max())}" if len(lo) and len(hi) else "-"
+
+    for m in names:
+        a, b = num(f"nc_{m}_auto_auprc_ratio"), num(f"nc_{m}_baseline_auprc_ratio")
+        ea, eb = num(f"nc_{m}_auto_epr"), num(f"nc_{m}_baseline_epr")
+        pa = span(num(f"nc_{m}_auto_n_pos_min"), num(f"nc_{m}_auto_n_pos_max"))
+        pb = span(num(f"nc_{m}_baseline_n_pos_min"), num(f"nc_{m}_baseline_n_pos_max"))
+        lines.append(f"| {m} | {int(a.notna().sum())} | {a.mean():.3f} | {a.median():.3f} | {b.mean():.3f} | "
+                     f"{ea.mean():.3f} | {eb.mean():.3f} | {pa} | {pb} |")
+    errs = [c for c in df if c.startswith("nc_") and c.endswith("_error")]
+    for c in errs:
+        for t, e in zip(df["task"], df[c]):
+            if isinstance(e, str):
+                lines.append(f"- error {t} / {c[3:-6]}: {e[:200]}")
+    lines.append("")
+    return lines
+
+
 def models_section(df: pd.DataFrame) -> list[str]:
     """Per-model table + paired comparisons over datasets (compare_units, Holm over the
     declared family). Datasets missing a score for either member of a pair are dropped
-    from that pair only, and n is printed per pair."""
+    from that pair only, and n is printed per pair. Negative controls follow, apart
+    (``controls_section``), only when the run scored one."""
     from grnbench.eval.comparison import compare_units, holm_adjust
 
     if not any(c.startswith("m_") for c in df):
-        return []
+        return controls_section(df)
     lines = ["## Models (CollecTRI evaluation half; unit = dataset)", ""]
     for metric, label in (("auprc_ratio", "AUPRC ratio"), ("epr", "EPR")):
         auto, base = _model_matrix(df, "auto", metric), _model_matrix(df, "baseline", metric)
@@ -518,7 +610,7 @@ def models_section(df: pd.DataFrame) -> list[str]:
                 if isinstance(e, str):
                     lines.append(f"- {t} / {c[2:-6]}: {e[:200]}")
         lines.append("")
-    return lines
+    return lines + controls_section(df)
 
 
 def _outcome_label(row) -> str:
@@ -681,6 +773,7 @@ def main(argv=None) -> int:
         return 0
     tasks, manifest_meta = load_task_manifest(args.tasks)
     tasks = _expand_task_paths(tasks)
+    controls = sorted({c for t in tasks for c in task_controls(t)})     # the whole list: every chunk pins the same
     if args.index is not None:
         tasks = tasks[args.index * args.chunk:(args.index + 1) * args.chunk]
     keep_awake()
@@ -688,13 +781,7 @@ def main(argv=None) -> int:
     os.environ.setdefault("OMP_NUM_THREADS", "1")
     models = [m.strip() for m in args.models.split(",") if m.strip()] if args.models else None
     ensure_run_config(args.out, manifest_meta, runner="real_bench",
-                      scientific_config={"models": models or [], "screen_methods": EVAL_METHODS,
-                                         "max_tfs": MAX_TFS,
-                                         "max_score_cells": MAX_SCORE_CELLS,
-                                         "cell_sampling": CELL_SAMPLING,
-                                         "min_reference_edges": MIN_REFERENCE_EDGES,
-                                         "reference_split": "within_tf_half",
-                                         "reference_sha256": reference_fingerprints(args.refs)})
+                      scientific_config=scientific_config(models, controls, args.refs))
     if args.max_attempts < 1:
         p.error("--max-attempts must be >= 1")
     jobs = [(t, args.refs, args.out, workroot, models, args.keep_artifacts,

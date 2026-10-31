@@ -40,6 +40,10 @@ from typing import Final, Literal, Mapping, Union
 import numpy as np
 
 DEFAULT_SEED: Final = 42
+# The negative control's default seed (D-037), fixed once before any run used it. The benchmark runners
+# (real_bench, candidate_study) pass no seed, so the control draws with this one: one fixed draw per universe.
+# `grnbench infer` and `grnbench run` pass --seed as for any model (LEGACY cli rows: MASTER).
+RANDOM_BASELINE_SEED: Final = 20261027
 SEED_MAX: Final = 2**32 - 1          # numpy, scikit-learn and torch all take a seed in [0, 2**32)
 POLICIES = ("legacy", "master", "derived")
 Policy = Literal["legacy", "master", "derived"]
@@ -150,6 +154,7 @@ _LEGACY: dict[str, dict[str, Cell]] = {
         "model.tigress": 42,                  # infer/regression.py:43
         "model.extra_trees": 42,              # infer/regression.py:295
         "model.gradient_boosting": 42,        # infer/regression.py:304
+        "model.random_baseline": RANDOM_BASELINE_SEED,   # infer/random_baseline.py:26, rng :31 (D-037)
         "model.community": None,              # infer/community.py:40; None, so members get none (:60)
         "model.grnboost2_motif": 42,          # infer/cistarget.py:330-332 hands **params to grnboost2
         "model.regdiffusion_motif": 0,        # infer/cistarget.py:330-332 -> regdiffusion

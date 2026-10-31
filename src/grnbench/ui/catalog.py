@@ -26,6 +26,7 @@ MODEL_INFO: dict[str, tuple[str, int]] = {
     "regdiffusion_motif": ("Model + motif prior", 2),
     "pearson_cistarget": ("Model + motif prior", 0), "grnboost2_cistarget": ("Model + motif prior", 2),
     "community": ("Ensemble", 1),
+    "random_baseline": ("Negative control", 0),
 }
 # Per-target L1 regression: its class above holds for a short TF list (the demo's 30; lasso 3 s). With no TF
 # list every gene is a regulator and lasso takes ~30 min at 1,400 cells x 1,000 genes (measured).
@@ -33,6 +34,8 @@ REGULATOR_BOUND = {"lasso", "tigress", "community"}      # community runs lasso 
 SPEED_LABEL = {0: "seconds", 1: "about a minute", 2: "minutes or more", None: "unknown speed"}
 PRESETS = ("Fast (seconds)", "Fast, including extras", "Recommended by the engine", "Everything available", "None")
 TIERS = ("default", "extra", "yours")
+# A negative control (D-037) is ticked only by hand: no preset puts it among the models it compares.
+CONTROL_FAMILY = "Negative control"
 
 
 def speed_of(name: str) -> int | None:
@@ -76,9 +79,9 @@ def preset_selection(table: pd.DataFrame, preset: str, recommended=()) -> list[s
         keep = usable[usable["speed"] == SPEED_LABEL[0]]
         if preset == "Fast (seconds)":
             keep = keep[keep["tier"] == "default"]
-        return keep.loc[~keep["family"].isin(["Model + motif prior", "Sequence prior"]), "method"].tolist()
+        return keep.loc[~keep["family"].isin(["Model + motif prior", "Sequence prior", CONTROL_FAMILY]), "method"].tolist()
     if preset == "Recommended by the engine":
         return [m for m in usable["method"] if m in set(recommended)]
     if preset == "Everything available":
-        return usable["method"].tolist()
+        return usable.loc[usable["family"] != CONTROL_FAMILY, "method"].tolist()
     return []

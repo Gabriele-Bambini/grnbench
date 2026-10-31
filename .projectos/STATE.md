@@ -27,6 +27,14 @@ comparison, published as a tool with a paper. Headline claims from real data (D-
 pre-registered experiments (D-017).
 
 ## In progress
+- Negative control (D-037, GB, `gb/random-baseline`): `random_baseline` (seeded uniform weights on the same
+  candidate pairs) is scored by every real_bench / candidate_study task planned from now on and reported in a
+  separate "Negative control (random)" table, never in a comparison family; committed reports regenerate
+  byte-identical. LM's review fixes done (reading rule and evaluation positives in both reports, seed and draw
+  rule in the run record, seed wording narrowed; task issue #195); main merged. Awaiting LM's re-review and LD's
+  follow-up look. Next: the first new plan shows its AUPRC ratio / EPR next to the models. Follow-up (LM finding
+  5, not done): an end-to-end test of `run_real_task` / `run_study_task` / `main()` with a control-carrying task,
+  and candidate_study printing a failed control's error.
 - Packaging and wheel resource safety (LD, `ld/wheel-install-resources`, issue #101):
   `grnbench.project` discovers project root across parent directories using the team state plus a
   grnbench-specific source or `pyproject.toml` identity marker; neutral `grnbench.declared_pairs`

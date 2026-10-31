@@ -437,3 +437,45 @@ STATUS: PROPOSED | ACTIVE | SUPERSEDED by D-xxx | REVERTED
   dropping 6 datasets EXP-20261001-LD-1 had scored. Each record's data provenance is its own snapshot
   (`EXP-...data.tsv`, checked with `--require-all`); data and large outputs live in a data folder outside the
   code checkout (the cluster's scratch area is not writable for this account; home has no quota).
+
+### D-037 | 2026-10-27 | claude (for GB) | ACTIVE | A random negative control next to the model scores of new runs
+- decision: a registered model `random_baseline` gives every candidate TF-target pair the other models score
+  (regulators of the TF list x every gene, self-loops dropped) a uniform random weight. Its default seed is
+  `seeds.RANDOM_BASELINE_SEED` (20261027); the benchmark runners (real_bench, candidate_study) pass no seed, so
+  there the control draws with that fixed seed, while `grnbench infer` and `grnbench run` pass `--seed` as for
+  any model. `real_bench.py plan` and `candidate_study.py plan`
+  record it in every task they write (`negative_controls`); a run scores it only for tasks that carry it, so task
+  lists planned before this decision run and report exactly as before (A/B: every committed report regenerates
+  byte-identical). real_bench stores its scores as `nc_<control>_<arm>_<metric>` (not `m_`), candidate_study as
+  the row's `negative_control` (baseline pipeline), and both reports show them in a separate "Negative control
+  (random)" table only when present. It is a control, not a comparison: it is never in `DECLARED_PAIRS`,
+  `CONFIRM_FAMILY` or any Holm family, never one of the screening proxies (`EVAL_METHODS`), `default=False` in
+  the registry, and no interface preset ticks it.
+- why: reviewers expect an empirical null next to the scores. AUPRC ratio and EPR are already normalised to
+  random in expectation, but a random scorer run through the same universe, cell cap, TF resolution and
+  evaluation half shows the null level the pipeline itself gives on that data (see the reading rule below),
+  and so catches a gross universe or evaluation bug that a normalised metric hides.
+- alternatives: the analytic expectation only (no check of the code path); a permutation null per model
+  (`eval.nulls`, far costlier, and a different question); adding it to `--models` by hand (old manifests then
+  differ by who typed what, and it would enter the declared family's model tables).
+- note: D-033 to D-036 are taken by open PRs (#145, #163, #142); this PR takes D-037 (renumber if main takes it
+  first).
+- update 2026-10-29 (LM's review of #186; task issue #195):
+  - reading rule: the null level of AUPRC ratio and EPR depends on the number of evaluation positives. LM's
+    review probe (2026-10-27; this control on 300 genes x 20 TFs, 5,980 pairs, 200 random gold sets per size;
+    not a registered result) gave a mean (sd) AUPRC ratio of 1.92 (2.82) at 10 positives, 1.44 (0.86) at 20,
+    1.15 (0.28) at 50, 1.10 (0.15) at 100 and 1.02 (0.04) at 600. So the control is a check for a gross
+    universe or evaluation error, not a threshold test at 1: a mean of 1.3 over small datasets is the expected
+    null. Both reports print, next to the control's mean, the evaluation positives in the candidate universe
+    per context as min-max over the datasets (real_bench `nc_<control>_<arm>_n_pos_min/_max`, candidate_study
+    `eval_<control>_n_pos_min/_max` in `negative_control`); model rows gain no key.
+  - record: the seed and the draw rule go into the run record of every new run that scores the control:
+    real_bench `RUN_CONFIG.json` `scientific_config.negative_control_draws` (only when `negative_controls` is
+    present, so older task lists keep their exact config), candidate_study each row's `negative_control.draws`.
+    Seed 20261027; draw (`infer/random_baseline.py` `DRAW_RULE`): uniform [0, 1) weights from
+    `numpy.random.default_rng(seed).random(n_regulators * n_genes)`, one draw per regulator x gene cell in
+    regulator-major order (regulators and genes in expression-column order), self-pairs included in the draw
+    and then dropped by the registry.
+  - one fixed draw per universe: the same seed gives the same weights for the same regulators and genes, so the
+    auto and baseline arms of real_bench get identical control scores whenever they share a gene set. They are
+    one null shown twice, not two independent nulls; the report table says so.

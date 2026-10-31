@@ -356,7 +356,7 @@ def _simulator() -> int:
 
 def _model_internals() -> None:
     """The seed reaches the random calls inside the adapters."""
-    from grnbench.infer import aracne3, classical, community, regdiffusion_adapter, regression, tree_methods
+    from grnbench.infer import aracne3, classical, community, random_baseline, regdiffusion_adapter, regression, tree_methods
     rel = _src(tree_methods)
     arboreto = _func(rel, "_run_arboreto")
     for call in _calls(arboreto, "create_graph"):
@@ -378,6 +378,7 @@ def _model_internals() -> None:
     for name in ("extra_trees", "gradient_boosting"):
         _hands_on(_func(rel, name), "_per_target_importance")
     _leaf(_func(_src(regdiffusion_adapter), "regdiffusion_runner"))
+    _leaf(_func(_src(random_baseline), "random_baseline"))          # the negative control (D-037)
     argv = [n for n in ast.walk(_func(_src(aracne3), "run_aracne3")) if isinstance(n, ast.List)
             and any(isinstance(e, ast.Constant) and e.value == "--seed" for e in n.elts)]
     assert len(argv) == 1, "run_aracne3: one command line with --seed"

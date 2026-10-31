@@ -178,7 +178,8 @@ def make_tasks(data_root: Path, conditions=CONDITIONS, max_datasets: int | None 
     datasets += raw10x_datasets(Path(data_root))
     datasets = datasets[:max_datasets] if max_datasets else datasets
     return [{"id": f"{d['id']}__{c}", "dataset": d["id"], "condition": c, "path": d["path"],
-             "truth": d["truth"], "seed": 0} for d in datasets for c in conditions]
+             "truth": d["truth"], "seed": 0, "negative_controls": list(real_bench.NEGATIVE_CONTROLS)}
+            for d in datasets for c in conditions]
 
 
 # -- candidates -------------------------------------------------------------------------- #
@@ -311,6 +312,15 @@ def run_study_task(task: dict, refs: Path | None, workroot: Path) -> dict:
                           "n_genes": len(genes[name]) if name in genes else None}
             done[name]["eval_seconds"] = round(time.time() - t1, 1)
             done[name]["seconds"] = round(done[name]["eval_seconds"] + (done[name]["screen_seconds"] or 0), 1)
+        controls = real_bench.task_controls(task)        # D-037: tasks planned before it have none
+        base_run = info["baseline"]["alias_of"] or "baseline"
+        if controls and base_run in res["records"]:
+            sc = score_candidates({base_run: res["records"][base_run]}, {base_run: res["plans"][base_run]},
+                                  tfs, evaluation, methods=controls, support=True)[base_run]
+            row["negative_control"] = {"candidate": "baseline",
+                                       "draws": {c: dict(real_bench.NEGATIVE_CONTROL_DRAWS[c]) for c in controls},
+                                       **{k: v for k, v in sc.items()
+                                          if any(k == f"eval_{c}" or k.startswith(f"eval_{c}_") for c in controls)}}
         cands = []
         for s in specs:
             c = dict(info[s["name"]])
@@ -508,7 +518,38 @@ def summary(rows: list[dict]) -> str:
     errs = [r for r in rows if r.get("error")]
     if errs:
         lines += ["", "## Task errors", ""] + [f"- {r['task']}: {str(r['error'])[:200]}" for r in errs]
+    lines += controls_lines(rows, conds)
     return "\n".join(lines) + "\n"
+
+
+def controls_lines(rows: list[dict], conds: list[str]) -> list[str]:
+    """The negative control on the baseline pipeline (D-037), apart from every arm and rule; [] when no row has
+    one (task lists planned before D-037)."""
+    scored = [r for r in rows if r.get("negative_control")]
+    if not scored:
+        return []
+    names = sorted({k[len("eval_"):] for r in scored for k in r["negative_control"]
+                    if k.startswith("eval_") and not k.endswith(("_epr", "_error", "_n_pos_min", "_n_pos_max"))})
+    lines = ["", "## Negative control (random), baseline pipeline", "",
+             "Not a comparison: a seeded uniform random weight on the baseline's candidate pairs (D-037); it enters "
+             "no arm, rule or confirmatory family. How to read it: its AUPRC ratio and EPR on the evaluation half "
+             "are the empirical null, whose level depends on the number of evaluation positives (close to 1 with "
+             "hundreds, higher and noisier with tens), so it checks for a gross universe or evaluation error and is "
+             "not a test against 1. It is one fixed draw per universe. Positives = evaluation pairs in the "
+             "candidate universe per context, min-max over the datasets.", "",
+             "| control | condition | n | mean AUPRC ratio | mean EPR | positives (min-max) |",
+             "|---|---|---|---|---|---|"]
+    for name in names:
+        for cond in conds:
+            nc = [r["negative_control"] for r in scored if r["condition"] == cond]
+            a = [v for v in (x.get(f"eval_{name}") for x in nc) if v is not None and np.isfinite(v)]
+            e = [v for v in (x.get(f"eval_{name}_epr") for x in nc) if v is not None and np.isfinite(v)]
+            lo = [x[f"eval_{name}_n_pos_min"] for x in nc if x.get(f"eval_{name}_n_pos_min") is not None]
+            hi = [x[f"eval_{name}_n_pos_max"] for x in nc if x.get(f"eval_{name}_n_pos_max") is not None]
+            pos = f"{min(lo)}-{max(hi)}" if lo and hi else "-"
+            if nc:
+                lines.append(f"| {name} | {cond} | {len(a)} | {_mean(a):.3f} | {_mean(e):.3f} | {pos} |")
+    return lines
 
 
 # Confirmatory family of EXP-20261003-LM-1, fixed before its run. Units = datasets; endpoint =

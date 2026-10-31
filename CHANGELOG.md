@@ -3,6 +3,16 @@
 ## Unreleased (0.8.0-dev) — interface and context-aware cleaning
 
 ### Project
+- Negative control (D-037): a new model `random_baseline` scores every candidate TF-target pair with a seeded
+  uniform random weight (an empirical null for AUPRC ratio and EPR). Runs of `real_bench.py` and `candidate_study.py` planned
+  from now on score it and report it in a separate "Negative control (random)" table; it is never in a
+  comparison family. Task lists planned before it run and report byte-identically.
+  Review fixes (LM, #186): the table states the reading rule (the null level depends on the number of
+  evaluation positives; a check for a gross error, not a test against 1) and prints those positives (min-max
+  over datasets) next to the mean; new runs record the control's seed (20261027) and draw rule
+  (`RUN_CONFIG.json` `negative_control_draws`, candidate_study rows `negative_control.draws`); the text no
+  longer says the seed is never taken from `--seed` (`grnbench infer`/`run` pass it); one fixed draw per
+  universe, so arms that share a gene set show identical control scores.
 - Packaging and CLI safety in non-editable wheel installs (#101): add `grnbench.project` for
   project-root discovery by walking parents for specific repository markers; move the canonical
   real-benchmark `DECLARED_PAIRS` to `grnbench.declared_pairs`; allow direct run-directory reporting

@@ -314,8 +314,10 @@ def score_candidates(records_by_cand, plans, tfs, eval_pairs,
                      methods: list[str] | None = None,
                      method_params: dict[str, dict] | None = None,
                      pair_ref: str | None = None, pair_genes: dict | None = None,
-                     ref_cache: dict | None = None) -> dict[str, dict]:
-    """Own-universe scores (``eval_*``). With ``pair_ref`` (a candidate name), ``pair_genes``
+                     ref_cache: dict | None = None, support: bool = False) -> dict[str, dict]:
+    """Own-universe scores (``eval_*``). ``support=True`` (the negative controls only, D-037) adds
+    ``eval_<method>_n_pos_min`` / ``_n_pos_max``: the fewest and most evaluation positives in the candidate
+    universe over the candidate's contexts. With ``pair_ref`` (a candidate name), ``pair_genes``
     (candidate -> its genes) and ``ref_cache`` (a dict the caller keeps across calls), each
     candidate is also scored on the genes it shares with the reference candidate, from the SAME
     edges (no second inference): ``pair_eval_*`` for the candidate, ``pair_base_eval_*`` for the
@@ -331,6 +333,7 @@ def score_candidates(records_by_cand, plans, tfs, eval_pairs,
     for name, recs in records_by_cand.items():
         strategy = plans[name].value("strategy")
         per_method = {m: {"auprc_ratio": [], "epr": []} for m in methods}
+        n_pos = {m: [] for m in methods}
         per_method_errors = {m: [] for m in methods}
         per_pair = {m: [] for m in methods}
         shared = (pair_genes[name] & pair_genes[pair_ref]
@@ -358,6 +361,7 @@ def score_candidates(records_by_cand, plans, tfs, eval_pairs,
                         r = evaluate_ranking(edges, gi, with_curve=False, universe=universe)
                         for metric in ("auprc_ratio", "epr"):
                             per_method[m][metric].append(float(r.get(metric, np.nan)))
+                        n_pos[m].append(int(r["n_gold_in_universe"]))
                     if name == pair_ref and ref_cache is not None:
                         ref_cache[(ctx, m)] = (edges, genes, groups)
                     if shared is not None:
@@ -373,6 +377,9 @@ def score_candidates(records_by_cand, plans, tfs, eval_pairs,
                 finite = [v for v in values if np.isfinite(v)]
                 key = f"eval_{method}" if metric == "auprc_ratio" else f"eval_{method}_{metric}"
                 row[key] = float(np.mean(finite)) if finite else np.nan
+            if support:
+                row[f"eval_{method}_n_pos_min"] = min(n_pos[method]) if n_pos[method] else None
+                row[f"eval_{method}_n_pos_max"] = max(n_pos[method]) if n_pos[method] else None
             if per_method_errors[method]:
                 row[f"eval_{method}_error"] = " | ".join(sorted(set(per_method_errors[method])))[:1000]
         vals = [row[f"eval_{m}"] for m in methods if np.isfinite(row[f"eval_{m}"])]

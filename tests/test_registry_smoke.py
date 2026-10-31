@@ -40,7 +40,7 @@ LOCK_FILE = Path(__file__).resolve().parents[1] / "requirements" / "lock-py311.t
 
 # every method smoke-run here, with settings that keep the run small ({} = its defaults)
 SMOKE = {
-    "spearman_signed": {}, "pearson_signed": {}, "mutual_info": {}, "clr": {}, "ppcor": {},
+    "spearman_signed": {}, "pearson_signed": {}, "random_baseline": {}, "mutual_info": {}, "clr": {}, "ppcor": {},
     "lasso": {}, "random_forest": {"n_estimators": 10},
     "genie3": {"n_estimators": 10}, "grnboost2": {"n_estimators": 20},
     "aracne3": {"timeout_s": 120},
